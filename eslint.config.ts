@@ -26,6 +26,13 @@ export default defineConfigWithVueTs(
     files: ['src/**/__tests__/*'],
   },
 
+  // Headless UI primitives are conventionally single-word (Button, Input, …).
+  {
+    name: 'app/ui-primitives',
+    files: ['src/components/ui/**/*.vue'],
+    rules: { 'vue/multi-word-component-names': 'off' },
+  },
+
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
   skipFormatting,

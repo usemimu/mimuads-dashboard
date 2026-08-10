@@ -1,35 +1,27 @@
-@import './base.css';
+/* Brand fonts. Self-host in production; dev uses Google Fonts for speed. */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
+@layer base {
+  :root {
+    color-scheme: light;
   }
 
+  html,
+  body,
   #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+    height: 100%;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-900 font-body antialiased;
+  }
+
+  /* Tabular figures for money/metrics wherever the mono font is used. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 }
