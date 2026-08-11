@@ -1782,7 +1782,14 @@
         },
         "responses": {
           "201": {
-            "description": "Topup intent created; includes Paystack authorization URL"
+            "description": "Topup intent created; includes Paystack authorization URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopupIntentResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid amount or request body"
@@ -1822,7 +1829,14 @@
         },
         "responses": {
           "201": {
-            "description": "Verification result with status and optional new balance"
+            "description": "Verification result with status and optional new balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyTopupResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid or missing payment reference"
@@ -2016,7 +2030,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Wallet balance and recent transactions"
+            "description": "Wallet balance and recent transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletBalanceResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized"
@@ -2076,7 +2097,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Paginated transaction history"
+            "description": "Paginated transaction history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionHistoryResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid query parameters"
@@ -11311,6 +11339,80 @@
           "amountKobo"
         ]
       },
+      "TopupIntentResponseDto": {
+        "type": "object",
+        "properties": {
+          "topupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountKobo": {
+            "type": "string"
+          },
+          "amountNaira": {
+            "type": "number"
+          },
+          "formattedAmount": {
+            "type": "string"
+          },
+          "surchargeKobo": {
+            "type": "string"
+          },
+          "surchargeNaira": {
+            "type": "number"
+          },
+          "formattedSurcharge": {
+            "type": "string"
+          },
+          "totalChargeKobo": {
+            "type": "string"
+          },
+          "totalChargeNaira": {
+            "type": "number"
+          },
+          "formattedTotalCharge": {
+            "type": "string"
+          },
+          "paystack": {
+            "type": "object",
+            "properties": {
+              "authorizationUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "accessCode": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "authorizationUrl",
+              "accessCode",
+              "reference"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "topupId",
+          "amountKobo",
+          "amountNaira",
+          "formattedAmount",
+          "surchargeKobo",
+          "surchargeNaira",
+          "formattedSurcharge",
+          "totalChargeKobo",
+          "totalChargeNaira",
+          "formattedTotalCharge",
+          "paystack",
+          "expiresAt"
+        ]
+      },
       "VerifyTopupRequestDto": {
         "type": "object",
         "properties": {
@@ -11320,6 +11422,131 @@
         },
         "required": [
           "reference"
+        ]
+      },
+      "VerifyTopupResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "failed",
+              "pending"
+            ]
+          },
+          "amountKobo": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "newBalance": {
+            "type": "object",
+            "properties": {
+              "balanceKobo": {
+                "type": "string"
+              },
+              "balanceNaira": {
+                "type": "number"
+              },
+              "formattedBalance": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "balanceKobo",
+              "balanceNaira",
+              "formattedBalance"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "amountKobo",
+          "reference"
+        ]
+      },
+      "WalletBalanceResponseDto": {
+        "type": "object",
+        "properties": {
+          "balanceKobo": {
+            "type": "string"
+          },
+          "balanceNaira": {
+            "type": "number"
+          },
+          "formattedBalance": {
+            "type": "string"
+          },
+          "recentTransactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "topup",
+                    "ad_play_charge",
+                    "refund",
+                    "chargeback",
+                    "apcon_fee",
+                    "adjustment"
+                  ]
+                },
+                "amountKobo": {
+                  "type": "string"
+                },
+                "amountNaira": {
+                  "type": "number"
+                },
+                "formattedAmount": {
+                  "type": "string"
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "credit",
+                    "debit"
+                  ]
+                },
+                "description": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "id",
+                "type",
+                "amountKobo",
+                "amountNaira",
+                "formattedAmount",
+                "direction",
+                "description",
+                "createdAt"
+              ]
+            }
+          }
+        },
+        "required": [
+          "balanceKobo",
+          "balanceNaira",
+          "formattedBalance",
+          "recentTransactions"
         ]
       },
       "WalletTransferDto": {
@@ -11351,6 +11578,103 @@
         "required": [
           "amountKobo",
           "idempotencyKey"
+        ]
+      },
+      "TransactionHistoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "topup",
+                    "ad_play_charge",
+                    "refund",
+                    "chargeback",
+                    "apcon_fee",
+                    "adjustment"
+                  ]
+                },
+                "amountKobo": {
+                  "type": "string"
+                },
+                "amountNaira": {
+                  "type": "number"
+                },
+                "formattedAmount": {
+                  "type": "string"
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "credit",
+                    "debit"
+                  ]
+                },
+                "description": {
+                  "type": "string"
+                },
+                "balanceAfterKobo": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "externalRef": {
+                  "type": "string"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "id",
+                "type",
+                "amountKobo",
+                "amountNaira",
+                "formattedAmount",
+                "direction",
+                "description",
+                "balanceAfterKobo",
+                "createdAt"
+              ]
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number"
+              },
+              "offset": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "hasMore": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "limit",
+              "offset",
+              "total",
+              "hasMore"
+            ]
+          }
+        },
+        "required": [
+          "transactions",
+          "pagination"
         ]
       },
       "AdminWalletAdjustmentDto": {

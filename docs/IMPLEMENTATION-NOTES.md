@@ -54,6 +54,19 @@ OPENAPI_URL=http://localhost:8000/openapi.json pnpm contracts:sync
   `ready_for_vetting` creative per org, and a **₦5,000,000 funded wallet** (balanced ledger entry) so
   campaigns submit end-to-end. (Committed to the API repo's `main`.)
 
+## Billing (slice 5)
+
+- Wallet + top-up response DTOs registered in OpenAPI (commit eea3c8a) → drift-checked. Invoice +
+  transfer responses are inline objects (no named DTO) → modelled permissively.
+- **`GET /advertiser/wallet` returns the ORG MASTER balance only** (no workspaceId param). Per-workspace
+  wallet cards need the list-workspaces endpoint (fast-follow) — the billing wallet card shows the org
+  master balance.
+- **Transfers** are gated behind `FEATURES.listWorkspaces` — the from/to pickers need the workspace
+  list, so the UI is locked until that endpoint ships (backend `POST /wallet/transfers` already works).
+- **Top-up (Paystack)**: built the full flow (topup-intent → redirect to `authorization_url` → callback
+  `/billing?reference=` → verify), but it needs real Paystack keys, so the e2e doesn't drive it.
+- **Invoice PDF** still returns JSON (the "real PDF" backend follow-up); "Download PDF" hits the endpoint.
+
 ## Still outstanding / fast-follow
 
 - **International phone** — `request-otp`/`verify-otp` accept `+234` only; the console fixes the

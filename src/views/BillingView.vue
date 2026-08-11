@@ -1,0 +1,189 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { PhDownloadSimple } from '@phosphor-icons/vue'
+import Button from '@/components/ui/Button.vue'
+import { useSession } from '@/stores/session'
+import { FEATURES } from '@/config/features'
+import { ctxKey } from '@/lib/ctx-key'
+import { formatKobo, nairaToKobo } from '@/lib/money'
+import { isApiError } from '@/api/errors'
+import {
+  getWallet, getTransactions, transactionsCsvUrl,
+  topupIntent, verifyTopup, createInvoice, listInvoices, invoicePdfUrl,
+} from '@/api/billing'
+
+const session = useSession()
+const route = useRoute()
+const router = useRouter()
+const qc = useQueryClient()
+const tab = ref<'transactions' | 'topup' | 'transfers' | 'invoices'>('transactions')
+const error = ref<string | null>(null)
+
+const { data: wallet } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'wallet')),
+  queryFn: getWallet,
+})
+const { data: txns } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'wallet', 'txns')),
+  queryFn: getTransactions,
+})
+const { data: invoices } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'invoices')),
+  queryFn: listInvoices,
+})
+
+// ── Top-up (Paystack) ──
+const topupNaira = ref<number | null>(null)
+const topupBusy = ref(false)
+const topupState = ref<'idle' | 'pending' | 'success' | 'failed'>('idle')
+async function startTopup() {
+  if (!topupNaira.value || topupNaira.value <= 0) return
+  topupBusy.value = true
+  error.value = null
+  try {
+    const intent = await topupIntent(
+      String(nairaToKobo(topupNaira.value)),
+      `${window.location.origin}/billing`,
+    )
+    const url = (intent.paystack as { authorization_url?: string })?.authorization_url
+    if (url) window.location.href = url
+    else error.value = 'Paystack did not return a checkout URL.'
+  } catch (e) {
+    error.value = isApiError(e) ? e.message : 'Top-up failed'
+  } finally {
+    topupBusy.value = false
+  }
+}
+// Paystack callback → verify.
+onMounted(async () => {
+  const reference = route.query.reference as string | undefined
+  if (!reference) return
+  tab.value = 'topup'
+  topupState.value = 'pending'
+  try {
+    const res = await verifyTopup(reference)
+    topupState.value = res.status === 'success' || res.status === 'completed' ? 'success' : 'failed'
+    qc.invalidateQueries({ queryKey: ctxKey(session.context, 'wallet') })
+  } catch {
+    topupState.value = 'failed'
+  } finally {
+    router.replace('/billing')
+  }
+})
+
+// ── Invoice request ──
+const invNaira = ref<number | null>(null)
+const invPurpose = ref('')
+const invBusy = ref(false)
+async function requestInvoice() {
+  if (!invNaira.value || invNaira.value <= 0) return
+  invBusy.value = true
+  error.value = null
+  try {
+    await createInvoice(String(nairaToKobo(invNaira.value)), invPurpose.value || undefined)
+    invNaira.value = null
+    invPurpose.value = ''
+    qc.invalidateQueries({ queryKey: ctxKey(session.context, 'invoices') })
+  } catch (e) {
+    error.value = isApiError(e) ? e.message : 'Could not request invoice'
+  } finally {
+    invBusy.value = false
+  }
+}
+
+const canBill = computed(() => session.canManageBilling)
+</script>
+
+<template>
+  <div>
+    <h1 class="mb-6 font-display text-3xl font-semibold text-neutral-900">{{ $t('billing.title') }}</h1>
+
+    <!-- Wallet card -->
+    <div class="mb-6 rounded-2xl border border-neutral-200 bg-white p-6">
+      <p class="text-xs uppercase tracking-wide text-neutral-400">{{ $t('billing.balance') }}</p>
+      <p class="mt-1 font-mono text-4xl font-semibold text-neutral-900" data-testid="wallet-balance">
+        {{ wallet ? formatKobo(wallet.balanceKobo) : '—' }}
+      </p>
+    </div>
+
+    <p v-if="error" role="alert" class="mb-3 text-sm text-clay-700">{{ error }}</p>
+
+    <!-- Tabs -->
+    <div class="mb-4 flex gap-1 border-b border-neutral-200">
+      <button v-for="t in (['transactions','topup','invoices','transfers'] as const)" :key="t"
+        class="px-4 py-2 text-sm" :class="tab === t ? 'border-b-2 border-clay-500 text-clay-700' : 'text-neutral-500'"
+        @click="tab = t">{{ $t('billing.tab' + t.charAt(0).toUpperCase() + t.slice(1)) }}</button>
+    </div>
+
+    <!-- Transactions -->
+    <div v-if="tab === 'transactions'">
+      <div class="mb-3 flex justify-end">
+        <a :href="transactionsCsvUrl()" target="_blank" rel="noopener">
+          <Button variant="outline" size="sm"><PhDownloadSimple :size="16" /> {{ $t('billing.exportCsv') }}</Button>
+        </a>
+      </div>
+      <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+        <table class="w-full text-sm">
+          <tbody>
+            <tr v-if="!txns?.transactions.length"><td class="px-4 py-6 text-center text-neutral-400">{{ $t('billing.noTransactions') }}</td></tr>
+            <tr v-for="tx in txns?.transactions ?? []" :key="tx.id" class="border-t border-neutral-100">
+              <td class="px-4 py-2 capitalize text-neutral-700">{{ tx.type.replace(/_/g, ' ') }}</td>
+              <td class="px-4 py-2 text-neutral-500">{{ tx.description ?? '' }}</td>
+              <td class="px-4 py-2 text-right font-mono">{{ formatKobo(tx.amountKobo) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Top up -->
+    <div v-else-if="tab === 'topup'" class="max-w-md">
+      <p v-if="topupState === 'pending'" class="rounded-lg bg-neutral-100 px-4 py-3 text-sm text-neutral-600">{{ $t('billing.topupPending') }}</p>
+      <p v-else-if="topupState === 'success'" class="rounded-lg bg-moss-50 px-4 py-3 text-sm text-moss-700">{{ $t('billing.topupSuccess') }}</p>
+      <p v-else-if="topupState === 'failed'" class="rounded-lg bg-clay-50 px-4 py-3 text-sm text-clay-700">{{ $t('billing.topupFailed') }}</p>
+      <div v-if="canBill" class="mt-4 space-y-3 rounded-xl border border-neutral-200 bg-white p-5">
+        <h2 class="font-medium text-neutral-900">{{ $t('billing.topupTitle') }}</h2>
+        <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.amount') }}</span>
+          <input v-model.number="topupNaira" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+        <p class="text-xs text-neutral-400">{{ $t('billing.topupHint') }}</p>
+        <Button class="w-full" :disabled="topupBusy" @click="startTopup">{{ $t('billing.continue') }}</Button>
+      </div>
+    </div>
+
+    <!-- Invoices -->
+    <div v-else-if="tab === 'invoices'" class="space-y-6">
+      <div v-if="canBill" class="max-w-md space-y-3 rounded-xl border border-neutral-200 bg-white p-5">
+        <h2 class="font-medium text-neutral-900">{{ $t('billing.invoiceRequest') }}</h2>
+        <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.amount') }}</span>
+          <input v-model.number="invNaira" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+        <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.purpose') }}</span>
+          <input v-model="invPurpose" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+        <Button :disabled="invBusy" @click="requestInvoice">{{ $t('billing.requestInvoice') }}</Button>
+      </div>
+      <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+        <table class="w-full text-sm">
+          <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-400">
+            <tr><th class="px-4 py-2">{{ $t('billing.invoiceNumber') }}</th><th class="px-4 py-2">{{ $t('billing.grandTotal') }}</th><th class="px-4 py-2">{{ $t('billing.status') }}</th><th class="px-4 py-2"></th></tr>
+          </thead>
+          <tbody>
+            <tr v-if="!invoices?.invoices.length"><td colspan="4" class="px-4 py-6 text-center text-neutral-400">{{ $t('billing.noInvoices') }}</td></tr>
+            <tr v-for="inv in invoices?.invoices ?? []" :key="inv.id" class="border-t border-neutral-100" data-testid="invoice-row">
+              <td class="px-4 py-2 font-mono">{{ inv.invoiceNumber }}</td>
+              <td class="px-4 py-2 font-mono">{{ formatKobo(inv.totalKobo) }}</td>
+              <td class="px-4 py-2"><span class="rounded-full bg-gold-100 px-2 py-0.5 text-xs capitalize text-gold-800">{{ inv.status.replace(/_/g, ' ') }}</span></td>
+              <td class="px-4 py-2 text-right"><a :href="invoicePdfUrl(inv.id)" target="_blank" rel="noopener" class="text-sm text-clay-600 hover:underline">{{ $t('billing.downloadPdf') }}</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Transfers (needs list-workspaces) -->
+    <div v-else class="rounded-xl border border-dashed border-neutral-300 bg-white p-8 text-center">
+      <p class="font-medium text-neutral-600">{{ $t('billing.transfersTitle') }}</p>
+      <p v-if="!FEATURES.listWorkspaces" class="mt-1 text-sm text-neutral-400">{{ $t('billing.transfersLocked') }}</p>
+    </div>
+  </div>
+</template>

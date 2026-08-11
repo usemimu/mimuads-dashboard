@@ -30,6 +30,16 @@ import {
   UploadIntentResponseSchema,
   CreativeStatusResponseSchema,
 } from '../contracts/creatives'
+import {
+  WalletBalanceSchema,
+  TransactionHistorySchema,
+  TopupIntentSchema,
+  TopupIntentResponseSchema,
+  VerifyTopupSchema,
+  VerifyTopupResponseSchema,
+  WalletTransferSchema,
+  CreateInvoiceSchema,
+} from '../contracts/billing'
 
 /**
  * Contract drift guard. The console owns its zod contracts (separate repo, no
@@ -64,6 +74,10 @@ const REQUESTS: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['TopUpCampaignRequestDto', TopUpSchema],
   ['ExtendCampaignRequestDto', ExtendSchema],
   ['UploadIntentRequestDto', UploadIntentSchema],
+  ['TopupIntentRequestDto', TopupIntentSchema],
+  ['VerifyTopupRequestDto', VerifyTopupSchema],
+  ['WalletTransferDto', WalletTransferSchema],
+  ['CreateInvoiceDto', CreateInvoiceSchema],
 ]
 
 /** Response: everything the console reads must still be present on the API shape. */
@@ -79,6 +93,10 @@ const RESPONSES: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['PricingQuoteResponseDto', QuoteResponseSchema],
   ['UploadIntentResponseDto', UploadIntentResponseSchema],
   ['CreativeStatusResponseDto', CreativeStatusResponseSchema],
+  ['WalletBalanceResponseDto', WalletBalanceSchema],
+  ['TransactionHistoryResponseDto', TransactionHistorySchema],
+  ['TopupIntentResponseDto', TopupIntentResponseSchema],
+  ['VerifyTopupResponseDto', VerifyTopupResponseSchema],
 ]
 
 describe('console contracts ↔ backend /openapi.json (no drift)', () => {
