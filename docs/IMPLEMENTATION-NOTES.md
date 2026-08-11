@@ -22,6 +22,22 @@ OPENAPI_URL=http://localhost:8000/openapi.json pnpm contracts:sync
   sessions persist + silently refresh (e2e-verified). It still has **no named response DTO**
   (unnamed inline object) → not drift-checkable; giving it one remains a small fast-follow.
 
+## Map & screens (slice 3)
+
+- **Map is Google Maps** (product decision — overrides the PRD's MapLibre). Key via
+  `VITE_GOOGLE_MAPS_API_KEY`, **optional**: absent in dev/CI → the map shows a graceful fallback and
+  the list view still works; set it in staging/prod. Uses the `@googlemaps/js-api-loader` functional
+  API (`setOptions`/`importLibrary`) + `@googlemaps/markerclusterer`.
+- Advertiser screens endpoints (`/advertiser/screens`, `/map`, `/:id`) return **unnamed inline
+  objects** (no OpenAPI DTO components), so they're **not drift-checkable** — the console models the
+  actual runtime response (permissive/passthrough zod). Giving them named response DTOs is a fast-follow.
+- **No server-side footfall-band or price-band filter** — done client-side on the loaded set. **Radius
+  select** is implemented client-side (haversine, unit-tested); interactive **polygon-draw** on the map
+  is a follow-up. `status` is config-state (active/offline/…), **not a live heartbeat**. `hourlyTraffic`
+  isn't populated by the backend, so the detail drawer's footfall curve is derived from `peakHours`.
+- Saved screen sets are **client-side (localStorage)**; per-org server persistence is a committed
+  fast-follow (PRD §8).
+
 ## Still outstanding / fast-follow
 
 - **International phone** — `request-otp`/`verify-otp` accept `+234` only; the console fixes the

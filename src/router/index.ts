@@ -52,7 +52,7 @@ const routes: RouteRecordRaw[] = [
       { path: '', redirect: '/dashboard' },
       { path: 'dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { titleKey: 'nav.dashboard' } },
       { path: 'campaigns', name: 'campaigns', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.campaigns' } },
-      { path: 'screens', name: 'screens', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.screens' } },
+      { path: 'screens', name: 'screens', component: () => import('@/views/ScreensView.vue'), meta: { titleKey: 'nav.screens' } },
       { path: 'reports', name: 'reports', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.reports' } },
       { path: 'billing', name: 'billing', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.billing' } },
       { path: 'organization', name: 'organization', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.organization' } },

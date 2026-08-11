@@ -35,17 +35,20 @@ function resolveAppEnv(): AppEnv {
 export interface Env {
   appEnv: AppEnv
   apiBaseUrl: string
-  mapTilesUrl: string
+  /** Google Maps JS API key. OPTIONAL — absent in dev/CI, where the map degrades
+   *  to a graceful fallback; required in staging/production for the live map. */
+  googleMapsApiKey: string | undefined
   paystackPublicKey: string
   isProduction: boolean
 }
 
 function buildEnv(): Env {
   const appEnv = resolveAppEnv()
+  const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim()
   return {
     appEnv,
     apiBaseUrl: requireEnv('VITE_API_BASE_URL').replace(/\/+$/, ''),
-    mapTilesUrl: requireEnv('VITE_MAP_TILES_URL'),
+    googleMapsApiKey: mapsKey && mapsKey.length > 0 ? mapsKey : undefined,
     paystackPublicKey: requireEnv('VITE_PAYSTACK_PUBLIC_KEY'),
     isProduction: appEnv === 'production',
   }
