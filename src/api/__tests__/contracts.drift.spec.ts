@@ -16,6 +16,20 @@ import {
   CreateBusinessProfileSchema,
   BusinessProfileResponseSchema,
 } from '../contracts/onboarding'
+import {
+  CreateCampaignSchema,
+  TopUpSchema,
+  ExtendSchema,
+  CampaignSchema,
+  CampaignListResponseSchema,
+  SubmitCampaignResponseSchema,
+  QuoteResponseSchema,
+} from '../contracts/campaigns'
+import {
+  UploadIntentSchema,
+  UploadIntentResponseSchema,
+  CreativeStatusResponseSchema,
+} from '../contracts/creatives'
 
 /**
  * Contract drift guard. The console owns its zod contracts (separate repo, no
@@ -46,6 +60,10 @@ const REQUESTS: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['SwitchOrgDto', SwitchOrgSchema],
   ['SwitchWorkspaceDto', SwitchWorkspaceSchema],
   ['CreateBusinessProfileDto', CreateBusinessProfileSchema],
+  ['CreateCampaignRequestDto', CreateCampaignSchema],
+  ['TopUpCampaignRequestDto', TopUpSchema],
+  ['ExtendCampaignRequestDto', ExtendSchema],
+  ['UploadIntentRequestDto', UploadIntentSchema],
 ]
 
 /** Response: everything the console reads must still be present on the API shape. */
@@ -55,6 +73,12 @@ const RESPONSES: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['RefreshTokenResponseDto', RefreshTokenResponseSchema],
   ['SwitchContextResponseDto', SwitchContextResponseSchema],
   ['BusinessProfileResponseDto', BusinessProfileResponseSchema],
+  ['CampaignResponseDto', CampaignSchema],
+  ['CampaignListResponseDto', CampaignListResponseSchema],
+  ['SubmitCampaignResponseDto', SubmitCampaignResponseSchema],
+  ['PricingQuoteResponseDto', QuoteResponseSchema],
+  ['UploadIntentResponseDto', UploadIntentResponseSchema],
+  ['CreativeStatusResponseDto', CreativeStatusResponseSchema],
 ]
 
 describe('console contracts ↔ backend /openapi.json (no drift)', () => {

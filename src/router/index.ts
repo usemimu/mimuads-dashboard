@@ -51,7 +51,9 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/dashboard' },
       { path: 'dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { titleKey: 'nav.dashboard' } },
-      { path: 'campaigns', name: 'campaigns', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.campaigns' } },
+      { path: 'campaigns', name: 'campaigns', component: () => import('@/views/CampaignsListView.vue'), meta: { titleKey: 'nav.campaigns' } },
+      { path: 'campaigns/new', name: 'campaign-new', component: () => import('@/views/CampaignWizardView.vue'), meta: { titleKey: 'campaigns.newCampaign' } },
+      { path: 'campaigns/:id', name: 'campaign-detail', component: () => import('@/views/CampaignDetailView.vue'), meta: { titleKey: 'nav.campaigns' } },
       { path: 'screens', name: 'screens', component: () => import('@/views/ScreensView.vue'), meta: { titleKey: 'nav.screens' } },
       { path: 'reports', name: 'reports', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.reports' } },
       { path: 'billing', name: 'billing', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.billing' } },

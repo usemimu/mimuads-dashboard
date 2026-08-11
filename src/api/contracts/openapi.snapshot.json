@@ -3859,7 +3859,14 @@
         },
         "responses": {
           "201": {
-            "description": "Presigned upload URL with creative ID, expiry time, and upload instructions"
+            "description": "Presigned upload URL with creative ID, expiry time, and upload instructions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadIntentResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Validation error — unsupported format or file size exceeds limit"
@@ -3952,7 +3959,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Creative status and metadata including vetting and APCON approval state"
+            "description": "Creative status and metadata including vetting and APCON approval state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreativeStatusResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized — valid JWT required"
@@ -4104,7 +4118,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Pricing quote with total cost, CPM, estimated impressions, and per-screen breakdown"
+            "description": "Pricing quote with gross/net cost, discount, CPM, estimated impressions, and per-screen breakdown",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingQuoteResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Validation error — invalid screen IDs, date range, or targeting parameters"
@@ -4184,7 +4205,14 @@
         },
         "responses": {
           "201": {
-            "description": "Draft campaign created successfully"
+            "description": "Draft campaign created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Validation error — invalid dates, budget out of range, or invalid screen/creative IDs"
@@ -4212,7 +4240,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Paginated campaign list with budget figures in both kobo and naira"
+            "description": "Paginated campaign list with budget figures in both kobo and naira",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignListResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized — valid JWT required"
@@ -4259,7 +4294,14 @@
         },
         "responses": {
           "200": {
-            "description": "Campaign updated successfully"
+            "description": "Campaign updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Validation error or campaign is not in draft status"
@@ -4300,7 +4342,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Campaign details including budget, scheduling, and status metadata"
+            "description": "Campaign details including budget, scheduling, and status metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized — valid JWT required"
@@ -4378,7 +4427,14 @@
         ],
         "responses": {
           "201": {
-            "description": "Campaign submitted for vetting — budget reserved"
+            "description": "Campaign submitted for vetting — budget reserved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitCampaignResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Campaign is not in draft status or fails validation"
@@ -4625,7 +4681,14 @@
         ],
         "responses": {
           "201": {
-            "description": "New draft campaign created"
+            "description": "New draft campaign created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Source is a draft (clone is unnecessary) or its creative is missing / not approved"
@@ -12373,6 +12436,86 @@
           "sizeBytes"
         ]
       },
+      "UploadIntentResponseDto": {
+        "type": "object",
+        "properties": {
+          "creativeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "presignedUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "presignedFields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uploadInstructions": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string"
+              },
+              "headers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "maxSizeBytes": {
+                "type": "number"
+              },
+              "allowedFormats": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "method",
+              "maxSizeBytes",
+              "allowedFormats"
+            ]
+          },
+          "posterUpload": {
+            "type": "object",
+            "properties": {
+              "presignedUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "headers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "maxSizeBytes": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "presignedUrl",
+              "headers",
+              "maxSizeBytes"
+            ]
+          }
+        },
+        "required": [
+          "creativeId",
+          "presignedUrl",
+          "expiresAt",
+          "uploadInstructions"
+        ]
+      },
       "ConfirmUploadDto": {
         "type": "object",
         "properties": {
@@ -12382,6 +12525,220 @@
         },
         "required": [
           "sha256Hash"
+        ]
+      },
+      "CreativeStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "uploading",
+              "processing",
+              "ready_for_vetting",
+              "in_vetting",
+              "approved",
+              "rejected",
+              "failed"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "video",
+              "image"
+            ]
+          },
+          "sizeBytes": {
+            "type": "string"
+          },
+          "durationSeconds": {
+            "type": "string"
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "cdnUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "previewUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "posterUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "processingStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "processingCompletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "processingError": {
+            "type": "string"
+          },
+          "vettingSubmittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "vettingApprovedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "vettingRejectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "vettingRejectionReason": {
+            "type": "string"
+          },
+          "apconSubmissionId": {
+            "type": "string"
+          },
+          "apconApprovedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "apconRejectionReason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "filename",
+          "format",
+          "sizeBytes",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PricingQuoteResponseDto": {
+        "type": "object",
+        "properties": {
+          "isWildcard": {
+            "type": "boolean"
+          },
+          "grossKobo": {
+            "type": "string"
+          },
+          "discountPct": {
+            "type": "number"
+          },
+          "netKobo": {
+            "type": "string"
+          },
+          "netNaira": {
+            "type": "number"
+          },
+          "formattedNet": {
+            "type": "string"
+          },
+          "totalCostKobo": {
+            "type": "string"
+          },
+          "totalCostNaira": {
+            "type": "number"
+          },
+          "formattedCost": {
+            "type": "string"
+          },
+          "estimatedImpressions": {
+            "type": "number"
+          },
+          "estimatedPlays": {
+            "type": "number"
+          },
+          "costPerThousandImpressions": {
+            "type": "number"
+          },
+          "breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "screenId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "screenName": {
+                  "type": "string"
+                },
+                "costKobo": {
+                  "type": "string"
+                },
+                "costNaira": {
+                  "type": "number"
+                },
+                "formattedCost": {
+                  "type": "string"
+                },
+                "estimatedImpressions": {
+                  "type": "number"
+                },
+                "estimatedPlays": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "screenId",
+                "screenName",
+                "costKobo",
+                "costNaira",
+                "formattedCost",
+                "estimatedImpressions",
+                "estimatedPlays"
+              ]
+            }
+          },
+          "durationDays": {
+            "type": "number"
+          },
+          "durationHours": {
+            "type": "number"
+          },
+          "totalScreens": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "isWildcard",
+          "grossKobo",
+          "discountPct",
+          "netKobo",
+          "netNaira",
+          "formattedNet",
+          "totalCostKobo",
+          "totalCostNaira",
+          "formattedCost",
+          "estimatedImpressions",
+          "estimatedPlays",
+          "costPerThousandImpressions",
+          "breakdown",
+          "durationDays",
+          "durationHours"
         ]
       },
       "CreateCampaignRequestDto": {
@@ -12466,6 +12823,199 @@
           "endDate"
         ]
       },
+      "CampaignResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending_payment",
+              "pending_vetting",
+              "active",
+              "paused",
+              "completed",
+              "rejected",
+              "suspended"
+            ]
+          },
+          "creative": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "filename": {
+                "type": "string"
+              },
+              "format": {
+                "type": "string",
+                "enum": [
+                  "video",
+                  "image"
+                ]
+              },
+              "cdnUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "posterUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "filename",
+              "format",
+              "status"
+            ]
+          },
+          "isWildcard": {
+            "type": "boolean"
+          },
+          "screenIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "screenCount": {
+            "type": "number"
+          },
+          "targetDaysOfWeek": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "targetHoursOfDay": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "budgetKobo": {
+            "type": "string"
+          },
+          "budgetNaira": {
+            "type": "number"
+          },
+          "formattedBudget": {
+            "type": "string"
+          },
+          "spentKobo": {
+            "type": "string"
+          },
+          "spentNaira": {
+            "type": "number"
+          },
+          "formattedSpent": {
+            "type": "string"
+          },
+          "remainingKobo": {
+            "type": "string"
+          },
+          "remainingNaira": {
+            "type": "number"
+          },
+          "formattedRemaining": {
+            "type": "string"
+          },
+          "dailyBudgetCapKobo": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isEvenPacing": {
+            "type": "boolean"
+          },
+          "apconSubmissionId": {
+            "type": "string"
+          },
+          "apconApprovedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "apconRejectionReason": {
+            "type": "string"
+          },
+          "pausedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "pausedReason": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "suspendedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "suspensionReason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "objective",
+          "status",
+          "creative",
+          "isWildcard",
+          "screenIds",
+          "screenCount",
+          "budgetKobo",
+          "budgetNaira",
+          "formattedBudget",
+          "spentKobo",
+          "spentNaira",
+          "formattedSpent",
+          "remainingKobo",
+          "remainingNaira",
+          "formattedRemaining",
+          "startDate",
+          "endDate",
+          "isEvenPacing",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "UpdateCampaignRequestDto": {
         "type": "object",
         "properties": {
@@ -12533,6 +13083,281 @@
             "type": "boolean"
           }
         }
+      },
+      "SubmitCampaignResponseDto": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "budgetReserved": {
+            "type": "object",
+            "properties": {
+              "amountKobo": {
+                "type": "string"
+              },
+              "amountNaira": {
+                "type": "number"
+              },
+              "formattedAmount": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "amountKobo",
+              "amountNaira",
+              "formattedAmount"
+            ]
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "campaignId",
+          "status",
+          "message",
+          "budgetReserved",
+          "nextSteps"
+        ]
+      },
+      "CampaignListResponseDto": {
+        "type": "object",
+        "properties": {
+          "campaigns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "objective": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "pending_payment",
+                    "pending_vetting",
+                    "active",
+                    "paused",
+                    "completed",
+                    "rejected",
+                    "suspended"
+                  ]
+                },
+                "creative": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "filename": {
+                      "type": "string"
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "video",
+                        "image"
+                      ]
+                    },
+                    "cdnUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "posterUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "filename",
+                    "format",
+                    "status"
+                  ]
+                },
+                "isWildcard": {
+                  "type": "boolean"
+                },
+                "screenIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "screenCount": {
+                  "type": "number"
+                },
+                "targetDaysOfWeek": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "targetHoursOfDay": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "budgetKobo": {
+                  "type": "string"
+                },
+                "budgetNaira": {
+                  "type": "number"
+                },
+                "formattedBudget": {
+                  "type": "string"
+                },
+                "spentKobo": {
+                  "type": "string"
+                },
+                "spentNaira": {
+                  "type": "number"
+                },
+                "formattedSpent": {
+                  "type": "string"
+                },
+                "remainingKobo": {
+                  "type": "string"
+                },
+                "remainingNaira": {
+                  "type": "number"
+                },
+                "formattedRemaining": {
+                  "type": "string"
+                },
+                "dailyBudgetCapKobo": {
+                  "type": "string"
+                },
+                "startDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "isEvenPacing": {
+                  "type": "boolean"
+                },
+                "apconSubmissionId": {
+                  "type": "string"
+                },
+                "apconApprovedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "apconRejectionReason": {
+                  "type": "string"
+                },
+                "pausedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "pausedReason": {
+                  "type": "string"
+                },
+                "completedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "suspendedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "suspensionReason": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "objective",
+                "status",
+                "creative",
+                "isWildcard",
+                "screenIds",
+                "screenCount",
+                "budgetKobo",
+                "budgetNaira",
+                "formattedBudget",
+                "spentKobo",
+                "spentNaira",
+                "formattedSpent",
+                "remainingKobo",
+                "remainingNaira",
+                "formattedRemaining",
+                "startDate",
+                "endDate",
+                "isEvenPacing",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number"
+              },
+              "offset": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "hasMore": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "limit",
+              "offset",
+              "total",
+              "hasMore"
+            ]
+          }
+        },
+        "required": [
+          "campaigns",
+          "pagination"
+        ]
       },
       "TopUpCampaignRequestDto": {
         "type": "object",

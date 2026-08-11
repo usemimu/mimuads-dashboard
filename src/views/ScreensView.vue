@@ -7,14 +7,23 @@ import ScreensMap from '@/components/screens/ScreensMap.vue'
 import ScreenDetailDrawer from '@/components/screens/ScreenDetailDrawer.vue'
 import { getScreensMap } from '@/api/screens'
 import { isOnline, type Screen } from '@/api/contracts/screens'
+import { useRouter } from 'vue-router'
 import { useSession } from '@/stores/session'
 import { useBasket } from '@/stores/basket'
+import { useWizard } from '@/stores/wizard'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
 import { applyClientFilters, screensToCsv } from '@/lib/screens'
 
 const session = useSession()
 const basket = useBasket()
+const wizard = useWizard()
+const router = useRouter()
+
+function useInCampaign() {
+  wizard.fromBasket(basket.ids)
+  router.push('/campaigns/new')
+}
 
 // Server-side filters (lga/venueType/search) drive the query; online + band
 // filters are applied client-side on the loaded set (no server support — flagged).
@@ -189,7 +198,7 @@ function saveSet() {
           <input v-model="setName" :placeholder="$t('screens.setName')" :aria-label="$t('screens.setName')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400" />
           <Button size="sm" variant="secondary" @click="saveSet">{{ $t('common.save') }}</Button>
         </div>
-        <Button class="w-full" size="sm" disabled>{{ $t('screens.useInCampaign') }}</Button>
+        <Button v-if="session.canSubmitCampaign" class="w-full" size="sm" @click="useInCampaign">{{ $t('screens.useInCampaign') }}</Button>
       </template>
       <div v-if="basket.savedSets.length" class="pt-2">
         <p class="mb-1 text-xs uppercase tracking-wide text-neutral-400">{{ $t('screens.savedSets') }}</p>

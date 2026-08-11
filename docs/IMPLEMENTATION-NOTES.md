@@ -38,6 +38,22 @@ OPENAPI_URL=http://localhost:8000/openapi.json pnpm contracts:sync
 - Saved screen sets are **client-side (localStorage)**; per-org server persistence is a committed
   fast-follow (PRD §8).
 
+## Campaign wizard + list/detail (slice 4)
+
+- Backend response DTOs registered in OpenAPI + stale quote DTO fixed (commit 087d8c1) — the wizard's
+  create/list/submit/quote/upload/creative-status responses are now drift-checked. Quote returns the
+  PRD's `{grossKobo, discountPct, netKobo}`.
+- **Detail (`GET :id`) + update responses omit `isWildcard`/`screenCount`** though `CampaignResponseDto`
+  declares them (the LIST response includes them). Console keeps those two optional; backend fast-follow
+  to make detail/update match the DTO.
+- **Performance + decision-factors** responses are inline (no named DTOs) → rendered permissively.
+- **Creative**: the wizard supports presigned-S3 upload (PUT to `presignedUrl` → confirm with SHA-256)
+  *and* picking an existing creative. The e2e uses pick-existing (S3 PUT via localstack isn't exercised
+  headless). ARCON review copy shown.
+- **Seed** now makes demo orgs fully transact-ready for the console: `kycCompleteAt` set, a
+  `ready_for_vetting` creative per org, and a **₦5,000,000 funded wallet** (balanced ledger entry) so
+  campaigns submit end-to-end. (Committed to the API repo's `main`.)
+
 ## Still outstanding / fast-follow
 
 - **International phone** — `request-otp`/`verify-otp` accept `+234` only; the console fixes the
