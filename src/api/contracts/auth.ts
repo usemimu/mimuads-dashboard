@@ -71,6 +71,8 @@ export interface SessionUser {
 export const SignupPayloadSchema = z.object({
   password: z.string().min(8),
   name: z.string().min(2).max(255),
+  // "Position at company" — optional sales signal (Page 1). Gates nothing.
+  position: z.string().max(120).optional(),
 })
 
 export const RequestOtpSchema = z.object({
@@ -114,3 +116,13 @@ export const SwitchContextResponseSchema = z.object({
   expiresIn: z.number().int().positive(),
 })
 export type SwitchContextResponse = z.infer<typeof SwitchContextResponseSchema>
+
+// ── Forgot / reset password ─────────────────────────────────────────────────
+export const ForgotPasswordSchema = z.object({
+  phoneOrEmail: z.string().min(1),
+})
+export const ResetPasswordSchema = z.object({
+  // The 6-digit reset code emitted by forgot-password (backend calls it `token`).
+  token: z.string().regex(/^\d{6}$/),
+  newPassword: z.string().min(8),
+})

@@ -78,6 +78,15 @@ async function onSubmit() {
         <Button type="submit" size="lg" class="w-full" :disabled="submitting">
           {{ submitting ? $t('auth.signingIn') : $t('auth.signIn') }}
         </Button>
+
+        <div class="flex items-center justify-between pt-1 text-sm">
+          <RouterLink to="/forgot-password" class="text-neutral-500 hover:underline">
+            {{ $t('reset.forgotTitle') }}
+          </RouterLink>
+          <RouterLink to="/signup" class="font-medium text-clay-600 hover:underline">
+            {{ $t('auth.createAccount') }}
+          </RouterLink>
+        </div>
       </form>
     </div>
   </div>

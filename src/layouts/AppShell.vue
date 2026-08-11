@@ -12,6 +12,7 @@ import {
   PhSignOut,
 } from '@phosphor-icons/vue'
 import OrgWorkspaceSwitcher from '@/components/OrgWorkspaceSwitcher.vue'
+import VerificationBanner from '@/components/VerificationBanner.vue'
 import Button from '@/components/ui/Button.vue'
 import { useSession } from '@/stores/session'
 
@@ -78,9 +79,11 @@ async function onSignOut() {
         </div>
       </header>
 
+      <VerificationBanner />
+
       <p
         v-if="!session.canMutate"
-        class="bg-gold-50 px-6 py-2 text-center text-sm text-gold-800"
+        class="bg-neutral-100 px-6 py-2 text-center text-sm text-neutral-600"
       >
         {{ $t('roles.viewerReadOnly') }}
       </p>

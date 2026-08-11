@@ -13,6 +13,24 @@ they match the backend's live `/openapi.json` (committed as `openapi.snapshot.js
 OPENAPI_URL=http://localhost:8000/openapi.json pnpm contracts:sync
 ```
 
+## Landed in the backend (migration 0055, for the console)
+
+- Org creation now accepts `displayName?`, `country?`(=NG), `approxClients?`; persists `state`
+  (was dropped); signup accepts `position?` (Page-1 sales signal). Required stays
+  `businessName/businessCategory/state/lga/businessType` — the console adapts (option A).
+- `login-password` now honors cookie transport (sets `mimu_refresh`+`mimu_csrf`), so password
+  sessions persist + silently refresh (e2e-verified). It still has **no named response DTO**
+  (unnamed inline object) → not drift-checkable; giving it one remains a small fast-follow.
+
+## Still outstanding / fast-follow
+
+- **International phone** — `request-otp`/`verify-otp` accept `+234` only; the console fixes the
+  +234 prefix. A full country selector needs backend + SMS work.
+- **Dojah in-page embed** — the verification hub opens the hosted widget URL in a new tab;
+  embedding the widget in-page (+ live status polling to verified) is a follow-up.
+- **Invite token preview** — no public "validate invite token" endpoint, so the invite screen
+  can't show the org name before acceptance; it accepts on load for an authed user.
+
 ## Fast-follow API asks (COMMITTED — backend will implement)
 
 These are wired in the console now behind `src/config/features.ts` flags; flip the flag when live.

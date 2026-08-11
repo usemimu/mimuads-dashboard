@@ -12,6 +12,10 @@ import {
   SwitchWorkspaceSchema,
   SwitchContextResponseSchema,
 } from '../contracts/auth'
+import {
+  CreateBusinessProfileSchema,
+  BusinessProfileResponseSchema,
+} from '../contracts/onboarding'
 
 /**
  * Contract drift guard. The console owns its zod contracts (separate repo, no
@@ -41,6 +45,7 @@ const REQUESTS: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['VerifyOTPDto', VerifyOtpSchema],
   ['SwitchOrgDto', SwitchOrgSchema],
   ['SwitchWorkspaceDto', SwitchWorkspaceSchema],
+  ['CreateBusinessProfileDto', CreateBusinessProfileSchema],
 ]
 
 /** Response: everything the console reads must still be present on the API shape. */
@@ -49,6 +54,7 @@ const RESPONSES: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['RequestOTPResponseDto', RequestOtpResponseSchema],
   ['RefreshTokenResponseDto', RefreshTokenResponseSchema],
   ['SwitchContextResponseDto', SwitchContextResponseSchema],
+  ['BusinessProfileResponseDto', BusinessProfileResponseSchema],
 ]
 
 describe('console contracts ↔ backend /openapi.json (no drift)', () => {

@@ -130,22 +130,30 @@ export const useSession = defineStore('session', () => {
   }
 
   /**
+   * Re-issue the access token from the refresh cookie. Used after org creation
+   * (the pre-org token has org=null; refresh re-resolves the org/role/tier claims)
+   * and on app load. Returns whether a session was (re)established.
+   */
+  async function refreshSession(): Promise<boolean> {
+    try {
+      const res = await api.post('/advertiser/auth/refresh', {}, RefreshTokenResponseSchema)
+      if (res.accessToken) {
+        applyToken(res.accessToken)
+        return true
+      }
+    } catch {
+      clearAccessToken()
+    }
+    return false
+  }
+
+  /**
    * On app load, try a silent refresh from the httpOnly cookie so a returning
    * user lands authenticated without re-login. Failure is normal (logged out).
    */
   async function bootstrap(): Promise<void> {
-    try {
-      const res = await api.post(
-        '/advertiser/auth/refresh',
-        {},
-        RefreshTokenResponseSchema,
-      )
-      if (res.accessToken) applyToken(res.accessToken)
-    } catch {
-      clearAccessToken()
-    } finally {
-      bootstrapped.value = true
-    }
+    await refreshSession()
+    bootstrapped.value = true
   }
 
   return {
@@ -165,6 +173,7 @@ export const useSession = defineStore('session', () => {
     switchWorkspace,
     logout,
     bootstrap,
+    refreshSession,
     clearSession,
   }
 })
