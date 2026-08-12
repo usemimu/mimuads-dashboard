@@ -5,14 +5,14 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { PhDownloadSimple } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import { useSession } from '@/stores/session'
-import { FEATURES } from '@/config/features'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo, nairaToKobo } from '@/lib/money'
 import { isApiError } from '@/api/errors'
 import {
   getWallet, getTransactions, transactionsCsvUrl,
-  topupIntent, verifyTopup, createInvoice, listInvoices, invoicePdfUrl,
+  topupIntent, verifyTopup, createInvoice, listInvoices, invoicePdfUrl, transfer,
 } from '@/api/billing'
+import { listWorkspaces } from '@/api/org'
 
 const session = useSession()
 const route = useRoute()
@@ -94,6 +94,39 @@ async function requestInvoice() {
 }
 
 const canBill = computed(() => session.canManageBilling)
+
+// ── Transfers (finance/admin) ──
+const { data: workspaces } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'ws-list')),
+  queryFn: listWorkspaces,
+  enabled: computed(() => session.context.tier === 'agency'),
+})
+const tFrom = ref('') // '' = org master
+const tTo = ref('')
+const tNaira = ref<number | null>(null)
+const tBusy = ref(false)
+const tDone = ref(false)
+async function doTransfer() {
+  if (!tNaira.value || tNaira.value <= 0 || tFrom.value === tTo.value) return
+  tBusy.value = true
+  error.value = null
+  tDone.value = false
+  try {
+    await transfer({
+      fromWorkspaceId: tFrom.value || undefined,
+      toWorkspaceId: tTo.value || undefined,
+      amountKobo: String(nairaToKobo(tNaira.value)),
+      idempotencyKey: 'transfer-' + Date.now(),
+    })
+    tDone.value = true
+    tNaira.value = null
+    qc.invalidateQueries({ queryKey: ctxKey(session.context, 'wallet') })
+  } catch (e) {
+    error.value = isApiError(e) ? e.message : 'Transfer failed'
+  } finally {
+    tBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -180,10 +213,28 @@ const canBill = computed(() => session.canManageBilling)
       </div>
     </div>
 
-    <!-- Transfers (needs list-workspaces) -->
-    <div v-else class="rounded-xl border border-dashed border-neutral-300 bg-white p-8 text-center">
-      <p class="font-medium text-neutral-600">{{ $t('billing.transfersTitle') }}</p>
-      <p v-if="!FEATURES.listWorkspaces" class="mt-1 text-sm text-neutral-400">{{ $t('billing.transfersLocked') }}</p>
+    <!-- Transfers -->
+    <div v-else class="max-w-md space-y-3 rounded-xl border border-neutral-200 bg-white p-5">
+      <h2 class="font-medium text-neutral-900">{{ $t('billing.transfersTitle') }}</h2>
+      <p v-if="!canBill" class="text-sm text-neutral-400">{{ $t('billing.transferReadonly') }}</p>
+      <template v-else>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.transferFrom') }}</span>
+            <select v-model="tFrom" :aria-label="$t('billing.transferFrom')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400">
+              <option value="">{{ $t('billing.orgMaster') }}</option>
+              <option v-for="w in workspaces?.workspaces ?? []" :key="w.id" :value="w.id">{{ w.name }}</option>
+            </select></label>
+          <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.transferTo') }}</span>
+            <select v-model="tTo" :aria-label="$t('billing.transferTo')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400">
+              <option value="">{{ $t('billing.orgMaster') }}</option>
+              <option v-for="w in workspaces?.workspaces ?? []" :key="w.id" :value="w.id">{{ w.name }}</option>
+            </select></label>
+        </div>
+        <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.amount') }}</span>
+          <input v-model.number="tNaira" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+        <p v-if="tDone" class="text-sm text-moss-600">{{ $t('billing.transferDone') }}</p>
+        <Button :disabled="tBusy || tFrom === tTo" @click="doTransfer">{{ $t('billing.doTransfer') }}</Button>
+      </template>
     </div>
   </div>
 </template>

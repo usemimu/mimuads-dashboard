@@ -1,16 +1,15 @@
 /**
- * Feature flags for COMMITTED backend fast-follows that aren't live yet. The
- * console builds the wiring (contracts + query/mutation hooks + UI) now and
- * gates it here, so each feature is a drop-in flip once the endpoint ships —
- * not a rebuild. See docs/IMPLEMENTATION-NOTES.md.
+ * Feature flags. The org-enumeration + workspace fast-follows shipped in the
+ * backend (slice 6), so they're enabled. Flags remain as kill-switches / for
+ * environments pointed at an older API.
  */
 export const FEATURES = {
-  /** GET list of orgs/memberships the current user belongs to (org switcher enumeration). */
-  listMyOrgs: false,
-  /** GET list of workspaces in the current org (workspace switcher enumeration + org admin). */
-  listWorkspaces: false,
-  /** POST create a workspace (agency org admin). */
-  createWorkspace: false,
+  /** GET /advertiser/orgs — org switcher enumeration. */
+  listMyOrgs: true,
+  /** GET /advertiser/org/workspaces — workspace switcher + org admin. */
+  listWorkspaces: true,
+  /** POST /advertiser/org/workspaces — create a workspace. */
+  createWorkspace: true,
 } as const
 
 export type FeatureFlag = keyof typeof FEATURES

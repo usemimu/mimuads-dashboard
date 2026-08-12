@@ -34,3 +34,22 @@ export const CreateWorkspaceSchema = z.object({
   name: z.string().min(2).max(120),
 })
 export type CreateWorkspaceRequest = z.infer<typeof CreateWorkspaceSchema>
+
+/** PATCH /advertiser/org/workspaces/:id */
+export const UpdateWorkspaceSchema = z.object({
+  name: z.string().min(2).max(120).optional(),
+  status: z.enum(['active', 'suspended', 'archived']).optional(),
+})
+
+/** GET /advertiser/org/members */
+export const MemberSchema = z.object({
+  userId: z.string(),
+  role: MembershipRoleSchema,
+  status: z.enum(['invited', 'active', 'suspended']),
+  name: z.string().nullable(),
+  email: z.string().nullable(),
+  phoneNumber: z.string().nullable(),
+})
+export type Member = z.infer<typeof MemberSchema>
+export const MembersResponseSchema = z.object({ members: z.array(MemberSchema) })
+export const ChangeRoleSchema = z.object({ role: MembershipRoleSchema })

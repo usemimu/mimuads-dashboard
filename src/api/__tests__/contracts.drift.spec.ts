@@ -40,6 +40,11 @@ import {
   WalletTransferSchema,
   CreateInvoiceSchema,
 } from '../contracts/billing'
+import {
+  CreateWorkspaceSchema,
+  MyOrgsResponseSchema,
+  WorkspacesResponseSchema,
+} from '../contracts/org'
 
 /**
  * Contract drift guard. The console owns its zod contracts (separate repo, no
@@ -78,6 +83,7 @@ const REQUESTS: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['VerifyTopupRequestDto', VerifyTopupSchema],
   ['WalletTransferDto', WalletTransferSchema],
   ['CreateInvoiceDto', CreateInvoiceSchema],
+  ['CreateWorkspaceDto', CreateWorkspaceSchema],
 ]
 
 /** Response: everything the console reads must still be present on the API shape. */
@@ -97,6 +103,8 @@ const RESPONSES: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['TransactionHistoryResponseDto', TransactionHistorySchema],
   ['TopupIntentResponseDto', TopupIntentResponseSchema],
   ['VerifyTopupResponseDto', VerifyTopupResponseSchema],
+  ['MyOrgsResponseDto', MyOrgsResponseSchema],
+  ['WorkspacesResponseDto', WorkspacesResponseSchema],
 ]
 
 describe('console contracts ↔ backend /openapi.json (no drift)', () => {

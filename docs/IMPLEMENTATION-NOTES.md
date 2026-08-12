@@ -76,6 +76,20 @@ OPENAPI_URL=http://localhost:8000/openapi.json pnpm contracts:sync
 - **Invite token preview** — no public "validate invite token" endpoint, so the invite screen
   can't show the org name before acceptance; it accepts on load for an authed user.
 
+## Reports + Org admin + Dashboard (slice 6)
+
+- The committed fast-follow endpoints were built (backend commit 1a0c552): `GET /advertiser/orgs`,
+  `GET/POST /advertiser/org/workspaces`, `PATCH …/:id`, member `PATCH …/members/:userId` (role) +
+  `POST …/members/:userId/suspend`, and `GET /wallet?workspaceId=`. Their response DTOs are registered
+  → drift-checked. So **`src/config/features.ts` flags are now `true`** and the org/workspace switcher
+  enumerates + switches, and Billing transfers has a real from/to form.
+- Org admin: members (list/invite/change-role/suspend), workspaces (list/create/archive, agency-only),
+  verification (links to the hub), API keys (list/create-shown-once/revoke). Reports: per-workspace
+  rollup (`/reports/org/summary`) + cross-campaign table with per-campaign CSV/PDF export links.
+  Dashboard: wallet balance + low-balance, campaigns-by-status, needs-attention list.
+- Report/invoice **PDF** exports are server-rendered but still return JSON (the "real PDF" backend
+  follow-up) — the export links hit the endpoints regardless.
+
 ## Fast-follow API asks (COMMITTED — backend will implement)
 
 These are wired in the console now behind `src/config/features.ts` flags; flip the flag when live.

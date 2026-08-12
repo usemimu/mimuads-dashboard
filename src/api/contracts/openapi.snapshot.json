@@ -2027,7 +2027,16 @@
         "operationId": "AdvertiserWalletController_getWallet",
         "summary": "Get wallet balance and recent transactions",
         "description": "Returns the current balance (in kobo) and the 10 most recent transactions. This is the primary wallet screen endpoint.",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Wallet balance and recent transactions",
@@ -5429,6 +5438,74 @@
         ]
       }
     },
+    "/v1/advertiser/org/members/{userId}": {
+      "patch": {
+        "operationId": "OrgInvitesController_changeRole",
+        "summary": "Change a member's role",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Organization"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/org/members/{userId}/suspend": {
+      "post": {
+        "operationId": "OrgInvitesController_suspendMember",
+        "summary": "Suspend a member (owner only)",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Organization"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/v1/advertiser/org/invites/accept": {
       "post": {
         "operationId": "OrgInvitesController_accept",
@@ -5447,6 +5524,141 @@
         "responses": {
           "201": {
             "description": "Membership created"
+          }
+        },
+        "tags": [
+          "Advertiser / Organization"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/orgs": {
+      "get": {
+        "operationId": "OrgsController_myOrgs",
+        "summary": "List organizations the current user belongs to",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Orgs for the switcher",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyOrgsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Advertiser / Organization"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/org/workspaces": {
+      "get": {
+        "operationId": "WorkspacesController_list",
+        "summary": "List workspaces in the current organization",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspacesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Advertiser / Organization"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "WorkspacesController_create",
+        "summary": "Create a client workspace (agency orgs only)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workspace created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Advertiser / Organization"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/org/workspaces/{id}": {
+      "patch": {
+        "operationId": "WorkspacesController_update",
+        "summary": "Rename or archive a workspace",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workspace updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -13735,6 +13947,24 @@
           "role"
         ]
       },
+      "ChangeRoleDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "admin",
+              "finance",
+              "campaign_manager",
+              "viewer"
+            ]
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
       "AcceptInviteDto": {
         "type": "object",
         "properties": {
@@ -13746,6 +13976,164 @@
         "required": [
           "token"
         ]
+      },
+      "MyOrgsResponseDto": {
+        "type": "object",
+        "properties": {
+          "orgs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "orgId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "advertiser",
+                    "agency"
+                  ]
+                },
+                "tier": {
+                  "type": "string",
+                  "enum": [
+                    "starter",
+                    "business",
+                    "agency",
+                    "enterprise"
+                  ]
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "owner",
+                    "admin",
+                    "finance",
+                    "campaign_manager",
+                    "viewer"
+                  ]
+                }
+              },
+              "required": [
+                "orgId",
+                "displayName",
+                "kind",
+                "tier",
+                "role"
+              ]
+            }
+          }
+        },
+        "required": [
+          "orgs"
+        ]
+      },
+      "WorkspacesResponseDto": {
+        "type": "object",
+        "properties": {
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "orgId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "suspended",
+                    "archived"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "orgId",
+                "name",
+                "status"
+              ]
+            }
+          }
+        },
+        "required": [
+          "workspaces"
+        ]
+      },
+      "CreateWorkspaceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "WorkspaceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orgId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "archived"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "orgId",
+          "name",
+          "status"
+        ]
+      },
+      "UpdateWorkspaceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "archived"
+            ]
+          }
+        }
       },
       "CreateInvoiceDto": {
         "type": "object",
