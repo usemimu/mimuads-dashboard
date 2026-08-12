@@ -47,3 +47,6 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Internal docs — keep local, not on GitHub
+docs/
