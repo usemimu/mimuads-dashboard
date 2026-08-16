@@ -1,3 +1,4 @@
+
 /**
  * en-NG message catalog. ALL user-facing strings live here (PRD §5 i18n) — no
  * inline copy in components. Keys are namespaced by area.
