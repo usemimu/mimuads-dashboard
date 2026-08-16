@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
 import { useSession } from '@/stores/session'
 import { isApiError } from '@/api/errors'
@@ -30,64 +31,51 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
-    <div class="w-full max-w-md">
-      <div class="mb-8 text-center">
-        <h1 class="font-display text-4xl font-semibold text-clay-600">{{ $t('app.name') }}</h1>
-        <p class="mt-1 text-sm text-neutral-500">{{ $t('app.tagline') }}</p>
+  <AuthCard>
+    <form class="space-y-4" @submit.prevent="onSubmit">
+      <div>
+        <h2 class="font-display text-2xl font-semibold text-neutral-900">{{ $t('auth.signIn') }}</h2>
+        <p class="text-sm text-neutral-500">{{ $t('app.tagline') }}</p>
       </div>
 
-      <form
-        class="space-y-4 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
-        @submit.prevent="onSubmit"
-      >
-        <h2 class="font-display text-2xl font-semibold text-neutral-900">
-          {{ $t('auth.signIn') }}
-        </h2>
+      <label class="block">
+        <span class="label">{{ $t('auth.phoneOrEmail') }}</span>
+        <input
+          v-model="phoneOrEmail"
+          type="text"
+          autocomplete="username"
+          required
+          class="input"
+        />
+      </label>
 
-        <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{
-            $t('auth.phoneOrEmail')
-          }}</span>
-          <input
-            v-model="phoneOrEmail"
-            type="text"
-            autocomplete="username"
-            required
-            class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400"
-          />
-        </label>
+      <label class="block">
+        <span class="label">{{ $t('auth.password') }}</span>
+        <input
+          v-model="password"
+          type="password"
+          autocomplete="current-password"
+          required
+          class="input"
+        />
+      </label>
 
-        <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{
-            $t('auth.password')
-          }}</span>
-          <input
-            v-model="password"
-            type="password"
-            autocomplete="current-password"
-            required
-            class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400"
-          />
-        </label>
+      <p v-if="error" role="alert" class="text-sm text-clay-700">
+        {{ error || $t('auth.signInFailed') }}
+      </p>
 
-        <p v-if="error" role="alert" class="text-sm text-clay-700">
-          {{ error || $t('auth.signInFailed') }}
-        </p>
+      <Button type="submit" size="lg" class="w-full" :disabled="submitting">
+        {{ submitting ? $t('auth.signingIn') : $t('auth.signIn') }}
+      </Button>
 
-        <Button type="submit" size="lg" class="w-full" :disabled="submitting">
-          {{ submitting ? $t('auth.signingIn') : $t('auth.signIn') }}
-        </Button>
-
-        <div class="flex items-center justify-between pt-1 text-sm">
-          <RouterLink to="/forgot-password" class="text-neutral-500 hover:underline">
-            {{ $t('reset.forgotTitle') }}
-          </RouterLink>
-          <RouterLink to="/signup" class="font-medium text-clay-600 hover:underline">
-            {{ $t('auth.createAccount') }}
-          </RouterLink>
-        </div>
-      </form>
-    </div>
-  </div>
+      <div class="flex items-center justify-between pt-1 text-sm">
+        <RouterLink to="/forgot-password" class="text-neutral-500 hover:underline">
+          {{ $t('reset.forgotTitle') }}
+        </RouterLink>
+        <RouterLink to="/signup" class="font-medium text-clay-600 hover:underline">
+          {{ $t('auth.createAccount') }}
+        </RouterLink>
+      </div>
+    </form>
+  </AuthCard>
 </template>

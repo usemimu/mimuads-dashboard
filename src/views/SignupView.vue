@@ -67,34 +67,34 @@ async function onSubmit() {
 
       <div class="grid grid-cols-2 gap-3">
         <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('signup.firstName') }}</span>
-          <input v-model="firstName" required class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+          <span class="label">{{ $t('signup.firstName') }}</span>
+          <input v-model="firstName" required class="input" />
         </label>
         <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('signup.lastName') }}</span>
-          <input v-model="lastName" required class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+          <span class="label">{{ $t('signup.lastName') }}</span>
+          <input v-model="lastName" required class="input" />
         </label>
       </div>
 
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('signup.email') }}</span>
-        <input v-model="email" type="email" required autocomplete="email" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+        <span class="label">{{ $t('signup.email') }}</span>
+        <input v-model="email" type="email" required autocomplete="email" class="input" />
       </label>
 
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('signup.phone') }}</span>
+        <span class="label">{{ $t('signup.phone') }}</span>
         <div class="flex">
-          <span class="inline-flex items-center rounded-l-lg border border-r-0 border-neutral-300 bg-neutral-50 px-3 font-mono text-sm text-neutral-600">+234</span>
-          <input v-model="localPhone" inputmode="numeric" maxlength="10" required placeholder="8030000000" class="w-full rounded-r-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+          <span class="inline-flex items-center rounded-l-xl border border-r-0 border-neutral-200 bg-neutral-50 px-3 font-mono text-sm text-neutral-600">+234</span>
+          <input v-model="localPhone" inputmode="numeric" maxlength="10" required placeholder="8030000000" class="input rounded-l-none" />
         </div>
       </label>
 
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">
+        <span class="label">
           {{ $t('signup.positionLabel') }}
           <span class="font-normal text-neutral-400">· {{ $t('signup.positionOptional') }}</span>
         </span>
-        <select v-model="position" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400">
+        <select v-model="position" class="input">
           <option value="">—</option>
           <option v-for="p in positions" :key="p" :value="p">{{ p }}</option>
         </select>
@@ -102,12 +102,12 @@ async function onSubmit() {
 
       <div class="grid grid-cols-2 gap-3">
         <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('signup.password') }}</span>
-          <input v-model="password" type="password" required minlength="8" autocomplete="new-password" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+          <span class="label">{{ $t('signup.password') }}</span>
+          <input v-model="password" type="password" required minlength="8" autocomplete="new-password" class="input" />
         </label>
         <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('signup.confirmPassword') }}</span>
-          <input v-model="confirm" type="password" required autocomplete="new-password" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+          <span class="label">{{ $t('signup.confirmPassword') }}</span>
+          <input v-model="confirm" type="password" required autocomplete="new-password" class="input" />
         </label>
       </div>
       <p v-if="!passwordsMatch" class="text-sm text-clay-700">{{ $t('signup.passwordsMustMatch') }}</p>

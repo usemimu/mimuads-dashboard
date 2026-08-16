@@ -66,14 +66,14 @@ async function onResend() {
       </div>
 
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('verify.code') }}</span>
+        <span class="label">{{ $t('verify.code') }}</span>
         <input
           v-model="code"
           inputmode="numeric"
           maxlength="6"
           required
           autocomplete="one-time-code"
-          class="w-full rounded-lg border-neutral-300 text-center font-mono text-2xl tracking-[0.4em] focus:border-clay-400 focus:ring-clay-400"
+          class="input text-center font-mono text-2xl tracking-[0.4em]"
         />
       </label>
 

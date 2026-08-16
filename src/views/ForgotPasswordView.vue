@@ -35,8 +35,8 @@ async function onSubmit() {
         <p class="text-sm text-neutral-500">{{ $t('reset.forgotBody') }}</p>
       </div>
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('auth.phoneOrEmail') }}</span>
-        <input v-model="phoneOrEmail" required class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+        <span class="label">{{ $t('auth.phoneOrEmail') }}</span>
+        <input v-model="phoneOrEmail" required class="input" />
       </label>
       <p v-if="sent" class="text-sm text-moss-600">{{ $t('reset.sent') }}</p>
       <p v-if="error" role="alert" class="text-sm text-clay-700">{{ error }}</p>

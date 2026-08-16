@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { RouterLink } from 'vue-router'
+import { PhSealWarning } from '@phosphor-icons/vue'
 import { useSession } from '@/stores/session'
 import { getKycStatus } from '@/api/onboarding'
 import { ctxKey } from '@/lib/ctx-key'
@@ -25,11 +26,15 @@ const show = computed(() => session.hasOrg && !verified.value)
 </script>
 
 <template>
-  <div v-if="show" class="bg-gold-50 px-6 py-2 text-center text-sm text-gold-800">
+  <div
+    v-if="show"
+    class="flex items-center justify-center gap-2 border-b border-gold-200/60 bg-gold-50 px-6 py-2.5 text-center text-sm text-gold-800"
+  >
+    <PhSealWarning :size="17" weight="fill" class="shrink-0 text-gold-500" />
     <template v-if="isAgency">{{ $t('verification.bannerAgency') }}</template>
     <template v-else>
-      {{ $t('verification.bannerAdvertiser') }}
-      <RouterLink to="/verify" class="ml-1 font-medium underline">{{ $t('verification.start') }}</RouterLink>
+      <span>{{ $t('verification.bannerAdvertiser') }}</span>
+      <RouterLink to="/verify" class="font-semibold underline underline-offset-2 hover:text-gold-900">{{ $t('verification.start') }}</RouterLink>
     </template>
   </div>
 </template>

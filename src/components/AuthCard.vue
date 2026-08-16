@@ -10,8 +10,14 @@ const steps = ['steps.account', 'steps.organization', 'steps.verify'] as const
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-10">
-    <div class="w-full max-w-md">
+  <div
+    class="relative flex min-h-screen items-center justify-center overflow-hidden bg-neutral-50 px-4 py-10"
+  >
+    <!-- Soft brand wash so the auth screens don't read as a bare form. -->
+    <div
+      class="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-clay-100/50 blur-3xl"
+    />
+    <div class="relative w-full max-w-md animate-fade-in">
       <div class="mb-6 text-center">
         <h1 class="font-display text-4xl font-semibold text-clay-600">{{ $t('app.name') }}</h1>
       </div>
@@ -19,7 +25,7 @@ const steps = ['steps.account', 'steps.organization', 'steps.verify'] as const
       <ol v-if="step !== null" class="mb-6 flex items-center justify-center gap-2">
         <li v-for="(s, i) in steps" :key="s" class="flex items-center gap-2">
           <span
-            class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+            class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold transition-colors"
             :class="
               i <= (step ?? 0)
                 ? 'bg-clay-500 text-white'
@@ -36,7 +42,7 @@ const steps = ['steps.account', 'steps.organization', 'steps.verify'] as const
         </li>
       </ol>
 
-      <div class="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+      <div class="rounded-2xl bg-white p-8 shadow-card">
         <slot />
       </div>
 

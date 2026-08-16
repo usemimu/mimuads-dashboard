@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import { useSession } from '@/stores/session'
 import { MembershipRoleSchema } from '@/api/contracts/common'
 import {
@@ -60,24 +61,25 @@ async function makeKey() {
 
 <template>
   <div>
-    <h1 class="mb-6 font-display text-3xl font-semibold text-neutral-900">{{ $t('orgAdmin.title') }}</h1>
-    <div class="mb-4 flex gap-1 border-b border-neutral-200">
+    <PageHeader :title="$t('orgAdmin.title')" />
+    <div class="mb-5 flex gap-1 border-b border-neutral-200">
       <button v-for="t in (['members','workspaces','verification','apikeys'] as const)" :key="t"
-        class="px-4 py-2 text-sm" :class="tab === t ? 'border-b-2 border-clay-500 text-clay-700' : 'text-neutral-500'"
+        class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors"
+        :class="tab === t ? 'border-clay-500 text-clay-700' : 'border-transparent text-neutral-500 hover:text-neutral-800'"
         @click="tab = t">{{ $t('orgAdmin.tab' + t.charAt(0).toUpperCase() + t.slice(1)) }}</button>
     </div>
-    <p v-if="error" role="alert" class="mb-3 text-sm text-clay-700">{{ error }}</p>
+    <p v-if="error" role="alert" class="mb-3 rounded-xl bg-clay-50 px-4 py-2.5 text-sm text-clay-700">{{ error }}</p>
 
     <!-- Members -->
     <div v-if="tab === 'members'" class="space-y-4">
       <div v-if="session.canMutate" class="flex gap-2">
-        <input v-model="inviteEmail" type="email" :placeholder="$t('orgAdmin.email')" :aria-label="$t('orgAdmin.email')" class="rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400" />
-        <select v-model="inviteRole" :aria-label="$t('orgAdmin.role')" class="rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400">
+        <input v-model="inviteEmail" type="email" :placeholder="$t('orgAdmin.email')" :aria-label="$t('orgAdmin.email')" class="input text-sm" />
+        <select v-model="inviteRole" :aria-label="$t('orgAdmin.role')" class="input text-sm">
           <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
         </select>
         <Button size="sm" @click="sendInvite">{{ $t('orgAdmin.invite') }}</Button>
       </div>
-      <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+      <div class="card overflow-hidden">
         <table class="w-full text-sm">
           <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-400">
             <tr><th class="px-4 py-2">{{ $t('orgAdmin.member') }}</th><th class="px-4 py-2">{{ $t('orgAdmin.role') }}</th><th class="px-4 py-2">{{ $t('orgAdmin.status') }}</th><th class="px-4 py-2"></th></tr>
@@ -86,7 +88,7 @@ async function makeKey() {
             <tr v-for="m in members?.members ?? []" :key="m.userId" class="border-t border-neutral-100" data-testid="member-row">
               <td class="px-4 py-2"><p class="text-neutral-900">{{ m.name ?? '—' }}</p><p class="text-xs text-neutral-500">{{ m.email }}</p></td>
               <td class="px-4 py-2">
-                <select v-if="session.canMutate && m.role !== 'owner'" :value="m.role" class="rounded border-neutral-300 text-xs" @change="run(() => changeRole(m.userId, ($event.target as HTMLSelectElement).value as never), 'members')">
+                <select v-if="session.canMutate && m.role !== 'owner'" :value="m.role" class="select w-auto text-xs" @change="run(() => changeRole(m.userId, ($event.target as HTMLSelectElement).value as never), 'members')">
                   <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
                 </select>
                 <span v-else class="capitalize">{{ m.role }}</span>
@@ -106,10 +108,10 @@ async function makeKey() {
       <p v-if="!isAgency" class="text-sm text-neutral-400">{{ $t('orgAdmin.agencyOnly') }}</p>
       <template v-else>
         <div v-if="session.canMutate" class="flex gap-2">
-          <input v-model="wsName" :placeholder="$t('orgAdmin.workspaceName')" :aria-label="$t('orgAdmin.workspaceName')" class="rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400" />
+          <input v-model="wsName" :placeholder="$t('orgAdmin.workspaceName')" :aria-label="$t('orgAdmin.workspaceName')" class="input text-sm" />
           <Button size="sm" @click="makeWorkspace">{{ $t('orgAdmin.create') }}</Button>
         </div>
-        <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+        <div class="card overflow-hidden">
           <table class="w-full text-sm">
             <tbody>
               <tr v-if="!workspaces?.workspaces.length"><td class="px-4 py-6 text-center text-neutral-400">{{ $t('orgAdmin.noWorkspaces') }}</td></tr>
@@ -127,9 +129,9 @@ async function makeKey() {
     </div>
 
     <!-- Verification -->
-    <div v-else-if="tab === 'verification'" class="rounded-xl border border-neutral-200 bg-white p-6">
-      <p class="text-xs uppercase tracking-wide text-neutral-400">{{ $t('orgAdmin.verificationLevel') }}</p>
-      <p class="mt-1 text-lg capitalize text-neutral-900">{{ session.context.tier }}</p>
+    <div v-else-if="tab === 'verification'" class="card p-6">
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('orgAdmin.verificationLevel') }}</p>
+      <p class="mt-1.5 text-lg font-semibold capitalize text-neutral-900">{{ session.context.tier }}</p>
       <RouterLink to="/verify" class="mt-3 inline-block text-sm text-clay-600 hover:underline">{{ $t('orgAdmin.openVerification') }}</RouterLink>
     </div>
 
@@ -137,10 +139,10 @@ async function makeKey() {
     <div v-else class="space-y-4">
       <p v-if="newKey" class="rounded-lg bg-gold-50 px-4 py-3 font-mono text-sm text-gold-800">{{ newKey }} <span class="block font-body text-xs">{{ $t('orgAdmin.keyOnce') }}</span></p>
       <div v-if="session.canMutate" class="flex gap-2">
-        <input v-model="keyName" :placeholder="$t('orgAdmin.apiKeyName')" :aria-label="$t('orgAdmin.apiKeyName')" class="rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400" />
+        <input v-model="keyName" :placeholder="$t('orgAdmin.apiKeyName')" :aria-label="$t('orgAdmin.apiKeyName')" class="input text-sm" />
         <Button size="sm" @click="makeKey">{{ $t('orgAdmin.createKey') }}</Button>
       </div>
-      <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+      <div class="card overflow-hidden">
         <table class="w-full text-sm">
           <tbody>
             <tr v-if="!(keys as { keys?: unknown[] })?.keys?.length"><td class="px-4 py-6 text-center text-neutral-400">{{ $t('orgAdmin.noKeys') }}</td></tr>

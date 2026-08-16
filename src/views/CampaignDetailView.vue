@@ -3,6 +3,9 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+import { statusTone, statusLabel } from '@/lib/status'
 import { useSession } from '@/stores/session'
 import {
   getCampaign, getPerformance, getPerformanceBreakdown, getDecisionFactors,
@@ -74,12 +77,17 @@ async function onClone() {
 
 <template>
   <div v-if="c" class="max-w-4xl">
-    <div class="mb-4 flex items-center justify-between">
-      <div>
-        <h1 class="font-display text-3xl font-semibold text-neutral-900">{{ c.name }}</h1>
-        <span class="text-sm capitalize text-neutral-500">{{ c.status.replace(/_/g, ' ') }} · {{ c.objective }}</span>
+    <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <h1 class="font-display text-3xl font-semibold leading-none text-neutral-900 sm:text-4xl">
+          {{ c.name }}
+        </h1>
+        <div class="mt-2.5 flex items-center gap-2">
+          <Badge :tone="statusTone(c.status)">{{ statusLabel(c.status) }}</Badge>
+          <span class="text-sm capitalize text-neutral-500">{{ c.objective }}</span>
+        </div>
       </div>
-      <div v-if="session.canMutate" class="flex gap-2">
+      <div v-if="session.canMutate" class="flex flex-wrap gap-2">
         <Button v-if="c.status === 'active'" size="sm" variant="secondary" @click="run(() => pauseCampaign(id))">{{ $t('campaigns.pause') }}</Button>
         <Button v-if="c.status === 'paused'" size="sm" variant="secondary" @click="run(() => resumeCampaign(id))">{{ $t('campaigns.resume') }}</Button>
         <Button size="sm" variant="secondary" @click="onTopup">{{ $t('campaigns.topup') }}</Button>
@@ -87,43 +95,53 @@ async function onClone() {
         <Button size="sm" variant="outline" @click="onClone">{{ $t('campaigns.clone') }}</Button>
       </div>
     </div>
-    <p v-if="error" role="alert" class="mb-3 text-sm text-clay-700">{{ error }}</p>
+    <p v-if="error" role="alert" class="mb-4 rounded-xl bg-clay-50 px-4 py-2.5 text-sm text-clay-700">{{ error }}</p>
 
     <!-- Pacing -->
-    <div class="mb-6 rounded-xl border border-neutral-200 bg-white p-5">
-      <div class="mb-2 flex justify-between text-sm">
-        <span class="text-neutral-500">{{ $t('campaigns.pacing') }}</span>
-        <span class="font-mono">{{ formatKobo(c.spentKobo) }} / {{ formatKobo(c.budgetKobo) }}</span>
+    <Card class="mb-5">
+      <div class="mb-2.5 flex items-center justify-between text-sm">
+        <span class="font-medium text-neutral-700">{{ $t('campaigns.pacing') }}</span>
+        <span class="font-mono text-neutral-600">{{ formatKobo(c.spentKobo) }} / {{ formatKobo(c.budgetKobo) }}</span>
       </div>
-      <div class="h-2 overflow-hidden rounded-full bg-neutral-100">
-        <div class="h-full bg-clay-500" :style="{ width: pacing + '%' }" />
+      <div class="h-2.5 overflow-hidden rounded-full bg-neutral-100">
+        <div class="h-full rounded-full bg-clay-500 transition-all" :style="{ width: pacing + '%' }" />
       </div>
-    </div>
+      <p class="mt-2 text-right text-xs font-medium text-neutral-400">{{ pacing }}%</p>
+    </Card>
 
     <!-- Performance tabs -->
-    <div class="mb-6 rounded-xl border border-neutral-200 bg-white">
-      <div class="flex gap-1 border-b border-neutral-200 p-2">
-        <button v-for="t in (['overall','by-screen','by-hour','by-day'] as const)" :key="t"
-          class="rounded px-3 py-1 text-sm" :class="tab === t ? 'bg-clay-50 text-clay-700' : 'text-neutral-600'"
-          @click="tab = t">{{ $t('campaigns.tab' + t.replace(/(^|-)(\w)/g, (_, __, ch) => ch.toUpperCase())) }}</button>
+    <Card padding="none" class="mb-5 overflow-hidden">
+      <div class="flex gap-1 border-b border-neutral-100 p-2">
+        <button
+          v-for="t in (['overall','by-screen','by-hour','by-day'] as const)"
+          :key="t"
+          class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+          :class="tab === t ? 'bg-clay-50 text-clay-700' : 'text-neutral-500 hover:bg-neutral-100'"
+          @click="tab = t"
+        >
+          {{ $t('campaigns.tab' + t.replace(/(^|-)(\w)/g, (_, __, ch) => ch.toUpperCase())) }}
+        </button>
       </div>
-      <div class="p-5 text-sm text-neutral-600">
-        <pre class="overflow-auto font-mono text-xs text-neutral-500">{{ perf ?? $t('common.loading') }}</pre>
+      <div class="p-5">
+        <pre class="overflow-auto font-mono text-xs leading-relaxed text-neutral-500">{{ perf ?? $t('common.loading') }}</pre>
       </div>
-    </div>
+    </Card>
 
     <!-- Decision factors -->
-    <div class="rounded-xl border border-neutral-200 bg-white p-5">
-      <h2 class="mb-3 font-display text-lg font-semibold text-neutral-900">{{ $t('campaigns.decisionFactors') }}</h2>
-      <div v-if="factorList.length" class="space-y-2">
+    <Card>
+      <h2 class="mb-4 font-display text-lg font-semibold text-neutral-900">{{ $t('campaigns.decisionFactors') }}</h2>
+      <div v-if="factorList.length" class="space-y-3">
         <div v-for="(f, i) in factorList" :key="i">
-          <div class="flex justify-between text-xs text-neutral-500">
-            <span>{{ f.label ?? f.name }}</span><span>{{ Math.round((f.weight ?? f.value ?? 0) * 100) }}%</span>
+          <div class="mb-1 flex justify-between text-xs">
+            <span class="font-medium text-neutral-600">{{ f.label ?? f.name }}</span>
+            <span class="font-mono text-neutral-400">{{ Math.round((f.weight ?? f.value ?? 0) * 100) }}%</span>
           </div>
-          <div class="h-1.5 rounded-full bg-neutral-100"><div class="h-full rounded-full bg-moss-400" :style="{ width: Math.round((f.weight ?? f.value ?? 0) * 100) + '%' }" /></div>
+          <div class="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+            <div class="h-full rounded-full bg-moss-400" :style="{ width: Math.round((f.weight ?? f.value ?? 0) * 100) + '%' }" />
+          </div>
         </div>
       </div>
       <p v-else class="text-sm text-neutral-400">{{ $t('common.comingSoon') }}</p>
-    </div>
+    </Card>
   </div>
 </template>

@@ -20,8 +20,55 @@
     @apply bg-neutral-50 text-neutral-900 font-body antialiased;
   }
 
+  /* Warm-tinted text selection instead of the default browser blue. */
+  ::selection {
+    @apply bg-clay-100 text-clay-800;
+  }
+
   /* Tabular figures for money/metrics wherever the mono font is used. */
   .font-mono {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Slim, warm scrollbars so long tables/sidebars feel considered. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.neutral.300') transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full border-4 border-solid border-transparent bg-neutral-300 bg-clip-content;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-400;
+  }
 }
+
+@layer components {
+  /* Floating-card surface — the console's core container. White on the
+     sand background, soft warm shadow, no hard border. Prefer the
+     <Card> component; this class is here for one-off markup. Shadow is
+     inlined (not @apply shadow-card) so this never depends on the custom
+     utility being generated. */
+  .card {
+    @apply rounded-2xl bg-white;
+    box-shadow:
+      0 1px 2px rgba(14, 13, 11, 0.04),
+      0 8px 24px -14px rgba(14, 13, 11, 0.12);
+  }
+
+  /* Consistent form controls across every form in the console. Pairs
+     with @tailwindcss/forms; warm clay focus ring. */
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-neutral-700;
+  }
+  .input,
+  .select {
+    @apply w-full rounded-xl border-neutral-200 bg-white text-neutral-900 shadow-sm transition
+      placeholder:text-neutral-400 focus:border-clay-400 focus:ring-2 focus:ring-clay-400/30;
+  }
+}
+

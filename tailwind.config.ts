@@ -66,6 +66,28 @@ export default {
         body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', '"Courier New"', 'monospace'],
       },
+      // Soft, warm-tinted elevation for the "floating card" surface
+      // language (white cards on the sand background). Shadows use the
+      // ink neutral (#0E0D0B) at low alpha so they read warm, not grey.
+      boxShadow: {
+        card: '0 1px 2px rgba(14, 13, 11, 0.04), 0 8px 24px -14px rgba(14, 13, 11, 0.12)',
+        'card-hover':
+          '0 2px 4px rgba(14, 13, 11, 0.05), 0 16px 40px -18px rgba(14, 13, 11, 0.18)',
+        pop: '0 4px 8px rgba(14, 13, 11, 0.06), 0 24px 48px -24px rgba(14, 13, 11, 0.22)',
+      },
+      borderRadius: {
+        '2xl': '1rem',
+        '3xl': '1.25rem',
+      },
+      keyframes: {
+        'fade-in': {
+          from: { opacity: '0', transform: 'translateY(4px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.25s ease-out both',
+      },
     },
   },
   plugins: [forms],

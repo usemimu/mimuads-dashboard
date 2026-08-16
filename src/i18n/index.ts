@@ -1,3 +1,4 @@
+
 import { createI18n } from 'vue-i18n'
 import enNG from './en-NG'
 

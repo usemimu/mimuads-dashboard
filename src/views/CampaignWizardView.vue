@@ -114,12 +114,12 @@ async function finish(submit: boolean) {
       </li>
     </ol>
 
-    <div class="rounded-2xl border border-neutral-200 bg-white p-8">
+    <div class="card p-8">
       <!-- Objective -->
       <div v-if="current === 'objective'" class="space-y-4">
         <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('campaigns.name') }}</span>
-          <input v-model="s.name" minlength="3" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+          <span class="label">{{ $t('campaigns.name') }}</span>
+          <input v-model="s.name" minlength="3" class="input" />
         </label>
         <div class="grid gap-3">
           <button v-for="o in objectives" :key="o" type="button"
@@ -155,13 +155,13 @@ async function finish(submit: boolean) {
       <!-- Schedule -->
       <div v-else-if="current === 'schedule'" class="space-y-4">
         <div class="grid grid-cols-2 gap-3">
-          <label class="block"><span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('campaigns.startDate') }}</span>
-            <input v-model="s.startDate" type="date" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
-          <label class="block"><span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('campaigns.endDate') }}</span>
-            <input v-model="s.endDate" type="date" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+          <label class="block"><span class="label">{{ $t('campaigns.startDate') }}</span>
+            <input v-model="s.startDate" type="date" class="input" /></label>
+          <label class="block"><span class="label">{{ $t('campaigns.endDate') }}</span>
+            <input v-model="s.endDate" type="date" class="input" /></label>
         </div>
         <div>
-          <p class="mb-1 text-sm font-medium text-neutral-700">{{ $t('campaigns.daysOfWeek') }}</p>
+          <p class="label">{{ $t('campaigns.daysOfWeek') }}</p>
           <div class="flex gap-1">
             <button v-for="d in days" :key="d" type="button" class="h-8 w-10 rounded text-xs"
               :class="s.daysOfWeek.includes(d) ? 'bg-clay-500 text-white' : 'bg-neutral-100 text-neutral-600'"
@@ -170,7 +170,7 @@ async function finish(submit: boolean) {
           <p class="mt-1 text-xs text-neutral-400">{{ s.daysOfWeek.length ? '' : $t('campaigns.allDays') }}</p>
         </div>
         <div>
-          <p class="mb-1 text-sm font-medium text-neutral-700">{{ $t('campaigns.dayparts') }}</p>
+          <p class="label">{{ $t('campaigns.dayparts') }}</p>
           <div class="grid grid-cols-12 gap-1">
             <button v-for="h in hours" :key="h" type="button" class="h-6 rounded text-[10px]"
               :class="s.hours.includes(h) ? 'bg-clay-500 text-white' : 'bg-neutral-100 text-neutral-500'"
@@ -183,10 +183,10 @@ async function finish(submit: boolean) {
       <!-- Budget + live quote -->
       <div v-else-if="current === 'budget'" class="space-y-4">
         <div class="grid grid-cols-2 gap-3">
-          <label class="block"><span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('campaigns.totalBudget') }}</span>
-            <input v-model.number="s.budgetNaira" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
-          <label class="block"><span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('campaigns.dailyCap') }}</span>
-            <input v-model.number="s.dailyCapNaira" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+          <label class="block"><span class="label">{{ $t('campaigns.totalBudget') }}</span>
+            <input v-model.number="s.budgetNaira" type="number" min="1" class="input" /></label>
+          <label class="block"><span class="label">{{ $t('campaigns.dailyCap') }}</span>
+            <input v-model.number="s.dailyCapNaira" type="number" min="1" class="input" /></label>
         </div>
         <div class="rounded-xl bg-neutral-50 p-4" data-testid="quote">
           <p v-if="quoteLoading" class="text-sm text-neutral-500">{{ $t('campaigns.quoteLoading') }}</p>

@@ -59,7 +59,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'billing', name: 'billing', component: () => import('@/views/BillingView.vue'), meta: { titleKey: 'nav.billing' } },
       { path: 'organization', name: 'organization', component: () => import('@/views/OrgAdminView.vue'), meta: { titleKey: 'nav.organization' } },
       { path: 'verify', name: 'verification', component: () => import('@/views/VerificationView.vue'), meta: { titleKey: 'verification.hubTitle' } },
-      { path: 'settings', name: 'settings', component: () => import('@/views/PlaceholderView.vue'), meta: { titleKey: 'nav.settings' } },
+      { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { titleKey: 'nav.settings' } },
     ],
   },
   {

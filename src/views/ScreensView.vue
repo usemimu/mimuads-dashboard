@@ -96,12 +96,12 @@ function saveSet() {
     <!-- Filter rail -->
     <div class="w-60 shrink-0 space-y-4 overflow-auto">
       <h1 class="font-display text-2xl font-semibold text-neutral-900">{{ $t('screens.title') }}</h1>
-      <input v-model="search" :placeholder="$t('screens.search')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400" />
-      <select v-model="lga" :aria-label="$t('nav.screens')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400">
+      <input v-model="search" :placeholder="$t('screens.search')" class="input text-sm" />
+      <select v-model="lga" :aria-label="$t('nav.screens')" class="input text-sm">
         <option value="">{{ $t('screens.allLgas') }}</option>
         <option v-for="l in lgaOptions" :key="l" :value="l">{{ l }}</option>
       </select>
-      <select v-model="venueType" :aria-label="$t('screens.status')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400">
+      <select v-model="venueType" :aria-label="$t('screens.status')" class="input text-sm">
         <option value="">{{ $t('screens.allVenues') }}</option>
         <option v-for="v in venueOptions" :key="v" :value="v">{{ v }}</option>
       </select>
@@ -110,12 +110,12 @@ function saveSet() {
         {{ $t('screens.online') }}
       </label>
       <label class="block text-sm">
-        <span class="mb-1 block text-neutral-600">{{ $t('screens.footfallBand') }}</span>
-        <input v-model.number="minReach" type="number" min="0" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400" />
+        <span class="mb-1 block text-sm font-medium text-neutral-600">{{ $t('screens.footfallBand') }}</span>
+        <input v-model.number="minReach" type="number" min="0" class="input text-sm" />
       </label>
       <label class="block text-sm">
-        <span class="mb-1 block text-neutral-600">{{ $t('screens.priceBand') }}</span>
-        <input v-model.number="maxPriceNaira" type="number" min="0" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400" />
+        <span class="mb-1 block text-sm font-medium text-neutral-600">{{ $t('screens.priceBand') }}</span>
+        <input v-model.number="maxPriceNaira" type="number" min="0" class="input text-sm" />
       </label>
       <button class="text-sm text-clay-600 hover:underline" @click="clearFilters">{{ $t('screens.clearFilters') }}</button>
       <button v-if="lga && session.canMutate" class="block text-sm text-clay-600 hover:underline" @click="selectAllInLga">
@@ -124,8 +124,8 @@ function saveSet() {
     </div>
 
     <!-- Map / list -->
-    <div class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white">
-      <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-2">
+    <div class="card flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div class="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
         <span class="text-sm text-neutral-500" data-testid="result-count">
           {{ isLoading ? $t('common.loading') : $t('screens.resultCount', { count: filtered.length }) }}
         </span>
@@ -185,7 +185,7 @@ function saveSet() {
     <ScreenDetailDrawer v-if="selectedId" :screen-id="selectedId" :summary="selectedSummary" @close="selectedId = null" />
 
     <!-- Basket -->
-    <div class="w-64 shrink-0 space-y-3 overflow-auto rounded-xl border border-neutral-200 bg-white p-4">
+    <div class="card w-64 shrink-0 space-y-3 overflow-auto p-4">
       <h2 class="font-display text-lg font-semibold text-neutral-900">{{ $t('screens.basket') }}</h2>
       <div class="rounded-lg bg-neutral-50 p-3">
         <p class="font-mono text-2xl text-neutral-900" data-testid="basket-count">{{ basket.count }}</p>
@@ -195,7 +195,7 @@ function saveSet() {
       <template v-else>
         <button class="text-sm text-clay-600 hover:underline" @click="basket.clear()">{{ $t('screens.clearSelection') }}</button>
         <div class="flex gap-2">
-          <input v-model="setName" :placeholder="$t('screens.setName')" :aria-label="$t('screens.setName')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400" />
+          <input v-model="setName" :placeholder="$t('screens.setName')" :aria-label="$t('screens.setName')" class="input text-sm" />
           <Button size="sm" variant="secondary" @click="saveSet">{{ $t('common.save') }}</Button>
         </div>
         <Button v-if="session.canSubmitCampaign" class="w-full" size="sm" @click="useInCampaign">{{ $t('screens.useInCampaign') }}</Button>

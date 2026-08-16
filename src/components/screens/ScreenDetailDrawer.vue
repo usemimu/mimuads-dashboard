@@ -43,8 +43,8 @@ function toggle() {
 </script>
 
 <template>
-  <aside class="flex h-full w-96 flex-col border-l border-neutral-200 bg-white">
-    <header class="flex items-start justify-between border-b border-neutral-200 p-5">
+  <aside class="flex h-full w-96 flex-col border-l border-neutral-200 bg-white shadow-card">
+    <header class="flex items-start justify-between border-b border-neutral-100 p-5">
       <div>
         <h2 class="font-display text-xl font-semibold text-neutral-900">{{ screen?.name }}</h2>
         <span
@@ -62,20 +62,20 @@ function toggle() {
 
     <div class="flex-1 space-y-5 overflow-auto p-5">
       <div>
-        <p class="text-xs uppercase tracking-wide text-neutral-400">{{ $t('screens.venue') }}</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('screens.venue') }}</p>
         <p class="text-sm text-neutral-900">{{ screen?.venueName }} · {{ screen?.venueType }}</p>
       </div>
       <div>
-        <p class="text-xs uppercase tracking-wide text-neutral-400">{{ $t('screens.address') }}</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('screens.address') }}</p>
         <p class="text-sm text-neutral-900">{{ screen?.address }}</p>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <p class="text-xs uppercase tracking-wide text-neutral-400">{{ $t('screens.estReach') }}</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('screens.estReach') }}</p>
           <p class="font-mono text-lg text-neutral-900">{{ screen?.estimatedDailyReach ?? '—' }}</p>
         </div>
         <div>
-          <p class="text-xs uppercase tracking-wide text-neutral-400">{{ $t('screens.basePrice') }}</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('screens.basePrice') }}</p>
           <p class="font-mono text-lg text-neutral-900">
             {{ screen?.basePriceKobo ? formatKobo(screen.basePriceKobo) : '—' }}
           </p>
@@ -99,7 +99,7 @@ function toggle() {
       </div>
     </div>
 
-    <footer class="border-t border-neutral-200 p-5">
+    <footer class="border-t border-neutral-100 p-5">
       <Button
         v-if="session.canMutate"
         class="w-full"

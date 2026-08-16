@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
+import { PhSealCheck } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import Badge from '@/components/ui/Badge.vue'
 import { useSession } from '@/stores/session'
 import { getKycStatus, startKyc } from '@/api/onboarding'
 import { ctxKey } from '@/lib/ctx-key'
@@ -32,26 +36,36 @@ async function onStart() {
 </script>
 
 <template>
-  <div class="max-w-xl">
-    <h1 class="font-display text-3xl font-semibold text-neutral-900">{{ $t('verification.hubTitle') }}</h1>
+  <div class="max-w-2xl">
+    <PageHeader :title="$t('verification.hubTitle')" />
 
-    <div class="mt-6 rounded-xl border border-neutral-200 bg-white p-6">
-      <p class="text-xs uppercase tracking-wide text-neutral-400">{{ $t('verification.currentLevel') }}</p>
-      <p class="mt-1 text-lg font-medium capitalize text-neutral-900">
-        {{ isLoading ? $t('verification.checking') : (status?.level || $t('verification.none')) }}
-      </p>
+    <Card>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+            {{ $t('verification.currentLevel') }}
+          </p>
+          <p class="mt-1.5 text-lg font-semibold capitalize text-neutral-900">
+            {{ isLoading ? $t('verification.checking') : (status?.level || $t('verification.none')) }}
+          </p>
+        </div>
+        <Badge :tone="status?.isVerified ? 'success' : 'pending'" :dot="true">
+          {{ status?.isVerified ? 'Verified' : $t('verification.none') }}
+        </Badge>
+      </div>
 
-      <div class="mt-5">
-        <p v-if="isAgency" class="rounded-lg bg-gold-50 px-4 py-3 text-sm text-gold-800">
+      <div class="mt-6 border-t border-neutral-100 pt-5">
+        <p v-if="isAgency" class="rounded-xl bg-gold-50 px-4 py-3 text-sm text-gold-800">
           {{ $t('verification.bannerAgency') }}
         </p>
         <div v-else class="flex gap-3">
           <Button :disabled="starting || status?.isVerified === true" @click="onStart">
+            <PhSealCheck :size="18" />
             {{ starting ? $t('verification.starting') : $t('verification.start') }}
           </Button>
           <Button variant="outline" @click="() => refetch()">{{ $t('common.retry') }}</Button>
         </div>
       </div>
-    </div>
+    </Card>
   </div>
 </template>

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { api } from '@/api/client'
+import { getProfile } from '@/api/profile'
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/token'
 import { resetQueryCacheForContextSwitch } from '@/api/query'
 import { decodeAccessClaims } from '@/lib/jwt'
@@ -139,12 +140,36 @@ export const useSession = defineStore('session', () => {
       const res = await api.post('/advertiser/auth/refresh', {}, RefreshTokenResponseSchema)
       if (res.accessToken) {
         applyToken(res.accessToken)
+        // The token has no name/email — hydrate the display user so a
+        // page refresh shows the person, not their raw id. Best-effort:
+        // a failure here shouldn't drop an otherwise-valid session.
+        await loadUser()
         return true
       }
     } catch {
       clearAccessToken()
     }
     return false
+  }
+
+  /**
+   * Populate `user` from GET /advertiser/profile. Called after a silent
+   * refresh (page reload / org creation), where the auth response that
+   * normally seeds `user` on login isn't in play.
+   */
+  async function loadUser(): Promise<void> {
+    try {
+      const res = await getProfile()
+      user.value = {
+        id: res.user.id,
+        name: res.user.name,
+        email: res.user.email,
+        phoneNumber: res.user.phoneNumber ?? '',
+        profileImageUrl: res.user.profileImageUrl,
+      }
+    } catch {
+      /* non-fatal — shell falls back to context.userId */
+    }
   }
 
   /**
@@ -174,6 +199,7 @@ export const useSession = defineStore('session', () => {
     logout,
     bootstrap,
     refreshSession,
+    loadUser,
     clearSession,
   }
 })

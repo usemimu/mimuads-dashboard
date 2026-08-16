@@ -65,6 +65,25 @@ export const BusinessProfileResponseSchema = z.object({
 })
 export type BusinessProfileResponse = z.infer<typeof BusinessProfileResponseSchema>
 
+// ── PATCH /advertiser/business-profile (edit) ────────────────────────────────
+// All fields optional (partial update). Mirrors UpdateBusinessProfileDto.
+export const UpdateBusinessProfileSchema = z.object({
+  businessName: z.string().min(2).max(100).optional(),
+  displayName: z.string().min(2).max(100).optional(),
+  country: z.string().length(2).optional(),
+  businessCategory: BusinessCategorySchema.optional(),
+  state: z.string().min(2).max(64).optional(),
+  lga: z.string().min(2).max(64).optional(),
+  businessType: BusinessTypeSchema.optional(),
+  approxClients: z.number().int().positive().max(100000).optional(),
+  businessAddress: z.string().max(500).optional(),
+  websiteUrl: z.string().url().optional(),
+  socialHandles: z.string().optional(),
+  rcNumber: z.string().max(50).optional(),
+  taxId: z.string().max(50).optional(),
+})
+export type UpdateBusinessProfileRequest = z.infer<typeof UpdateBusinessProfileSchema>
+
 // ── GET /advertiser/locations (auth-free reference data) ─────────────────────
 export const NigerianStateSchema = z.object({
   name: z.string(),

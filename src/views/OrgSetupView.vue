@@ -104,7 +104,7 @@ async function onSubmit() {
 
     <form v-if="kind" class="space-y-4" @submit.prevent="onSubmit">
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{
+        <span class="label">{{
           kind === 'agency' ? $t('org.agencyName') : $t('org.businessName')
         }}</span>
         <input
@@ -112,26 +112,26 @@ async function onSubmit() {
           required
           minlength="2"
           :aria-label="kind === 'agency' ? $t('org.agencyName') : $t('org.businessName')"
-          class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400"
+          class="input"
         />
       </label>
 
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('org.displayName') }} <span class="font-normal text-neutral-400">· {{ $t('signup.positionOptional') }}</span></span>
-        <input v-model="displayName" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+        <span class="label">{{ $t('org.displayName') }} <span class="font-normal text-neutral-400">· {{ $t('signup.positionOptional') }}</span></span>
+        <input v-model="displayName" class="input" />
       </label>
 
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('org.category') }}</span>
-        <select v-model="category" required :aria-label="$t('org.category')" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400">
+        <span class="label">{{ $t('org.category') }}</span>
+        <select v-model="category" required :aria-label="$t('org.category')" class="input">
           <option value="" disabled>—</option>
           <option v-for="c in categories" :key="c" :value="c">{{ prettify(c) }}</option>
         </select>
       </label>
 
       <label v-if="kind === 'advertiser'" class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('org.businessType') }}</span>
-        <select v-model="businessType" required :aria-label="$t('org.businessType')" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400">
+        <span class="label">{{ $t('org.businessType') }}</span>
+        <select v-model="businessType" required :aria-label="$t('org.businessType')" class="input">
           <option value="" disabled>—</option>
           <option v-for="t in advertiserTypes" :key="t" :value="t">{{ prettify(t) }}</option>
         </select>
@@ -139,15 +139,15 @@ async function onSubmit() {
 
       <div class="grid grid-cols-2 gap-3">
         <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('org.state') }}</span>
-          <select v-model="stateName" required :aria-label="$t('org.state')" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400">
+          <span class="label">{{ $t('org.state') }}</span>
+          <select v-model="stateName" required :aria-label="$t('org.state')" class="input">
             <option value="" disabled>—</option>
             <option v-for="s in states" :key="s.code" :value="s.name">{{ s.name }}</option>
           </select>
         </label>
         <label class="block">
-          <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('org.lga') }}</span>
-          <select v-model="lga" required :disabled="!stateName" :aria-label="$t('org.lga')" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400 disabled:bg-neutral-100">
+          <span class="label">{{ $t('org.lga') }}</span>
+          <select v-model="lga" required :disabled="!stateName" :aria-label="$t('org.lga')" class="select disabled:bg-neutral-100">
             <option value="" disabled>—</option>
             <option v-for="l in lgasForState" :key="l" :value="l">{{ l }}</option>
           </select>
@@ -155,8 +155,8 @@ async function onSubmit() {
       </div>
 
       <label v-if="kind === 'agency'" class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('org.approxClients') }} <span class="font-normal text-neutral-400">· {{ $t('signup.positionOptional') }}</span></span>
-        <input v-model.number="approxClients" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+        <span class="label">{{ $t('org.approxClients') }} <span class="font-normal text-neutral-400">· {{ $t('signup.positionOptional') }}</span></span>
+        <input v-model.number="approxClients" type="number" min="1" class="input" />
       </label>
 
       <p v-if="kind === 'agency'" class="rounded-lg bg-gold-50 px-3 py-2 text-sm text-gold-800">

@@ -4,6 +4,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { PhDownloadSimple } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import Badge from '@/components/ui/Badge.vue'
 import { useSession } from '@/stores/session'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo, nairaToKobo } from '@/lib/money'
@@ -131,22 +134,23 @@ async function doTransfer() {
 
 <template>
   <div>
-    <h1 class="mb-6 font-display text-3xl font-semibold text-neutral-900">{{ $t('billing.title') }}</h1>
+    <PageHeader :title="$t('billing.title')" />
 
     <!-- Wallet card -->
-    <div class="mb-6 rounded-2xl border border-neutral-200 bg-white p-6">
-      <p class="text-xs uppercase tracking-wide text-neutral-400">{{ $t('billing.balance') }}</p>
-      <p class="mt-1 font-mono text-4xl font-semibold text-neutral-900" data-testid="wallet-balance">
+    <Card class="mb-6 bg-gradient-to-br from-white to-clay-50/40">
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('billing.balance') }}</p>
+      <p class="mt-1.5 font-mono text-4xl font-semibold text-neutral-900" data-testid="wallet-balance">
         {{ wallet ? formatKobo(wallet.balanceKobo) : '—' }}
       </p>
-    </div>
+    </Card>
 
-    <p v-if="error" role="alert" class="mb-3 text-sm text-clay-700">{{ error }}</p>
+    <p v-if="error" role="alert" class="mb-3 rounded-xl bg-clay-50 px-4 py-2.5 text-sm text-clay-700">{{ error }}</p>
 
     <!-- Tabs -->
-    <div class="mb-4 flex gap-1 border-b border-neutral-200">
+    <div class="mb-5 flex gap-1 border-b border-neutral-200">
       <button v-for="t in (['transactions','topup','invoices','transfers'] as const)" :key="t"
-        class="px-4 py-2 text-sm" :class="tab === t ? 'border-b-2 border-clay-500 text-clay-700' : 'text-neutral-500'"
+        class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors"
+        :class="tab === t ? 'border-clay-500 text-clay-700' : 'border-transparent text-neutral-500 hover:text-neutral-800'"
         @click="tab = t">{{ $t('billing.tab' + t.charAt(0).toUpperCase() + t.slice(1)) }}</button>
     </div>
 
@@ -157,7 +161,7 @@ async function doTransfer() {
           <Button variant="outline" size="sm"><PhDownloadSimple :size="16" /> {{ $t('billing.exportCsv') }}</Button>
         </a>
       </div>
-      <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+      <div class="card overflow-hidden">
         <table class="w-full text-sm">
           <tbody>
             <tr v-if="!txns?.transactions.length"><td class="px-4 py-6 text-center text-neutral-400">{{ $t('billing.noTransactions') }}</td></tr>
@@ -176,10 +180,10 @@ async function doTransfer() {
       <p v-if="topupState === 'pending'" class="rounded-lg bg-neutral-100 px-4 py-3 text-sm text-neutral-600">{{ $t('billing.topupPending') }}</p>
       <p v-else-if="topupState === 'success'" class="rounded-lg bg-moss-50 px-4 py-3 text-sm text-moss-700">{{ $t('billing.topupSuccess') }}</p>
       <p v-else-if="topupState === 'failed'" class="rounded-lg bg-clay-50 px-4 py-3 text-sm text-clay-700">{{ $t('billing.topupFailed') }}</p>
-      <div v-if="canBill" class="mt-4 space-y-3 rounded-xl border border-neutral-200 bg-white p-5">
+      <div v-if="canBill" class="card mt-4 space-y-3 p-5">
         <h2 class="font-medium text-neutral-900">{{ $t('billing.topupTitle') }}</h2>
-        <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.amount') }}</span>
-          <input v-model.number="topupNaira" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+        <label class="block"><span class="label">{{ $t('billing.amount') }}</span>
+          <input v-model.number="topupNaira" type="number" min="1" class="input" /></label>
         <p class="text-xs text-neutral-400">{{ $t('billing.topupHint') }}</p>
         <Button class="w-full" :disabled="topupBusy" @click="startTopup">{{ $t('billing.continue') }}</Button>
       </div>
@@ -187,15 +191,15 @@ async function doTransfer() {
 
     <!-- Invoices -->
     <div v-else-if="tab === 'invoices'" class="space-y-6">
-      <div v-if="canBill" class="max-w-md space-y-3 rounded-xl border border-neutral-200 bg-white p-5">
+      <div v-if="canBill" class="card max-w-md space-y-3 p-5">
         <h2 class="font-medium text-neutral-900">{{ $t('billing.invoiceRequest') }}</h2>
-        <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.amount') }}</span>
-          <input v-model.number="invNaira" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
-        <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.purpose') }}</span>
-          <input v-model="invPurpose" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+        <label class="block"><span class="label">{{ $t('billing.amount') }}</span>
+          <input v-model.number="invNaira" type="number" min="1" class="input" /></label>
+        <label class="block"><span class="label">{{ $t('billing.purpose') }}</span>
+          <input v-model="invPurpose" class="input" /></label>
         <Button :disabled="invBusy" @click="requestInvoice">{{ $t('billing.requestInvoice') }}</Button>
       </div>
-      <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+      <div class="card overflow-hidden">
         <table class="w-full text-sm">
           <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-400">
             <tr><th class="px-4 py-2">{{ $t('billing.invoiceNumber') }}</th><th class="px-4 py-2">{{ $t('billing.grandTotal') }}</th><th class="px-4 py-2">{{ $t('billing.status') }}</th><th class="px-4 py-2"></th></tr>
@@ -205,7 +209,7 @@ async function doTransfer() {
             <tr v-for="inv in invoices?.invoices ?? []" :key="inv.id" class="border-t border-neutral-100" data-testid="invoice-row">
               <td class="px-4 py-2 font-mono">{{ inv.invoiceNumber }}</td>
               <td class="px-4 py-2 font-mono">{{ formatKobo(inv.totalKobo) }}</td>
-              <td class="px-4 py-2"><span class="rounded-full bg-gold-100 px-2 py-0.5 text-xs capitalize text-gold-800">{{ inv.status.replace(/_/g, ' ') }}</span></td>
+              <td class="px-4 py-2"><Badge tone="pending">{{ inv.status.replace(/_/g, ' ') }}</Badge></td>
               <td class="px-4 py-2 text-right"><a :href="invoicePdfUrl(inv.id)" target="_blank" rel="noopener" class="text-sm text-clay-600 hover:underline">{{ $t('billing.downloadPdf') }}</a></td>
             </tr>
           </tbody>
@@ -214,24 +218,24 @@ async function doTransfer() {
     </div>
 
     <!-- Transfers -->
-    <div v-else class="max-w-md space-y-3 rounded-xl border border-neutral-200 bg-white p-5">
+    <div v-else class="card max-w-md space-y-3 p-5">
       <h2 class="font-medium text-neutral-900">{{ $t('billing.transfersTitle') }}</h2>
       <p v-if="!canBill" class="text-sm text-neutral-400">{{ $t('billing.transferReadonly') }}</p>
       <template v-else>
         <div class="grid grid-cols-2 gap-3">
-          <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.transferFrom') }}</span>
-            <select v-model="tFrom" :aria-label="$t('billing.transferFrom')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400">
+          <label class="block"><span class="label">{{ $t('billing.transferFrom') }}</span>
+            <select v-model="tFrom" :aria-label="$t('billing.transferFrom')" class="select text-sm">
               <option value="">{{ $t('billing.orgMaster') }}</option>
               <option v-for="w in workspaces?.workspaces ?? []" :key="w.id" :value="w.id">{{ w.name }}</option>
             </select></label>
-          <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.transferTo') }}</span>
-            <select v-model="tTo" :aria-label="$t('billing.transferTo')" class="w-full rounded-lg border-neutral-300 text-sm focus:border-clay-400 focus:ring-clay-400">
+          <label class="block"><span class="label">{{ $t('billing.transferTo') }}</span>
+            <select v-model="tTo" :aria-label="$t('billing.transferTo')" class="select text-sm">
               <option value="">{{ $t('billing.orgMaster') }}</option>
               <option v-for="w in workspaces?.workspaces ?? []" :key="w.id" :value="w.id">{{ w.name }}</option>
             </select></label>
         </div>
-        <label class="block"><span class="mb-1 block text-sm text-neutral-600">{{ $t('billing.amount') }}</span>
-          <input v-model.number="tNaira" type="number" min="1" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" /></label>
+        <label class="block"><span class="label">{{ $t('billing.amount') }}</span>
+          <input v-model.number="tNaira" type="number" min="1" class="input" /></label>
         <p v-if="tDone" class="text-sm text-moss-600">{{ $t('billing.transferDone') }}</p>
         <Button :disabled="tBusy || tFrom === tTo" @click="doTransfer">{{ $t('billing.doTransfer') }}</Button>
       </template>

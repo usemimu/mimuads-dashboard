@@ -15,7 +15,14 @@ import {
 import {
   CreateBusinessProfileSchema,
   BusinessProfileResponseSchema,
+  UpdateBusinessProfileSchema,
 } from '../contracts/onboarding'
+import {
+  ChangePasswordSchema,
+  DeleteAccountSchema,
+  ProfileImageUploadSchema,
+  ConfirmProfileImageSchema,
+} from '../contracts/profile'
 import {
   CreateCampaignSchema,
   TopUpSchema,
@@ -84,6 +91,11 @@ const REQUESTS: Array<[string, z.ZodObject<z.ZodRawShape>]> = [
   ['WalletTransferDto', WalletTransferSchema],
   ['CreateInvoiceDto', CreateInvoiceSchema],
   ['CreateWorkspaceDto', CreateWorkspaceSchema],
+  ['UpdateBusinessProfileDto', UpdateBusinessProfileSchema],
+  ['ChangePasswordDto', ChangePasswordSchema],
+  ['DeleteAccountDto', DeleteAccountSchema],
+  ['ProfileImageUploadDto', ProfileImageUploadSchema],
+  ['ConfirmProfileImageDto', ConfirmProfileImageSchema],
 ]
 
 /** Response: everything the console reads must still be present on the API shape. */

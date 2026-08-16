@@ -65,6 +65,8 @@ export interface SessionUser {
   name: string | null
   email: string | null
   phoneNumber: string
+  /** Avatar URL — populated from GET /advertiser/profile (optional on login). */
+  profileImageUrl?: string | null
 }
 
 // ── Request OTP: POST /advertiser/auth/request-otp ──────────────────────────

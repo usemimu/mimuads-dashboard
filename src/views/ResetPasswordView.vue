@@ -33,12 +33,12 @@ async function onSubmit() {
     <form class="space-y-4" @submit.prevent="onSubmit">
       <h2 class="font-display text-2xl font-semibold text-neutral-900">{{ $t('reset.resetTitle') }}</h2>
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('reset.code') }}</span>
-        <input v-model="token" inputmode="numeric" maxlength="6" required class="w-full rounded-lg border-neutral-300 text-center font-mono tracking-widest focus:border-clay-400 focus:ring-clay-400" />
+        <span class="label">{{ $t('reset.code') }}</span>
+        <input v-model="token" inputmode="numeric" maxlength="6" required class="input text-center font-mono tracking-widest" />
       </label>
       <label class="block">
-        <span class="mb-1 block text-sm font-medium text-neutral-700">{{ $t('reset.newPassword') }}</span>
-        <input v-model="newPassword" type="password" minlength="8" required autocomplete="new-password" class="w-full rounded-lg border-neutral-300 focus:border-clay-400 focus:ring-clay-400" />
+        <span class="label">{{ $t('reset.newPassword') }}</span>
+        <input v-model="newPassword" type="password" minlength="8" required autocomplete="new-password" class="input" />
       </label>
       <p v-if="done" class="text-sm text-moss-600">{{ $t('reset.done') }}</p>
       <p v-if="error" role="alert" class="text-sm text-clay-700">{{ error }}</p>
