@@ -48,27 +48,29 @@
 }
 
 @layer components {
-  /* Floating-card surface — the console's core container. White on the
-     sand background, soft warm shadow, no hard border. Prefer the
-     <Card> component; this class is here for one-off markup. Shadow is
-     inlined (not @apply shadow-card) so this never depends on the custom
-     utility being generated. */
+  /* Core container — an "editorial console" surface: white on the sand
+     background, a warm hairline border and only a whisper of shadow.
+     Prefer the <Card> component; this class is here for one-off markup.
+     Shadow is inlined so it never depends on a custom utility. */
   .card {
-    @apply rounded-2xl bg-white;
-    box-shadow:
-      0 1px 2px rgba(14, 13, 11, 0.04),
-      0 8px 24px -14px rgba(14, 13, 11, 0.12);
+    @apply rounded-xl border border-line bg-white;
+    box-shadow: 0 1px 2px rgba(14, 13, 11, 0.05);
   }
 
-  /* Consistent form controls across every form in the console. Pairs
-     with @tailwindcss/forms; warm clay focus ring. */
+  /* Consistent form controls across every form. Pairs with
+     @tailwindcss/forms; denser (admin-like) with a warm clay ring. */
   .label {
-    @apply mb-1.5 block text-sm font-medium text-neutral-700;
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-neutral-500;
   }
   .input,
   .select {
-    @apply w-full rounded-xl border-neutral-200 bg-white text-neutral-900 shadow-sm transition
-      placeholder:text-neutral-400 focus:border-clay-400 focus:ring-2 focus:ring-clay-400/30;
+    @apply w-full rounded-lg border-line-strong bg-white py-2 text-sm text-neutral-900 transition
+      placeholder:text-neutral-400 focus:border-clay-400 focus:ring-2 focus:ring-clay-400/25;
+  }
+
+  /* Micro-label used above stats and section groupings. */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-neutral-400;
   }
 }
 

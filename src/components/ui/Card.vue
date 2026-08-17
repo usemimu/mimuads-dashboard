@@ -3,9 +3,9 @@ import { computed } from 'vue'
 import { cn } from '@/lib/cn'
 
 /**
- * Floating-card surface — the console's core container. White on the
- * sand background, soft warm shadow, no hard border (see the design
- * system). Set `interactive` for clickable cards that lift on hover.
+ * Core container — an "editorial console" surface: white on the sand
+ * background, a warm hairline border and only a whisper of shadow.
+ * Set `interactive` for clickable cards that lift on hover.
  */
 const props = withDefaults(
   defineProps<{
@@ -21,16 +21,16 @@ const props = withDefaults(
 const pad = {
   none: '',
   sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
+  md: 'p-5',
+  lg: 'p-7',
 }
 
 const classes = computed(() =>
   cn(
-    'rounded-2xl bg-white shadow-card',
+    'rounded-xl border border-line bg-white shadow-card',
     pad[props.padding],
     props.interactive &&
-      'cursor-pointer transition-shadow duration-200 hover:shadow-card-hover',
+      'cursor-pointer transition-all duration-200 hover:border-line-strong hover:shadow-card-hover',
     props.class,
   ),
 )

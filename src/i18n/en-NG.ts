@@ -9,6 +9,7 @@ export default {
     tagline: 'The buying surface for out-of-home advertising',
   },
   nav: {
+    menu: 'Menu',
     dashboard: 'Dashboard',
     campaigns: 'Campaigns',
     screens: 'Screens',

@@ -14,13 +14,14 @@ import {
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo, nairaToKobo } from '@/lib/money'
 import { isApiError } from '@/api/errors'
+import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
 const router = useRouter()
 const session = useSession()
 const qc = useQueryClient()
+const toast = useToastStore()
 const id = computed(() => String(route.params.id))
-const error = ref<string | null>(null)
 
 const { data: c } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'campaign', id.value)),
@@ -48,12 +49,11 @@ const factorList = computed(() => {
 })
 
 async function run(fn: () => Promise<unknown>) {
-  error.value = null
   try {
     await fn()
     qc.invalidateQueries({ queryKey: ctxKey(session.context, 'campaign', id.value) })
   } catch (e) {
-    error.value = isApiError(e) ? e.message : 'Action failed'
+    toast.error(isApiError(e) ? e.message : 'Action failed')
   }
 }
 function onTopup() {
@@ -65,12 +65,11 @@ function onExtend() {
   if (d) run(() => extendCampaign(id.value, new Date(`${d}T00:00:00Z`).toISOString()))
 }
 async function onClone() {
-  error.value = null
   try {
     const clone = await cloneCampaign(id.value)
     router.push(`/campaigns/${clone.id}`)
   } catch (e) {
-    error.value = isApiError(e) ? e.message : 'Clone failed'
+    toast.error(isApiError(e) ? e.message : 'Clone failed')
   }
 }
 </script>
@@ -95,7 +94,6 @@ async function onClone() {
         <Button size="sm" variant="outline" @click="onClone">{{ $t('campaigns.clone') }}</Button>
       </div>
     </div>
-    <p v-if="error" role="alert" class="mb-4 rounded-xl bg-clay-50 px-4 py-2.5 text-sm text-clay-700">{{ error }}</p>
 
     <!-- Pacing -->
     <Card class="mb-5">

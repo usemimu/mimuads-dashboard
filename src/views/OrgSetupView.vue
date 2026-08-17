@@ -7,6 +7,7 @@ import { createBusinessProfile, getStates } from '@/api/onboarding'
 import { BusinessCategorySchema, BusinessTypeSchema, type NigerianState } from '@/api/contracts/onboarding'
 import { useSession } from '@/stores/session'
 import { isApiError } from '@/api/errors'
+import { useToastStore } from '@/stores/toast'
 
 /**
  * Page 3 — org fork (PRD §4.1). Two cards (advertiser/agency) → org kind. Option A:
@@ -17,6 +18,7 @@ import { isApiError } from '@/api/errors'
 const route = useRoute()
 const router = useRouter()
 const session = useSession()
+const toast = useToastStore()
 
 type Kind = 'advertiser' | 'agency' | null
 const kind = ref<Kind>(route.query.src === 'agencies' ? 'agency' : null)
@@ -29,7 +31,6 @@ const stateName = ref('')
 const lga = ref('')
 const approxClients = ref<number | null>(null)
 const submitting = ref(false)
-const error = ref<string | null>(null)
 
 const states = ref<NigerianState[]>([])
 onMounted(async () => {
@@ -52,7 +53,6 @@ function selectKind(k: Kind) {
 }
 
 async function onSubmit() {
-  error.value = null
   submitting.value = true
   try {
     await createBusinessProfile({
@@ -69,7 +69,7 @@ async function onSubmit() {
     await session.refreshSession()
     router.replace('/dashboard')
   } catch (e) {
-    error.value = isApiError(e) ? e.message : null
+    toast.error(isApiError(e) ? e.message : 'Could not create organization.')
   } finally {
     submitting.value = false
   }
@@ -162,7 +162,6 @@ async function onSubmit() {
       <p v-if="kind === 'agency'" class="rounded-lg bg-gold-50 px-3 py-2 text-sm text-gold-800">
         {{ $t('org.agencyPendingNote') }}
       </p>
-      <p v-if="error" role="alert" class="text-sm text-clay-700">{{ error }}</p>
 
       <Button type="submit" size="lg" class="w-full" :disabled="submitting">
         {{ submitting ? $t('org.creating') : kind === 'agency' ? $t('org.createAgency') : $t('org.createAdvertiser') }}

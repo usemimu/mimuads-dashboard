@@ -9,20 +9,20 @@ import { cn } from '@/lib/cn'
  *   accent → clay, neutral/draft → grey, info → blue-ish neutral.
  */
 const badge = cva(
-  'inline-flex items-center gap-1.5 rounded-full font-body font-semibold uppercase tracking-wide',
+  'inline-flex items-center gap-1.5 rounded-md border font-body font-semibold uppercase tracking-wide',
   {
     variants: {
       tone: {
-        neutral: 'bg-neutral-100 text-neutral-600',
-        accent: 'bg-clay-50 text-clay-700',
-        success: 'bg-moss-50 text-moss-700',
-        pending: 'bg-gold-50 text-gold-700',
-        danger: 'bg-clay-100 text-clay-800',
-        info: 'bg-neutral-100 text-neutral-700',
+        neutral: 'border-line bg-neutral-50 text-neutral-600',
+        accent: 'border-clay-200/70 bg-clay-50 text-clay-600',
+        success: 'border-moss-200/70 bg-moss-50 text-moss-600',
+        pending: 'border-gold-200/70 bg-gold-50 text-gold-600',
+        danger: 'border-clay-200 bg-clay-50 text-clay-700',
+        info: 'border-line bg-neutral-100 text-neutral-700',
       },
       size: {
-        sm: 'px-2 py-0.5 text-[10px]',
-        md: 'px-2.5 py-1 text-[11px]',
+        sm: 'px-1.5 py-0.5 text-[10px]',
+        md: 'px-2 py-0.5 text-[11px]',
       },
     },
     defaultVariants: { tone: 'neutral', size: 'md' },

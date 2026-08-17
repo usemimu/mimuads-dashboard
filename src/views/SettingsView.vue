@@ -15,7 +15,9 @@ import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
+import { useI18n } from 'vue-i18n'
 import { useSession } from '@/stores/session'
+import { useToastStore } from '@/stores/toast'
 import { isApiError } from '@/api/errors'
 import {
   getBusinessProfile,
@@ -39,6 +41,8 @@ import {
 const session = useSession()
 const router = useRouter()
 const qc = useQueryClient()
+const toast = useToastStore()
+const { t } = useI18n()
 
 const pretty = (v?: string | null) => (v ? v.replace(/_/g, ' ') : null)
 const prettify = (v: string) => v.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -57,7 +61,6 @@ const initials = computed(() => {
 // ── Avatar ───────────────────────────────────────────────────────────────────
 const fileInput = ref<HTMLInputElement | null>(null)
 const avatarBusy = ref(false)
-const avatarError = ref<string | null>(null)
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp']
 
 function pickAvatar() {
@@ -66,7 +69,6 @@ function pickAvatar() {
 async function onAvatarChange(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-  avatarError.value = null
   avatarBusy.value = true
   try {
     const raw = (file.name.split('.').pop() ?? '').toLowerCase()
@@ -75,21 +77,22 @@ async function onAvatarChange(e: Event) {
     await uploadAvatarToPresigned(intent, file)
     await confirmAvatar(intent.fileUrl)
     await session.loadUser()
+    toast.success('Photo updated.')
   } catch (err) {
-    avatarError.value = isApiError(err) ? err.message : 'Could not upload photo.'
+    toast.error(isApiError(err) ? err.message : 'Could not upload photo.')
   } finally {
     avatarBusy.value = false
     if (fileInput.value) fileInput.value.value = ''
   }
 }
 async function onRemoveAvatar() {
-  avatarError.value = null
   avatarBusy.value = true
   try {
     await deleteAvatar()
     await session.loadUser()
+    toast.success('Photo removed.')
   } catch (err) {
-    avatarError.value = isApiError(err) ? err.message : 'Could not remove photo.'
+    toast.error(isApiError(err) ? err.message : 'Could not remove photo.')
   } finally {
     avatarBusy.value = false
   }
@@ -98,20 +101,16 @@ async function onRemoveAvatar() {
 // ── Change password ──────────────────────────────────────────────────────────
 const pw = reactive({ current: '', next: '', confirm: '' })
 const pwBusy = ref(false)
-const pwError = ref<string | null>(null)
-const pwSuccess = ref(false)
 const pwMatch = computed(() => !pw.confirm || pw.next === pw.confirm)
 async function onChangePassword() {
-  pwError.value = null
-  pwSuccess.value = false
   if (!pwMatch.value || pw.next.length < 8) return
   pwBusy.value = true
   try {
     await changePassword(pw.current, pw.next)
     pw.current = pw.next = pw.confirm = ''
-    pwSuccess.value = true
+    toast.success(t('settings.passwordChanged'))
   } catch (e) {
-    pwError.value = isApiError(e) ? e.message : 'Could not change password.'
+    toast.error(isApiError(e) ? e.message : 'Could not change password.')
   } finally {
     pwBusy.value = false
   }
@@ -154,11 +153,7 @@ watch(bizData, (v) => v && seed(v), { immediate: true })
 const isAgency = computed(() => biz.businessType === 'agency' || session.context.tier === 'agency')
 
 const bizBusy = ref(false)
-const bizError = ref<string | null>(null)
-const bizSuccess = ref(false)
 async function onSaveBusiness() {
-  bizError.value = null
-  bizSuccess.value = false
   bizBusy.value = true
   try {
     const trim = (v: string) => (v.trim() ? v.trim() : undefined)
@@ -179,9 +174,9 @@ async function onSaveBusiness() {
     const updated = await updateBusinessProfile(patch)
     seed(updated)
     qc.invalidateQueries({ queryKey: ['business-profile'] })
-    bizSuccess.value = true
+    toast.success(t('settings.businessSaved'))
   } catch (e) {
-    bizError.value = isApiError(e) ? e.message : 'Could not save business profile.'
+    toast.error(isApiError(e) ? e.message : 'Could not save business profile.')
   } finally {
     bizBusy.value = false
   }
@@ -191,16 +186,14 @@ async function onSaveBusiness() {
 const showDelete = ref(false)
 const deleteReason = ref('')
 const deleteBusy = ref(false)
-const deleteError = ref<string | null>(null)
 async function onConfirmDelete() {
-  deleteError.value = null
   deleteBusy.value = true
   try {
     await deleteAccount(deleteReason.value || undefined)
     session.clearSession()
     router.replace({ name: 'login' })
   } catch (e) {
-    deleteError.value = isApiError(e) ? e.message : 'Could not delete account.'
+    toast.error(isApiError(e) ? e.message : 'Could not delete account.')
     deleteBusy.value = false
   }
 }
@@ -259,7 +252,6 @@ async function onSignOut() {
               </Button>
             </div>
             <p class="text-xs text-neutral-400">{{ $t('settings.photoHint') }}</p>
-            <p v-if="avatarError" class="text-xs text-clay-700">{{ avatarError }}</p>
           </div>
           <input ref="fileInput" type="file" accept=".jpg,.jpeg,.png,.webp,image/*" class="hidden" @change="onAvatarChange" />
         </div>
@@ -359,8 +351,6 @@ async function onSignOut() {
           </div>
           <div class="flex items-center gap-3">
             <Button type="submit" :disabled="bizBusy">{{ bizBusy ? $t('settings.saving') : $t('settings.saveChanges') }}</Button>
-            <span v-if="bizSuccess" class="text-sm text-moss-600">{{ $t('settings.businessSaved') }}</span>
-            <span v-if="bizError" class="text-sm text-clay-700">{{ bizError }}</span>
           </div>
         </form>
       </Card>
@@ -394,8 +384,6 @@ async function onSignOut() {
             <Button type="submit" :disabled="pwBusy || !pwMatch || pw.next.length < 8">
               {{ pwBusy ? $t('settings.saving') : $t('settings.updatePassword') }}
             </Button>
-            <span v-if="pwSuccess" class="text-sm text-moss-600">{{ $t('settings.passwordChanged') }}</span>
-            <span v-if="pwError" class="text-sm text-clay-700">{{ pwError }}</span>
           </div>
         </form>
       </Card>
@@ -464,7 +452,6 @@ async function onSignOut() {
           <span class="label">{{ $t('settings.deleteReason') }}</span>
           <textarea v-model="deleteReason" rows="2" class="input" />
         </label>
-        <p v-if="deleteError" class="mt-2 text-sm text-clay-700">{{ deleteError }}</p>
         <div class="mt-5 flex justify-end gap-3">
           <Button variant="ghost" :disabled="deleteBusy" @click="showDelete = false">{{ $t('common.cancel') }}</Button>
           <Button variant="danger" :disabled="deleteBusy" @click="onConfirmDelete">

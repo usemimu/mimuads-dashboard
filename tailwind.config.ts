@@ -60,19 +60,25 @@ export default {
           800: '#282420',
           900: '#0E0D0B',
         },
+        // Warm hairline borders (mirrors the admin console's --border tokens)
+        // so cards, sidebar and tables read "considered", not grey.
+        line: {
+          DEFAULT: '#E6E1D9',
+          strong: '#DDD8D0',
+        },
       },
       fontFamily: {
         display: ['Cormorant', 'Georgia', 'serif'],
         body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', '"Courier New"', 'monospace'],
       },
-      // Soft, warm-tinted elevation for the "floating card" surface
-      // language (white cards on the sand background). Shadows use the
-      // ink neutral (#0E0D0B) at low alpha so they read warm, not grey.
+      // Restrained, warm-tinted elevation — an "editorial console" surface
+      // language: cards lean on a hairline border with only a whisper of
+      // shadow (admin-style), reserving real elevation (`pop`) for menus,
+      // toasts and modals. Alpha uses the ink neutral so shadows read warm.
       boxShadow: {
-        card: '0 1px 2px rgba(14, 13, 11, 0.04), 0 8px 24px -14px rgba(14, 13, 11, 0.12)',
-        'card-hover':
-          '0 2px 4px rgba(14, 13, 11, 0.05), 0 16px 40px -18px rgba(14, 13, 11, 0.18)',
+        card: '0 1px 2px rgba(14, 13, 11, 0.05)',
+        'card-hover': '0 4px 14px -4px rgba(14, 13, 11, 0.12)',
         pop: '0 4px 8px rgba(14, 13, 11, 0.06), 0 24px 48px -24px rgba(14, 13, 11, 0.22)',
       },
       borderRadius: {

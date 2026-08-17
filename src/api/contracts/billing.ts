@@ -47,7 +47,11 @@ export const TopupIntentResponseSchema = z
     formattedSurcharge: z.string(),
     totalChargeKobo: z.string(),
     formattedTotalCharge: z.string(),
-    paystack: z.unknown(), // { authorization_url, reference, access_code }
+    paystack: z.object({
+      authorizationUrl: z.string(),
+      accessCode: z.string(),
+      reference: z.string(),
+    }),
     expiresAt: z.string(),
   })
   .passthrough()

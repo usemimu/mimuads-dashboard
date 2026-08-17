@@ -2,34 +2,38 @@
 import Card from './Card.vue'
 
 /**
- * KPI tile: small uppercase label, large value (mono by default for
- * money/metrics), optional icon and a footer slot for a link or trend.
+ * KPI tile: an eyebrow label, a large editorial value set in the display
+ * serif (Cormorant, tabular figures — the "marketing platform" hero
+ * number), an accented icon chip, and a footer slot for a link or trend.
  */
 withDefaults(
   defineProps<{
     label: string
     value: string | number
-    /** Mono + tabular figures — right for money and counts. */
+    /** Use the mono face instead of the display serif for the value. */
     mono?: boolean
   }>(),
-  { mono: true },
+  { mono: false },
 )
 </script>
 
 <template>
-  <Card class="flex flex-col gap-1">
-    <div class="flex items-center justify-between">
-      <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-        {{ label }}
-      </p>
-      <span v-if="$slots.icon" class="text-neutral-300"><slot name="icon" /></span>
+  <Card class="flex flex-col gap-2">
+    <div class="flex items-start justify-between">
+      <p class="eyebrow pt-0.5">{{ label }}</p>
+      <span
+        v-if="$slots.icon"
+        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-clay-50 text-clay-500"
+      >
+        <slot name="icon" />
+      </span>
     </div>
     <p
-      class="mt-1 font-semibold text-neutral-900"
-      :class="mono ? 'font-mono text-2xl' : 'text-xl capitalize'"
+      class="font-semibold leading-none text-neutral-900 [font-variant-numeric:tabular-nums]"
+      :class="mono ? 'font-mono text-2xl' : 'font-display text-[2.5rem]'"
     >
       {{ value }}
     </p>
-    <div v-if="$slots.footer" class="mt-1 text-xs"><slot name="footer" /></div>
+    <div v-if="$slots.footer" class="text-xs"><slot name="footer" /></div>
   </Card>
 </template>

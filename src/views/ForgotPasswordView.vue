@@ -5,22 +5,22 @@ import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
 import { forgotPassword } from '@/api/onboarding'
 import { isApiError } from '@/api/errors'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const phoneOrEmail = ref('')
 const submitting = ref(false)
 const sent = ref(false)
-const error = ref<string | null>(null)
 
 async function onSubmit() {
-  error.value = null
   submitting.value = true
   try {
     await forgotPassword(phoneOrEmail.value)
     sent.value = true
     setTimeout(() => router.push({ name: 'reset-password' }), 1200)
   } catch (e) {
-    error.value = isApiError(e) ? e.message : null
+    toast.error(isApiError(e) ? e.message : 'Could not send reset code.')
   } finally {
     submitting.value = false
   }
@@ -39,7 +39,6 @@ async function onSubmit() {
         <input v-model="phoneOrEmail" required class="input" />
       </label>
       <p v-if="sent" class="text-sm text-moss-600">{{ $t('reset.sent') }}</p>
-      <p v-if="error" role="alert" class="text-sm text-clay-700">{{ error }}</p>
       <Button type="submit" size="lg" class="w-full" :disabled="submitting">{{ $t('reset.sendCode') }}</Button>
     </form>
     <template #footer>

@@ -4,26 +4,28 @@ import { useRouter, useRoute } from 'vue-router'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
 import { useSession } from '@/stores/session'
+import { useToastStore } from '@/stores/toast'
 import { isApiError } from '@/api/errors'
+import { useI18n } from 'vue-i18n'
 
 const session = useSession()
 const router = useRouter()
 const route = useRoute()
+const toast = useToastStore()
+const { t } = useI18n()
 
 const phoneOrEmail = ref('')
 const password = ref('')
 const submitting = ref(false)
-const error = ref<string | null>(null)
 
 async function onSubmit() {
-  error.value = null
   submitting.value = true
   try {
     await session.loginWithPassword(phoneOrEmail.value, password.value)
     const redirect = (route.query.redirect as string) || '/dashboard'
     router.replace(redirect)
   } catch (e) {
-    error.value = isApiError(e) ? e.message : null
+    toast.error(isApiError(e) ? e.message : t('auth.signInFailed'))
   } finally {
     submitting.value = false
   }
@@ -59,10 +61,6 @@ async function onSubmit() {
           class="input"
         />
       </label>
-
-      <p v-if="error" role="alert" class="text-sm text-clay-700">
-        {{ error || $t('auth.signInFailed') }}
-      </p>
 
       <Button type="submit" size="lg" class="w-full" :disabled="submitting">
         {{ submitting ? $t('auth.signingIn') : $t('auth.signIn') }}

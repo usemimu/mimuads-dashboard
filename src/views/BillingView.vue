@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
 import { useSession } from '@/stores/session'
+import { useToastStore } from '@/stores/toast'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo, nairaToKobo } from '@/lib/money'
 import { isApiError } from '@/api/errors'
@@ -21,8 +22,8 @@ const session = useSession()
 const route = useRoute()
 const router = useRouter()
 const qc = useQueryClient()
+const toast = useToastStore()
 const tab = ref<'transactions' | 'topup' | 'transfers' | 'invoices'>('transactions')
-const error = ref<string | null>(null)
 
 const { data: wallet } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'wallet')),
@@ -44,17 +45,16 @@ const topupState = ref<'idle' | 'pending' | 'success' | 'failed'>('idle')
 async function startTopup() {
   if (!topupNaira.value || topupNaira.value <= 0) return
   topupBusy.value = true
-  error.value = null
   try {
     const intent = await topupIntent(
       String(nairaToKobo(topupNaira.value)),
       `${window.location.origin}/billing`,
     )
-    const url = (intent.paystack as { authorization_url?: string })?.authorization_url
+    const url = intent.paystack?.authorizationUrl
     if (url) window.location.href = url
-    else error.value = 'Paystack did not return a checkout URL.'
+    else toast.error('Paystack did not return a checkout URL.')
   } catch (e) {
-    error.value = isApiError(e) ? e.message : 'Top-up failed'
+    toast.error(isApiError(e) ? e.message : 'Top-up failed')
   } finally {
     topupBusy.value = false
   }
@@ -67,10 +67,14 @@ onMounted(async () => {
   topupState.value = 'pending'
   try {
     const res = await verifyTopup(reference)
-    topupState.value = res.status === 'success' || res.status === 'completed' ? 'success' : 'failed'
+    const ok = res.status === 'success' || res.status === 'completed'
+    topupState.value = ok ? 'success' : 'failed'
+    if (ok) toast.success('Top-up successful — wallet updated.')
+    else toast.error('Top-up could not be verified.')
     qc.invalidateQueries({ queryKey: ctxKey(session.context, 'wallet') })
   } catch {
     topupState.value = 'failed'
+    toast.error('Top-up could not be verified.')
   } finally {
     router.replace('/billing')
   }
@@ -83,14 +87,14 @@ const invBusy = ref(false)
 async function requestInvoice() {
   if (!invNaira.value || invNaira.value <= 0) return
   invBusy.value = true
-  error.value = null
   try {
     await createInvoice(String(nairaToKobo(invNaira.value)), invPurpose.value || undefined)
     invNaira.value = null
     invPurpose.value = ''
+    toast.success('Invoice requested.')
     qc.invalidateQueries({ queryKey: ctxKey(session.context, 'invoices') })
   } catch (e) {
-    error.value = isApiError(e) ? e.message : 'Could not request invoice'
+    toast.error(isApiError(e) ? e.message : 'Could not request invoice')
   } finally {
     invBusy.value = false
   }
@@ -112,7 +116,6 @@ const tDone = ref(false)
 async function doTransfer() {
   if (!tNaira.value || tNaira.value <= 0 || tFrom.value === tTo.value) return
   tBusy.value = true
-  error.value = null
   tDone.value = false
   try {
     await transfer({
@@ -123,9 +126,10 @@ async function doTransfer() {
     })
     tDone.value = true
     tNaira.value = null
+    toast.success('Transfer complete.')
     qc.invalidateQueries({ queryKey: ctxKey(session.context, 'wallet') })
   } catch (e) {
-    error.value = isApiError(e) ? e.message : 'Transfer failed'
+    toast.error(isApiError(e) ? e.message : 'Transfer failed')
   } finally {
     tBusy.value = false
   }
@@ -143,8 +147,6 @@ async function doTransfer() {
         {{ wallet ? formatKobo(wallet.balanceKobo) : '—' }}
       </p>
     </Card>
-
-    <p v-if="error" role="alert" class="mb-3 rounded-xl bg-clay-50 px-4 py-2.5 text-sm text-clay-700">{{ error }}</p>
 
     <!-- Tabs -->
     <div class="mb-5 flex gap-1 border-b border-neutral-200">

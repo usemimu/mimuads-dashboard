@@ -46,25 +46,31 @@ async function onSignOut() {
 <template>
   <div class="flex h-full min-h-screen bg-neutral-50">
     <!-- Sidebar -->
-    <aside class="flex w-64 flex-col border-r border-neutral-200/70 bg-white">
-      <div class="flex h-16 items-center px-6">
-        <span class="font-display text-[26px] font-semibold leading-none text-clay-600">{{
+    <aside class="flex w-60 flex-col border-r border-line bg-[#FDFCFA]">
+      <div class="flex h-14 items-center gap-2 border-b border-line px-5">
+        <span class="font-display text-[22px] font-semibold leading-none tracking-[-0.02em] text-neutral-900">{{
           $t('app.name')
         }}</span>
+        <span class="ml-auto rounded border border-line px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-neutral-400">
+          Ads
+        </span>
       </div>
-      <nav class="flex-1 space-y-1 px-3 py-4">
+      <nav class="flex-1 overflow-y-auto px-2.5 py-4">
+        <p class="px-2.5 pb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-neutral-400">
+          {{ $t('nav.menu') }}
+        </p>
         <RouterLink
           v-for="item in nav"
           :key="item.to"
           :to="item.to"
-          class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
-          active-class="!bg-clay-50 !text-clay-700"
+          class="group relative my-0.5 flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium text-neutral-600 transition-colors hover:bg-neutral-900/[0.035] hover:text-neutral-900"
+          active-class="!bg-clay-500/[0.08] !font-semibold !text-neutral-900 before:absolute before:-left-2.5 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-clay-500"
         >
-          <component :is="item.icon" :size="20" weight="regular" />
+          <component :is="item.icon" :size="18" weight="regular" />
           <span>{{ $t(item.key) }}</span>
         </RouterLink>
       </nav>
-      <div class="border-t border-neutral-200/70 p-3">
+      <div class="border-t border-line p-2.5">
         <Button variant="ghost" size="sm" class="w-full justify-start text-neutral-500" @click="onSignOut">
           <PhSignOut :size="18" />
           <span>{{ $t('auth.signOut') }}</span>
@@ -75,23 +81,23 @@ async function onSignOut() {
     <!-- Main -->
     <div class="flex min-w-0 flex-1 flex-col">
       <header
-        class="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-neutral-200/70 bg-neutral-50/80 px-6 backdrop-blur"
+        class="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-line bg-neutral-50/85 px-6 backdrop-blur-xl"
       >
         <OrgWorkspaceSwitcher />
         <div class="flex items-center gap-3">
           <div class="flex flex-col text-right leading-tight">
-            <span class="text-sm font-semibold text-neutral-900">{{ userName }}</span>
-            <span v-if="roleLabel" class="text-xs capitalize text-neutral-500">{{ roleLabel }}</span>
+            <span class="text-[13px] font-semibold text-neutral-900">{{ userName }}</span>
+            <span v-if="roleLabel" class="text-[11px] capitalize text-neutral-400">{{ roleLabel }}</span>
           </div>
           <img
             v-if="session.user?.profileImageUrl"
             :src="session.user.profileImageUrl"
             alt="avatar"
-            class="h-9 w-9 rounded-full object-cover ring-1 ring-neutral-200"
+            class="h-8 w-8 rounded-lg object-cover ring-1 ring-line"
           />
           <div
             v-else
-            class="flex h-9 w-9 items-center justify-center rounded-full bg-clay-100 text-xs font-semibold text-clay-700"
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-clay-500 text-xs font-bold text-white"
           >
             {{ userInitials }}
           </div>

@@ -14,11 +14,13 @@ import { listCreatives, uploadIntent, putToPresigned, confirmUpload, sha256Hex }
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo, nairaToKobo } from '@/lib/money'
 import { isApiError } from '@/api/errors'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
 const wizard = useWizard()
 const basket = useBasket()
 const session = useSession()
+const toast = useToastStore()
 const s = wizard.state
 
 // Safety net for deep links: campaign creation requires identity
@@ -86,16 +88,14 @@ async function onUpload(e: Event) {
     await refetchCreatives()
     s.creativeId = intent.creativeId
   } catch (e) {
-    error.value = isApiError(e) ? e.message : 'Upload failed'
+    toast.error(isApiError(e) ? e.message : 'Upload failed')
   } finally {
     uploading.value = false
   }
 }
 
 const submitting = ref(false)
-const error = ref<string | null>(null)
 async function finish(submit: boolean) {
-  error.value = null
   submitting.value = true
   try {
     const campaign = await createCampaign(buildCreatePayload(s))
@@ -103,7 +103,7 @@ async function finish(submit: boolean) {
     wizard.reset()
     router.push(`/campaigns/${campaign.id}`)
   } catch (e) {
-    error.value = isApiError(e) ? e.message : 'Something went wrong'
+    toast.error(isApiError(e) ? e.message : 'Something went wrong')
   } finally {
     submitting.value = false
   }
@@ -238,7 +238,6 @@ async function finish(submit: boolean) {
           <div><dt class="text-neutral-500">{{ $t('campaigns.dates') }}</dt><dd class="text-neutral-900">{{ s.startDate }} → {{ s.endDate }}</dd></div>
           <div v-if="quote"><dt class="text-neutral-500">{{ $t('campaigns.quoteNet') }}</dt><dd class="font-mono text-clay-700">{{ formatKobo(quote.netKobo) }}</dd></div>
         </dl>
-        <p v-if="error" role="alert" class="text-sm text-clay-700">{{ error }}</p>
         <div class="flex gap-3">
           <Button variant="outline" :disabled="submitting" @click="finish(false)">{{ $t('campaigns.saveDraft') }}</Button>
           <Button :disabled="submitting || !stepValid(s, 'review')" @click="finish(true)">

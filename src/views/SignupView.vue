@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button.vue'
 import { requestOtp } from '@/api/onboarding'
 import { isApiError } from '@/api/errors'
 import { useSignup } from '@/stores/signup'
+import { useToastStore } from '@/stores/toast'
 
 /**
  * Page 1 — Create account (PRD §4.1). Creates a USER only (no org). Fields, order
@@ -17,6 +18,7 @@ import { useSignup } from '@/stores/signup'
 const router = useRouter()
 const { tm } = useI18n()
 const signupStore = useSignup()
+const toast = useToastStore()
 
 const firstName = ref('')
 const lastName = ref('')
@@ -26,14 +28,12 @@ const position = ref('')
 const password = ref('')
 const confirm = ref('')
 const submitting = ref(false)
-const error = ref<string | null>(null)
 
 const positions = computed(() => tm('signup.positions') as string[])
 const passwordsMatch = computed(() => confirm.value.length === 0 || password.value === confirm.value)
 const phoneE164 = computed(() => '+234' + localPhone.value.replace(/\D/g, ''))
 
 async function onSubmit() {
-  error.value = null
   if (!passwordsMatch.value) return
   submitting.value = true
   try {
@@ -50,7 +50,7 @@ async function onSubmit() {
     signupStore.set(payload)
     router.push({ name: 'signup-verify', query: { phone: phoneE164.value } })
   } catch (e) {
-    error.value = isApiError(e) ? e.message : null
+    toast.error(isApiError(e) ? e.message : 'Could not create account.')
   } finally {
     submitting.value = false
   }
@@ -111,7 +111,6 @@ async function onSubmit() {
         </label>
       </div>
       <p v-if="!passwordsMatch" class="text-sm text-clay-700">{{ $t('signup.passwordsMustMatch') }}</p>
-      <p v-if="error" role="alert" class="text-sm text-clay-700">{{ error }}</p>
 
       <Button type="submit" size="lg" class="w-full" :disabled="submitting || !passwordsMatch">
         {{ submitting ? $t('signup.creating') : $t('signup.next') }}

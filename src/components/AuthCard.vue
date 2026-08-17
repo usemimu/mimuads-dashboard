@@ -42,7 +42,7 @@ const steps = ['steps.account', 'steps.organization', 'steps.verify'] as const
         </li>
       </ol>
 
-      <div class="rounded-2xl bg-white p-8 shadow-card">
+      <div class="rounded-xl border border-line bg-white p-8 shadow-card-hover">
         <slot />
       </div>
 

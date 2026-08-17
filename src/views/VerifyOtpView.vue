@@ -7,17 +7,20 @@ import { useSession } from '@/stores/session'
 import { useSignup } from '@/stores/signup'
 import { requestOtp } from '@/api/onboarding'
 import { isApiError } from '@/api/errors'
+import { useToastStore } from '@/stores/toast'
+import { useI18n } from 'vue-i18n'
 
 /** Page 2 — OTP verification (PRD §4.1). verify-otp establishes the cookie session. */
 const route = useRoute()
 const router = useRouter()
 const session = useSession()
 const signupStore = useSignup()
+const toast = useToastStore()
+const { t } = useI18n()
 
 const phone = computed(() => (route.query.phone as string) || signupStore.pending?.phone || '')
 const code = ref('')
 const submitting = ref(false)
-const error = ref<string | null>(null)
 
 const cooldown = ref(0)
 let timer: ReturnType<typeof setInterval> | undefined
@@ -31,7 +34,6 @@ function startCooldown() {
 onUnmounted(() => timer && clearInterval(timer))
 
 async function onSubmit() {
-  error.value = null
   submitting.value = true
   try {
     await session.verifyOtp(phone.value, code.value)
@@ -40,7 +42,7 @@ async function onSubmit() {
     // no-org users to org setup, verified users to the shell.
     router.replace('/')
   } catch (e) {
-    error.value = isApiError(e) ? e.message : null
+    toast.error(isApiError(e) ? e.message : t('verify.failed'))
   } finally {
     submitting.value = false
   }
@@ -52,7 +54,7 @@ async function onResend() {
     await requestOtp(signupStore.pending)
     startCooldown()
   } catch (e) {
-    error.value = isApiError(e) ? e.message : null
+    toast.error(isApiError(e) ? e.message : t('verify.failed'))
   }
 }
 </script>
@@ -76,8 +78,6 @@ async function onResend() {
           class="input text-center font-mono text-2xl tracking-[0.4em]"
         />
       </label>
-
-      <p v-if="error" role="alert" class="text-sm text-clay-700">{{ error || $t('verify.failed') }}</p>
 
       <Button type="submit" size="lg" class="w-full" :disabled="submitting || code.length !== 6">
         {{ submitting ? $t('verify.verifying') : $t('verify.submit') }}

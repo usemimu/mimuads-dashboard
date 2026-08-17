@@ -12,11 +12,12 @@ import {
   listApiKeys, createApiKey, revokeApiKey,
 } from '@/api/org'
 import { isApiError } from '@/api/errors'
+import { useToastStore } from '@/stores/toast'
 
 const session = useSession()
 const qc = useQueryClient()
+const toast = useToastStore()
 const tab = ref<'members' | 'workspaces' | 'verification' | 'apikeys'>('members')
-const error = ref<string | null>(null)
 const roles = MembershipRoleSchema.options
 const isAgency = computed(() => session.context.tier === 'agency')
 const isOwner = computed(() => session.role === 'owner')
@@ -26,9 +27,8 @@ const { data: workspaces } = useQuery({ queryKey: ['ws-admin'], queryFn: listWor
 const { data: keys } = useQuery({ queryKey: ['apikeys'], queryFn: listApiKeys })
 
 async function run(fn: () => Promise<unknown>, key: string) {
-  error.value = null
   try { await fn(); qc.invalidateQueries({ queryKey: [key] }) }
-  catch (e) { error.value = isApiError(e) ? e.message : 'Action failed' }
+  catch (e) { toast.error(isApiError(e) ? e.message : 'Action failed') }
 }
 
 // Invite
@@ -49,13 +49,12 @@ const keyName = ref('')
 const newKey = ref<string | null>(null)
 async function makeKey() {
   if (!keyName.value) return
-  error.value = null
   try {
     const res = (await createApiKey(keyName.value, ['campaigns:write', 'reports:read'])) as { key?: string; plaintext?: string }
     newKey.value = res.key ?? res.plaintext ?? null
     keyName.value = ''
     qc.invalidateQueries({ queryKey: ['apikeys'] })
-  } catch (e) { error.value = isApiError(e) ? e.message : 'Could not create key' }
+  } catch (e) { toast.error(isApiError(e) ? e.message : 'Could not create key') }
 }
 </script>
 
@@ -68,7 +67,6 @@ async function makeKey() {
         :class="tab === t ? 'border-clay-500 text-clay-700' : 'border-transparent text-neutral-500 hover:text-neutral-800'"
         @click="tab = t">{{ $t('orgAdmin.tab' + t.charAt(0).toUpperCase() + t.slice(1)) }}</button>
     </div>
-    <p v-if="error" role="alert" class="mb-3 rounded-xl bg-clay-50 px-4 py-2.5 text-sm text-clay-700">{{ error }}</p>
 
     <!-- Members -->
     <div v-if="tab === 'members'" class="space-y-4">
