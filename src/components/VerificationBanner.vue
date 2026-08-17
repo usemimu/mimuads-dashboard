@@ -1,28 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
 import { RouterLink } from 'vue-router'
 import { PhSealWarning } from '@phosphor-icons/vue'
 import { useSession } from '@/stores/session'
-import { getKycStatus } from '@/api/onboarding'
-import { ctxKey } from '@/lib/ctx-key'
+import { useKyc } from '@/composables/useKyc'
 
 /**
- * Contextual verification banner (PRD §4.1 Page 4). Shown when the active org
- * isn't verified — advertiser orgs get a link to the verification hub; agency
- * orgs see the ops-driven enhanced-verification pending state.
+ * Contextual verification banner (PRD §4.1 Page 4). Shown while the operator
+ * hasn't finished identity verification (`kycComplete`). Once complete the
+ * banner clears — pending *business* approval is a separate, non-blocking
+ * state and does not keep the banner up. Agency orgs see the ops-driven
+ * enhanced-verification note.
  */
 const session = useSession()
 const isAgency = computed(() => session.context.tier === 'agency')
 
-const { data } = useQuery({
-  queryKey: ctxKey(session.context, 'kyc', 'status'),
-  queryFn: getKycStatus,
-  staleTime: 60_000,
-})
-
-const verified = computed(() => data.value?.isVerified === true)
-const show = computed(() => session.hasOrg && !verified.value)
+const { kycComplete } = useKyc()
+const show = computed(() => session.hasOrg && !kycComplete.value)
 </script>
 
 <template>

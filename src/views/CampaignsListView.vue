@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhPlus, PhMegaphone } from '@phosphor-icons/vue'
+import { PhPlus, PhMegaphone, PhSealCheck } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -11,6 +11,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import { listCampaigns, pauseCampaign, resumeCampaign } from '@/api/campaigns'
 import { useSession } from '@/stores/session'
 import { useWizard } from '@/stores/wizard'
+import { useKyc } from '@/composables/useKyc'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
 import { statusTone, statusLabel } from '@/lib/status'
@@ -19,6 +20,12 @@ const router = useRouter()
 const session = useSession()
 const wizard = useWizard()
 const qc = useQueryClient()
+
+// Campaign creation is gated on identity verification (kycComplete) — the
+// same milestone the mobile app gates on. Business approval pending does
+// NOT block. Until KYC is done the whole campaigns surface is replaced by
+// a verify-first prompt.
+const { kycComplete, isLoading: kycLoading } = useKyc()
 
 const statusFilter = ref('')
 const selected = ref<Set<string>>(new Set())
@@ -50,12 +57,30 @@ function startWizard() {
   <div>
     <PageHeader :title="$t('campaigns.title')">
       <template #actions>
-        <Button v-if="session.canSubmitCampaign" @click="startWizard">
+        <Button v-if="session.canSubmitCampaign && kycComplete" @click="startWizard">
           <PhPlus :size="16" /> {{ $t('campaigns.newCampaign') }}
         </Button>
       </template>
     </PageHeader>
 
+    <!-- KYC gate: while identity verification isn't complete, the whole
+         campaigns surface is replaced by a verify-first prompt. -->
+    <Card v-if="kycLoading">
+      <p class="py-6 text-center text-sm text-neutral-400">{{ $t('verification.checkingCampaigns') }}</p>
+    </Card>
+
+    <Card v-else-if="!kycComplete">
+      <EmptyState :title="$t('verification.gateTitle')" :message="$t('verification.gateBody')">
+        <template #icon><PhSealCheck :size="24" /></template>
+        <template #actions>
+          <RouterLink to="/verify">
+            <Button><PhSealCheck :size="16" /> {{ $t('verification.gateCta') }}</Button>
+          </RouterLink>
+        </template>
+      </EmptyState>
+    </Card>
+
+    <template v-else>
     <div class="mb-5 flex flex-wrap items-center gap-3">
       <select
         v-model="statusFilter"
@@ -129,5 +154,6 @@ function startWizard() {
         </tbody>
       </table>
     </Card>
+    </template>
   </div>
 </template>

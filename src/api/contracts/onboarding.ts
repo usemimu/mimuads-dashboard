@@ -103,11 +103,27 @@ export const KycStartResponseSchema = z.object({
 export type KycStartResponse = z.infer<typeof KycStartResponseSchema>
 
 /** Permissive — the exact status payload firms up when we wire the widget. */
+// Mirrors the backend KycStatusProjection (kyc.service.ts). Two distinct
+// concepts: `kycComplete` = the operator finished identity verification
+// (Dojah), and `businessApprovalStatus` = ops sign-off on the business
+// (flips later, independently). The console gates campaign creation on
+// kycComplete alone — business approval pending does NOT block.
 export const KycStatusResponseSchema = z
   .object({
-    status: z.string().optional(),
-    level: z.string().nullish(),
-    isVerified: z.boolean().optional(),
+    kycComplete: z.boolean(),
+    kycCompleteAt: z.string().nullable(),
+    businessApprovalStatus: z.string(),
+    latestVerification: z
+      .object({
+        referenceId: z.string(),
+        status: z.string(),
+        method: z.string().nullable(),
+        initiatedAt: z.string(),
+        verifiedAt: z.string().nullable(),
+        failedAt: z.string().nullable(),
+        failureReason: z.string().nullable(),
+      })
+      .nullable(),
   })
   .passthrough()
 export type KycStatusResponse = z.infer<typeof KycStatusResponseSchema>

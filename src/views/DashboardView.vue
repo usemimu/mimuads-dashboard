@@ -10,6 +10,7 @@ import {
   PhArrowRight,
   PhWarningCircle,
   PhCheckCircle,
+  PhSealCheck,
 } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -17,6 +18,7 @@ import StatCard from '@/components/ui/StatCard.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
 import { useSession } from '@/stores/session'
+import { useKyc } from '@/composables/useKyc'
 import { getWallet } from '@/api/billing'
 import { listCampaigns } from '@/api/campaigns'
 import { ctxKey } from '@/lib/ctx-key'
@@ -25,6 +27,7 @@ import { statusTone, statusLabel } from '@/lib/status'
 
 /** Dashboard (§4.8) — assembled from existing endpoints; no bespoke analytics. */
 const session = useSession()
+const { kycComplete } = useKyc()
 
 const { data: wallet } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'wallet')),
@@ -59,12 +62,20 @@ const dashSubtitle = computed(() => {
   <div>
     <PageHeader :title="$t('nav.dashboard')" :subtitle="dashSubtitle">
       <template #actions>
-        <RouterLink v-if="session.canSubmitCampaign" to="/campaigns/new">
-          <Button>
-            <PhMegaphone :size="18" />
-            {{ $t('dashboard.quickStart') }}
-          </Button>
-        </RouterLink>
+        <template v-if="session.canSubmitCampaign">
+          <RouterLink v-if="kycComplete" to="/campaigns/new">
+            <Button>
+              <PhMegaphone :size="18" />
+              {{ $t('dashboard.quickStart') }}
+            </Button>
+          </RouterLink>
+          <RouterLink v-else to="/verify">
+            <Button variant="outline">
+              <PhSealCheck :size="18" />
+              {{ $t('verification.gateCta') }}
+            </Button>
+          </RouterLink>
+        </template>
       </template>
     </PageHeader>
 

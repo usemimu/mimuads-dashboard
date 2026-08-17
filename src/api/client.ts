@@ -54,13 +54,21 @@ async function refreshOnce(): Promise<boolean> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
       try {
+        // Refresh is a cookie-authenticated, state-changing route, so the
+        // API enforces the double-submit CSRF check: echo the readable
+        // `mimu_csrf` cookie in X-CSRF-Token. (The general doFetch below
+        // does this for mutations; this standalone fetch must too, or the
+        // API returns 403 "CSRF token missing or invalid".)
+        const refreshHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'X-Auth-Transport': 'cookie',
+        }
+        const csrf = readCookie(CSRF_COOKIE)
+        if (csrf) refreshHeaders['X-CSRF-Token'] = csrf
         const res = await fetch(env.apiBaseUrl + REFRESH_PATH, {
           method: 'POST',
           credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Auth-Transport': 'cookie',
-          },
+          headers: refreshHeaders,
           body: '{}',
         })
         if (!res.ok) return false

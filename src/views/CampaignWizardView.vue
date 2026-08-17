@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
 import { useWizard } from '@/stores/wizard'
 import { useBasket } from '@/stores/basket'
 import { useSession } from '@/stores/session'
+import { useKyc } from '@/composables/useKyc'
 import { WIZARD_STEPS, stepValid, buildCreatePayload } from '@/lib/wizard'
 import { ObjectiveSchema } from '@/api/contracts/campaigns'
 import { getQuote, createCampaign, submitCampaign } from '@/api/campaigns'
@@ -19,6 +20,14 @@ const wizard = useWizard()
 const basket = useBasket()
 const session = useSession()
 const s = wizard.state
+
+// Safety net for deep links: campaign creation requires identity
+// verification. Once KYC status loads and reads incomplete, bounce to the
+// verification hub. (Business approval pending does NOT block.)
+const { kycComplete, isLoading: kycLoading } = useKyc()
+watch([kycLoading, kycComplete], ([loading, complete]) => {
+  if (!loading && !complete) router.replace('/verify')
+}, { immediate: true })
 
 const objectives = ObjectiveSchema.options
 const days = [0, 1, 2, 3, 4, 5, 6]
