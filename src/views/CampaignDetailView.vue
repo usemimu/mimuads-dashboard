@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
+import OfferCard from '@/components/OfferCard.vue'
 import { statusTone, statusLabel } from '@/lib/status'
 import { useSession } from '@/stores/session'
 import {
@@ -106,6 +107,9 @@ async function onClone() {
       </div>
       <p class="mt-2 text-right text-xs font-medium text-neutral-400">{{ pacing }}%</p>
     </Card>
+
+    <!-- Offer -->
+    <OfferCard :campaign-id="id" />
 
     <!-- Performance tabs -->
     <Card padding="none" class="mb-5 overflow-hidden">

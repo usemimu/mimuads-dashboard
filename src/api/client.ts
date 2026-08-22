@@ -185,6 +185,8 @@ export const api = {
     apiFetch<T>(path, { method: 'POST', body, schema }),
   patch: <T>(path: string, body?: unknown, schema?: z.ZodType<T>) =>
     apiFetch<T>(path, { method: 'PATCH', body, schema }),
+  put: <T>(path: string, body?: unknown, schema?: z.ZodType<T>) =>
+    apiFetch<T>(path, { method: 'PUT', body, schema }),
   del: <T>(path: string, body?: unknown, schema?: z.ZodType<T>) =>
     apiFetch<T>(path, { method: 'DELETE', body, schema }),
 }

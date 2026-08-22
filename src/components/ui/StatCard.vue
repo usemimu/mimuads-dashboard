@@ -3,7 +3,7 @@ import Card from './Card.vue'
 
 /**
  * KPI tile: an eyebrow label, a large editorial value set in the display
- * serif (Cormorant, tabular figures — the "marketing platform" hero
+ * Aeonik (tabular figures — the "marketing platform" hero
  * number), an accented icon chip, and a footer slot for a link or trend.
  */
 withDefaults(

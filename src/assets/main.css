@@ -1,9 +1,9 @@
-/* Brand fonts. Self-host in production; dev uses Google Fonts for speed. */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hanken Grotesk (free, OFL) — Aeonik-style look-alike, loaded from Google
+   Fonts via the <link> in index.html. Replaces the evaluation-only Aeonik. */
 
 @layer base {
   :root {

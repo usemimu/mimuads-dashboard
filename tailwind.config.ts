@@ -68,9 +68,9 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Cormorant', 'Georgia', 'serif'],
-        body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', '"Courier New"', 'monospace'],
+        display: ['Hanken Grotesk', 'Georgia', 'serif'],
+        body: ['Hanken Grotesk', 'system-ui', 'sans-serif'],
+        mono: ['Hanken Grotesk', '"Courier New"', 'monospace'],
       },
       // Restrained, warm-tinted elevation — an "editorial console" surface
       // language: cards lean on a hairline border with only a whisper of
