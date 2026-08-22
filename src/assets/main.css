@@ -1,9 +1,17 @@
+/* Aeonik — licensed (CoType / This Is Our Shop), self-hosted. Only the
+   Regular weight is bundled; bolder text is browser-synthesized until the
+   Bold/Light weight files are added to public/fonts + this @font-face. */
+@font-face {
+  font-family: 'Aeonik';
+  src: url('/fonts/Aeonik-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Hanken Grotesk (free, OFL) — Aeonik-style look-alike, loaded from Google
-   Fonts via the <link> in index.html. Replaces the evaluation-only Aeonik. */
 
 @layer base {
   :root {
