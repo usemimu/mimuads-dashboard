@@ -50,6 +50,31 @@
 @layer base {
   :root {
     color-scheme: light;
+
+    /* Admin-console tokens (light). Ported from mimu-admin so this
+       console's shell + page chrome read identically. The palette is the
+       same clay/neutral system as Tailwind's tokens; these vars let the
+       shell/page classes below match admin's markup 1:1. */
+    --bg: #f7f5f2;
+    --bg-raised: #ffffff;
+    --bg-sunken: #ede9e3;
+    --bg-hover: rgba(14, 13, 11, 0.035);
+    --bg-active: rgba(181, 84, 48, 0.08);
+    --bg-selected: rgba(181, 84, 48, 0.09);
+    --border: #e6e1d9;
+    --border-strong: #ddd8d0;
+    --border-focus: #b55430;
+    --fg: #0e0d0b;
+    --fg-2: #5e574f;
+    --fg-3: #a89f94;
+    --shadow-sm: 0 1px 2px rgba(14, 13, 11, 0.06);
+    --shadow-md: 0 4px 14px rgba(14, 13, 11, 0.1);
+    --shadow-lg: 0 12px 40px rgba(14, 13, 11, 0.16);
+    --sidebar-bg: #fdfcfa;
+    --topbar-bg: rgba(247, 245, 242, 0.88);
+
+    --ease: cubic-bezier(0.2, 0, 0.1, 1);
+    --dur-med: 160ms;
   }
 
   html,
@@ -59,7 +84,7 @@
   }
 
   body {
-    @apply bg-neutral-50 text-neutral-900 font-body antialiased;
+    @apply bg-neutral-50 font-body text-[13px] leading-normal text-neutral-900 antialiased;
   }
 
   /* Warm-tinted text selection instead of the default browser blue. */
@@ -113,6 +138,296 @@
   /* Micro-label used above stats and section groupings. */
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-wider text-neutral-400;
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+     App shell — ported from mimu-admin so the console frame (sidebar,
+     topbar, page chrome) is visually identical. Light theme only.
+     ──────────────────────────────────────────────────────────────── */
+  .app-shell {
+    @apply grid h-screen;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 44px 1fr;
+  }
+
+  .sidebar {
+    grid-row: 1 / 3;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    @apply flex flex-col overflow-x-hidden overflow-y-auto;
+  }
+
+  .topbar {
+    background: var(--topbar-bg);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    @apply z-[5] flex items-center gap-3 px-4;
+  }
+
+  .page {
+    @apply relative overflow-x-hidden overflow-y-auto;
+    background: var(--bg);
+  }
+
+  /* Sidebar chrome */
+  .sb-logo {
+    @apply flex h-[44px] cursor-pointer items-center gap-2.5 px-4;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sb-logo-txt {
+    @apply font-display text-[20px] font-normal leading-none;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+
+  .sb-env {
+    @apply ml-auto rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase;
+    letter-spacing: 0.1em;
+    color: var(--fg-3);
+    border: 1px solid var(--border);
+  }
+
+  .sb-section {
+    @apply px-2 py-3;
+  }
+
+  .sb-section-label {
+    @apply px-2.5 pb-1.5 text-[10px] font-bold uppercase;
+    letter-spacing: 0.1em;
+    color: var(--fg-3);
+  }
+
+  .sb-item {
+    @apply relative my-0.5 flex cursor-pointer select-none items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px];
+    color: var(--fg-2);
+  }
+
+  .sb-item:hover {
+    background: var(--bg-hover);
+    color: var(--fg);
+  }
+
+  .sb-item.active {
+    background: var(--bg-active);
+    color: var(--fg);
+    @apply font-semibold;
+  }
+
+  .sb-item.active::before {
+    content: '';
+    @apply absolute left-[-8px] bottom-1.5 top-1.5 w-0.5 rounded-r;
+    background: #b55430;
+  }
+
+  .sb-item i {
+    @apply shrink-0 text-base;
+  }
+
+  .sb-item-label {
+    @apply flex-1;
+  }
+
+  .sb-badge {
+    @apply min-w-[18px] rounded px-1.5 py-0.5 text-center font-mono text-[10px] font-bold;
+    background: var(--bg-sunken);
+    color: var(--fg-2);
+  }
+
+  .sb-badge.attn {
+    @apply bg-gold-500 text-white;
+  }
+
+  .sb-badge.alert {
+    @apply bg-clay-700 text-white;
+  }
+
+  .sb-user {
+    position: sticky;
+    bottom: 0;
+    @apply flex cursor-pointer items-center gap-2.5 px-3 py-2.5;
+    border-top: 1px solid var(--border);
+    background: var(--sidebar-bg);
+  }
+
+  .sb-user:hover {
+    background: var(--bg-hover);
+  }
+
+  .avatar {
+    @apply flex shrink-0 items-center justify-center rounded-md text-xs font-bold text-white;
+    background: #b55430;
+  }
+
+  .sb-user-name {
+    @apply truncate text-xs font-semibold leading-tight;
+    color: var(--fg);
+  }
+
+  .sb-user-role {
+    @apply text-[11px] capitalize leading-tight;
+    color: var(--fg-3);
+  }
+
+  /* Topbar chrome */
+  .tb-search {
+    @apply mx-auto flex max-w-[560px] flex-1 cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px];
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    color: var(--fg-3);
+  }
+
+  .tb-search:hover {
+    border-color: var(--border-strong);
+  }
+
+  .tb-right {
+    @apply ml-auto flex items-center gap-2;
+  }
+
+  .tb-btn {
+    @apply relative flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-md border-0 bg-transparent;
+    color: var(--fg-2);
+  }
+
+  .tb-btn:hover {
+    background: var(--bg-hover);
+    color: var(--fg);
+  }
+
+  .tb-btn .dot {
+    @apply absolute right-[5px] top-[5px] h-1.5 w-1.5 rounded-full bg-clay-500;
+  }
+
+  .kbd {
+    @apply inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-sm px-1.5 font-mono text-[10px] font-semibold leading-none;
+    color: var(--fg-2);
+    background: var(--bg-sunken);
+    border: 1px solid var(--border-strong);
+  }
+
+  /* Page chrome */
+  .page-header {
+    @apply px-6 pb-4 pt-5;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .page-header.sticky {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+
+  .page-title-row {
+    @apply mb-1 flex items-center gap-4;
+  }
+
+  .page-title {
+    @apply font-display text-xl font-semibold;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+  }
+
+  .page-subtitle {
+    @apply text-[13px] capitalize;
+    color: var(--fg-2);
+  }
+
+  .page-body {
+    @apply px-6 py-5;
+  }
+
+  /* Metric tiles */
+  .metric {
+    @apply rounded-lg p-4;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+  }
+
+  .metric-label {
+    @apply mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-3);
+  }
+
+  .metric-value {
+    @apply mb-1.5 font-display text-[32px] font-normal leading-none [font-variant-numeric:tabular-nums];
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+
+  /* Pills */
+  .pill {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-transparent px-2 py-0.5 text-[11px] font-semibold leading-relaxed;
+  }
+
+  .pill-active {
+    @apply text-moss-500;
+    background: rgba(43, 114, 68, 0.1);
+    border-color: rgba(43, 114, 68, 0.25);
+  }
+
+  .pill-pending {
+    @apply text-gold-500;
+    background: rgba(180, 136, 28, 0.12);
+    border-color: rgba(180, 136, 28, 0.28);
+  }
+
+  .pill-failed {
+    @apply text-clay-700;
+    background: rgba(184, 40, 40, 0.1);
+    border-color: rgba(184, 40, 40, 0.25);
+  }
+
+  .pill-neutral {
+    background: var(--bg-sunken);
+    border-color: var(--border);
+    color: var(--fg-2);
+  }
+
+  .pill-clay {
+    @apply text-clay-500;
+    background: rgba(181, 84, 48, 0.1);
+    border-color: rgba(181, 84, 48, 0.25);
+  }
+
+  /* Status dot */
+  .sdot {
+    @apply inline-block h-[7px] w-[7px] rounded-full;
+  }
+  .sdot.green {
+    @apply bg-moss-500;
+  }
+  .sdot.red {
+    @apply bg-clay-700;
+  }
+  .sdot.amber {
+    @apply bg-gold-500;
+  }
+  .sdot.grey {
+    background: var(--fg-3);
+  }
+
+  /* Filter bar / chips */
+  .filterbar {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-1.5 text-xs leading-none;
+    color: var(--fg-2);
+    border-color: var(--border);
+    background: var(--bg);
+  }
+  .chip strong {
+    @apply font-semibold;
+    color: var(--fg);
+  }
+  .chip.active {
+    color: var(--fg);
+    border-color: var(--border-focus);
+    background: var(--bg-selected);
   }
 }
 

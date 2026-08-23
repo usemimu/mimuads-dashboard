@@ -18,7 +18,7 @@ withDefaults(
 </script>
 
 <template>
-  <Card class="flex flex-col gap-2">
+  <Card class="flex flex-col gap-2 [container-type:inline-size]">
     <div class="flex items-start justify-between">
       <p class="eyebrow pt-0.5">{{ label }}</p>
       <span
@@ -28,9 +28,12 @@ withDefaults(
         <slot name="icon" />
       </span>
     </div>
+    <!-- The value scales with the tile width (cqi) so long amounts like
+         ₦500,000,000 never overflow the box, while capping at the hero size
+         on wide tiles. `whitespace-nowrap` keeps it on one line. -->
     <p
-      class="font-semibold leading-none text-neutral-900 [font-variant-numeric:tabular-nums]"
-      :class="mono ? 'font-mono text-2xl' : 'font-display text-[2.5rem]'"
+      class="whitespace-nowrap font-semibold leading-none text-neutral-900 [font-variant-numeric:tabular-nums]"
+      :class="mono ? 'font-mono text-[clamp(1rem,7cqi,1.5rem)]' : 'font-display text-[clamp(1.125rem,9cqi,2.5rem)]'"
     >
       {{ value }}
     </p>

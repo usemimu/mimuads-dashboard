@@ -6,14 +6,17 @@ import { env } from '@/env'
 import { isOnline, type Screen } from '@/api/contracts/screens'
 
 /**
- * Google Maps inventory view (per product decision — replaces the PRD's MapLibre).
- * Clustered markers coloured by online/offline. Degrades to a clear fallback when
- * no VITE_GOOGLE_MAPS_API_KEY is set (dev/CI), so the rest of the browser still works.
+ * Google Maps inventory view — the web equivalent of the mobile screens map.
+ * Screens render as clay dots (online) / muted dots (offline); tapping one
+ * emits `select` so the parent can raise a detail card. The camera frames all
+ * visible screens whenever the filtered set changes (mirrors the mobile map's
+ * "fit to features"). Degrades to a clear fallback when no
+ * VITE_GOOGLE_MAPS_API_KEY is set (dev/CI).
  */
 const props = defineProps<{ screens: Screen[]; selectedIds: string[] }>()
 const emit = defineEmits<{ (e: 'select', screen: Screen): void }>()
 
-const ONLINE = '#2B7244' // moss-500
+const ONLINE = '#B55430' // clay-500 — matches the mobile accent dot
 const OFFLINE = '#A89F94' // neutral-400
 const LAGOS = { lat: 6.5244, lng: 3.3792 }
 
@@ -31,11 +34,27 @@ function icon(screen: Screen, selected: boolean): google.maps.Symbol {
     scale: selected ? 9 : 6,
     fillColor: isOnline(screen.status) ? ONLINE : OFFLINE,
     fillOpacity: 1,
-    strokeColor: selected ? '#B55430' /* clay-500 */ : '#ffffff',
+    strokeColor: selected ? '#79321E' /* clay-700 */ : '#ffffff',
     strokeWeight: selected ? 3 : 1.5,
   }
 }
 
+/** Frame the camera around all screens with a coordinate (mobile "fit"). */
+function frame(): void {
+  if (!map) return
+  const pts = props.screens.filter((s) => s.latitude != null && s.longitude != null)
+  if (!pts.length) return
+  if (pts.length === 1) {
+    map.setCenter({ lat: pts[0]!.latitude!, lng: pts[0]!.longitude! })
+    map.setZoom(14)
+    return
+  }
+  const bounds = new google.maps.LatLngBounds()
+  for (const s of pts) bounds.extend({ lat: s.latitude!, lng: s.longitude! })
+  map.fitBounds(bounds, 64)
+}
+
+/** Rebuild every marker + cluster from the current screen set. */
 function render(): void {
   if (!map) return
   clusterer?.clearMarkers()
@@ -56,6 +75,14 @@ function render(): void {
   clusterer = new MarkerClusterer({ map, markers: [...next.values()] })
 }
 
+/** Recolour existing markers for selection changes — no camera re-frame. */
+function refreshSelection(): void {
+  for (const s of props.screens) {
+    const m = markers.value.get(s.id)
+    if (m) m.setIcon(icon(s, props.selectedIds.includes(s.id)))
+  }
+}
+
 onMounted(async () => {
   if (!hasKey || !el.value) return
   try {
@@ -65,10 +92,12 @@ onMounted(async () => {
     map = new Map(el.value, {
       center: LAGOS,
       zoom: 11,
-      disableDefaultUI: false,
+      disableDefaultUI: true,
+      zoomControl: true,
       clickableIcons: false,
     })
     render()
+    frame()
   } catch {
     failed.value = true
   }
@@ -79,7 +108,10 @@ onBeforeUnmount(() => {
   markers.value.forEach((m) => m.setMap(null))
 })
 
-watch(() => [props.screens, props.selectedIds], render, { deep: true })
+// The filtered set changing rebuilds markers and re-frames the camera; a
+// pure selection change only recolours (keeps the user's current viewport).
+watch(() => props.screens, () => { render(); frame() }, { deep: true })
+watch(() => props.selectedIds, refreshSelection, { deep: true })
 </script>
 
 <template>

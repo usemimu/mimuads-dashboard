@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
+import ScreenPicker from '@/components/screens/ScreenPicker.vue'
 import { useWizard } from '@/stores/wizard'
 import { useBasket } from '@/stores/basket'
 import { useSession } from '@/stores/session'
@@ -151,13 +152,14 @@ async function finish(submit: boolean) {
             <span class="block text-sm text-neutral-500">{{ $t('campaigns.wildcardHint') }}</span>
           </span>
         </label>
-        <div v-if="!s.isWildcard" class="space-y-2">
-          <Button v-if="basket.count" variant="secondary" @click="useBasketScreens">
-            {{ $t('campaigns.useBasket', { count: basket.count }) }}
-          </Button>
-          <p class="text-sm" :class="s.screenIds.length ? 'text-neutral-700' : 'text-neutral-400'">
-            {{ s.screenIds.length ? $t('screens.resultCount', { count: s.screenIds.length }) : $t('campaigns.noScreens') }}
-          </p>
+        <div v-if="!s.isWildcard" class="space-y-3">
+          <div v-if="basket.count" class="flex items-center justify-between gap-3 rounded-lg bg-neutral-50 px-3 py-2">
+            <span class="text-sm text-neutral-500">{{ $t('campaigns.basketAvailable', { count: basket.count }) }}</span>
+            <Button variant="secondary" size="sm" @click="useBasketScreens">
+              {{ $t('campaigns.useBasket', { count: basket.count }) }}
+            </Button>
+          </div>
+          <ScreenPicker v-model="s.screenIds" />
         </div>
       </div>
 

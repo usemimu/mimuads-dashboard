@@ -205,10 +205,10 @@ async function onSignOut() {
 </script>
 
 <template>
-  <div class="max-w-3xl">
+  <div>
     <PageHeader :title="$t('settings.title')" />
 
-    <div class="space-y-6">
+    <div class="max-w-3xl space-y-6">
       <!-- Account + avatar -->
       <Card>
         <div class="mb-5 flex items-start gap-3">

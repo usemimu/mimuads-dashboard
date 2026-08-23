@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { PhCaretUpDown, PhCheck, PhBuildings } from '@phosphor-icons/vue'
 import { useSession } from '@/stores/session'
@@ -14,6 +14,31 @@ import { ctxKey } from '@/lib/ctx-key'
  */
 const session = useSession()
 const open = ref(false)
+
+// Living in the sidebar (which clips overflow), the menu is teleported to
+// <body> and rendered `position: fixed`, anchored under the trigger — so it
+// can't be cut off by the sidebar's scroll/overflow. Rect recomputed on open.
+const triggerEl = ref<HTMLElement | null>(null)
+// `up` anchors the menu to its bottom edge (grows upward) — used when the
+// trigger sits low in the viewport (it lives at the bottom of the sidebar).
+const menuPos = reactive({ top: 0, bottom: 0, left: 0, width: 0, up: false })
+
+function toggleMenu() {
+  if (open.value) {
+    open.value = false
+    return
+  }
+  const el = triggerEl.value
+  if (el) {
+    const r = el.getBoundingClientRect()
+    menuPos.up = r.bottom > window.innerHeight * 0.6
+    menuPos.top = r.bottom + 6
+    menuPos.bottom = window.innerHeight - r.top + 6
+    menuPos.left = r.left
+    menuPos.width = Math.max(r.width, 232)
+  }
+  open.value = true
+}
 
 const { data: orgs } = useQuery({
   queryKey: ['my-orgs'],
@@ -51,31 +76,37 @@ async function pickWorkspace(workspaceId: string | null) {
 </script>
 
 <template>
-  <div class="relative">
+  <div>
     <button
+      ref="triggerEl"
       type="button"
-      class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:bg-neutral-50"
+      class="flex w-full items-center gap-2 rounded-md border border-line bg-[var(--bg-raised)] px-2 py-1.5 text-left transition-colors hover:bg-neutral-50"
       :aria-label="$t('context.switchOrg')"
-      @click="open = !open"
+      @click="toggleMenu"
     >
-      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-clay-50 text-clay-600">
-        <PhBuildings :size="17" />
+      <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-clay-50 text-clay-600">
+        <PhBuildings :size="14" />
       </div>
-      <div class="flex flex-col leading-tight">
-        <span class="text-sm font-semibold text-neutral-900">{{ orgLabel }}</span>
-        <span v-if="wsLabel" class="text-xs font-medium text-clay-600">{{ wsLabel }}</span>
-        <span v-else class="text-xs text-neutral-500">{{ $t('context.org') }}</span>
+      <div class="flex min-w-0 flex-1 flex-col leading-tight">
+        <span class="truncate text-[13px] font-semibold text-neutral-900">{{ orgLabel }}</span>
+        <span v-if="wsLabel" class="truncate text-[11px] font-medium text-clay-600">{{ wsLabel }}</span>
+        <span v-else class="truncate text-[11px] text-neutral-500">{{ $t('context.org') }}</span>
       </div>
-      <PhCaretUpDown :size="16" class="text-neutral-400" />
+      <PhCaretUpDown :size="14" class="shrink-0 text-neutral-400" />
     </button>
 
-    <!-- Click-outside backdrop -->
-    <div v-if="open" class="fixed inset-0 z-10" @click="open = false" />
-
-    <div
-      v-if="open"
-      class="absolute left-0 z-20 mt-2 w-64 overflow-hidden rounded-xl bg-white py-1.5 shadow-pop ring-1 ring-neutral-200/70"
-    >
+    <!-- Menu teleported to <body> so the sidebar's overflow can't clip it. -->
+    <Teleport to="body">
+      <div v-if="open" class="fixed inset-0 z-[998]" @click="open = false" />
+      <div
+        v-if="open"
+        class="fixed z-[999] overflow-hidden rounded-xl bg-white py-1.5 shadow-pop ring-1 ring-neutral-200/70"
+        :style="{
+          left: `${menuPos.left}px`,
+          width: `${menuPos.width}px`,
+          ...(menuPos.up ? { bottom: `${menuPos.bottom}px` } : { top: `${menuPos.top}px` }),
+        }"
+      >
       <p class="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('context.switchOrg') }}</p>
       <button
         v-for="o in orgs?.orgs ?? []" :key="o.orgId"
@@ -102,6 +133,7 @@ async function pickWorkspace(workspaceId: string | null) {
           <PhCheck v-if="w.id === session.context.workspaceId" :size="15" class="text-clay-600" />
         </button>
       </template>
-    </div>
+      </div>
+    </Teleport>
   </div>
 </template>

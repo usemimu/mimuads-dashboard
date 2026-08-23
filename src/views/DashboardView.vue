@@ -81,7 +81,7 @@ const dashSubtitle = computed(() => {
 
     <!-- KPI tiles -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard :label="$t('dashboard.walletBalance')" :value="wallet ? formatKobo(wallet.balanceKobo) : '—'">
+      <StatCard :label="$t('dashboard.walletBalance')" :value="wallet ? formatKobo(wallet.balanceKobo, { showDecimals: false }) : '—'">
         <template #icon><PhWallet :size="20" /></template>
         <template v-if="lowBalance" #footer>
           <RouterLink to="/billing" class="inline-flex items-center gap-1 font-medium text-clay-600 hover:underline">

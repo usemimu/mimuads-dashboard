@@ -43,9 +43,10 @@ async function onStart() {
 </script>
 
 <template>
-  <div class="max-w-2xl">
+  <div>
     <PageHeader :title="$t('verification.hubTitle')" />
 
+    <div class="max-w-2xl">
     <Card>
       <!-- Identity verification -->
       <div class="flex items-start justify-between gap-4">
@@ -95,5 +96,6 @@ async function onStart() {
         </Badge>
       </div>
     </Card>
+    </div>
   </div>
 </template>
