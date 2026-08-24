@@ -510,3 +510,32 @@
   }
 }
 
+/* ── Sidebar collapse (icon rail) ─────────────────────────────────────────────
+   Unlayered so these win over the layered .sb-* rules. One model on every
+   viewport: 64px icon rail when `.collapsed`, full otherwise. The shell
+   defaults it collapsed under 768px (see AppShell) until the user toggles. */
+.app-shell.collapsed {
+  grid-template-columns: 64px 1fr;
+}
+.app-shell.collapsed .sb-logo-txt,
+.app-shell.collapsed .sb-env,
+.app-shell.collapsed .sb-section-label,
+.app-shell.collapsed .sb-item-label,
+.app-shell.collapsed .sb-user-name,
+.app-shell.collapsed .sb-user-role,
+.app-shell.collapsed [data-collapse-hide] {
+  display: none;
+}
+.app-shell.collapsed .sb-item,
+.app-shell.collapsed .sb-logo,
+.app-shell.collapsed .sb-user {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+.app-shell.collapsed .sb-section {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+

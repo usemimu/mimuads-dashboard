@@ -25,6 +25,52 @@ export function confirmUpload(id: string, sha256Hash: string) {
   )
 }
 
+/**
+ * Read a creative File's metadata client-side. Videos MUST carry
+ * `durationSeconds` (the backend rejects video uploads without it — 5–180s,
+ * landscape only); we also read `resolution` so the server can reject portrait
+ * early. Resolves to `{}` if the browser can't decode the file.
+ */
+export function probeCreative(
+  file: File,
+): Promise<{ durationSeconds?: number; resolution?: string }> {
+  if (file.type.startsWith('video')) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file)
+      const v = document.createElement('video')
+      v.preload = 'metadata'
+      v.onloadedmetadata = () => {
+        const durationSeconds = Number.isFinite(v.duration) ? Math.round(v.duration) : undefined
+        const resolution = v.videoWidth && v.videoHeight ? `${v.videoWidth}x${v.videoHeight}` : undefined
+        URL.revokeObjectURL(url)
+        resolve({ durationSeconds, resolution })
+      }
+      v.onerror = () => {
+        URL.revokeObjectURL(url)
+        resolve({})
+      }
+      v.src = url
+    })
+  }
+  if (file.type.startsWith('image')) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file)
+      const img = new Image()
+      img.onload = () => {
+        const resolution = `${img.naturalWidth}x${img.naturalHeight}`
+        URL.revokeObjectURL(url)
+        resolve({ resolution })
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(url)
+        resolve({})
+      }
+      img.src = url
+    })
+  }
+  return Promise.resolve({})
+}
+
 /** SHA-256 of a File as lowercase hex (for the confirm step). */
 export async function sha256Hex(file: File): Promise<string> {
   const buf = await file.arrayBuffer()

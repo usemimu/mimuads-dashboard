@@ -1,34 +1,35 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import {
-  PhWallet,
-  PhMegaphone,
-  PhClockCountdown,
-  PhStack,
-  PhArrowRight,
-  PhWarningCircle,
-  PhCheckCircle,
-  PhSealCheck,
-} from '@phosphor-icons/vue'
+import { PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhWarningCircle } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
-import StatCard from '@/components/ui/StatCard.vue'
-import PageHeader from '@/components/ui/PageHeader.vue'
-import Badge from '@/components/ui/Badge.vue'
+import MetricTile from '@/components/dashboard/MetricTile.vue'
+import TimeSeriesChart from '@/components/charts/TimeSeriesChart.vue'
+import CampaignsTable from '@/components/dashboard/CampaignsTable.vue'
+import InsightsPanel from '@/components/dashboard/InsightsPanel.vue'
 import { useSession } from '@/stores/session'
 import { useKyc } from '@/composables/useKyc'
 import { getWallet } from '@/api/billing'
 import { listCampaigns } from '@/api/campaigns'
+import { getOrgSummary } from '@/api/org'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
-import { statusTone, statusLabel } from '@/lib/status'
+import type { Campaign } from '@/api/contracts/campaigns'
 
-/** Dashboard (§4.8) — assembled from existing endpoints; no bespoke analytics. */
 const session = useSession()
 const { kycComplete } = useKyc()
 
+// ── Controls ─────────────────────────────────────────────────────────
+const search = ref('')
+const scope = ref<'all' | 'current' | 'archived'>('current')
+const period = ref(30) // days
+
+const CURRENT = new Set(['draft', 'pending_payment', 'pending_vetting', 'active', 'paused'])
+const ARCHIVED = new Set(['completed', 'rejected', 'suspended'])
+
+// ── Data ─────────────────────────────────────────────────────────────
 const { data: wallet } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'wallet')),
   queryFn: getWallet,
@@ -37,101 +38,138 @@ const { data: campaigns } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'campaigns', 'all')),
   queryFn: () => listCampaigns({}),
 })
-
-const list = computed(() => campaigns.value?.campaigns ?? [])
-const byStatus = computed(() => {
-  const m: Record<string, number> = {}
-  for (const c of list.value) m[c.status] = (m[c.status] ?? 0) + 1
-  return m
+const { data: summary } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'reports', 'summary', String(period.value))),
+  queryFn: () => getOrgSummary(period.value),
 })
-const statusRows = computed(() =>
-  Object.entries(byStatus.value).sort((a, b) => b[1] - a[1]),
+
+const list = computed<Campaign[]>(() => campaigns.value?.campaigns ?? [])
+
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  const cutoff = Date.now() - period.value * 86_400_000
+  return list.value.filter((c) => {
+    if (q && !c.name.toLowerCase().includes(q)) return false
+    if (scope.value === 'current' && !CURRENT.has(c.status)) return false
+    if (scope.value === 'archived' && !ARCHIVED.has(c.status)) return false
+    if (c.createdAt && Date.parse(c.createdAt) < cutoff) return false
+    return true
+  })
+})
+
+// ── Metrics ──────────────────────────────────────────────────────────
+function pluck(obj: unknown, keys: string[]): number {
+  const o = obj as Record<string, unknown> | null
+  if (!o) return 0
+  for (const k of keys) {
+    const v = o[k]
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+    if (typeof v === 'string' && /^\d+$/.test(v)) return Number(v)
+  }
+  return 0
+}
+const totals = computed(() => (summary.value as { totals?: unknown } | undefined)?.totals ?? null)
+const impressions = computed(() => pluck(totals.value, ['impressions', 'plays', 'verifiedViews']))
+const spendKobo = computed(() => filtered.value.reduce((sum, c) => sum + Number(c.spentKobo || 0), 0))
+const activeCount = computed(() => filtered.value.filter((c) => c.status === 'active').length)
+const screensLive = computed(() =>
+  filtered.value.filter((c) => c.status === 'active').reduce((sum, c) => sum + (c.screenCount ?? 0), 0),
 )
-const activeCount = computed(() => byStatus.value['active'] ?? 0)
-const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKobo) < 500_000_00 : false))
-const inReview = computed(() => list.value.filter((c) => c.status === 'pending_vetting').length)
+const cpmKobo = computed(() => (impressions.value > 0 ? Math.round((spendKobo.value / impressions.value) * 1000) : 0))
 
-const dashSubtitle = computed(() => {
-  const role = session.role ? session.role.replace(/_/g, ' ') : null
-  const tier = session.context.tier ?? null
-  return [role, tier].filter(Boolean).join(' · ') || undefined
+// ── Chart: cumulative spend by campaign start date (real, quasi-temporal) ──
+function shortDate(d: string): string {
+  const t = Date.parse(d)
+  if (Number.isNaN(t)) return d
+  return new Date(t).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
+}
+const chartCampaigns = computed(() => [...filtered.value].sort((a, b) => a.startDate.localeCompare(b.startDate)))
+const chartPoints = computed(() => {
+  let acc = 0
+  return chartCampaigns.value.map((c) => {
+    acc += Number(c.spentKobo || 0) / 100
+    return Math.round(acc)
+  })
 })
+const chartLabels = computed(() => chartCampaigns.value.map((c) => shortDate(c.startDate)))
+
+const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKobo) < 500_000_00 : false))
 </script>
 
 <template>
   <div>
-    <PageHeader :title="$t('nav.dashboard')" :subtitle="dashSubtitle">
-      <template #actions>
-        <template v-if="session.canSubmitCampaign">
-          <RouterLink v-if="kycComplete" to="/campaigns/new">
-            <Button>
-              <PhMegaphone :size="18" />
-              {{ $t('dashboard.quickStart') }}
-            </Button>
-          </RouterLink>
-          <RouterLink v-else to="/verify">
-            <Button variant="outline">
-              <PhSealCheck :size="18" />
-              {{ $t('verification.gateCta') }}
-            </Button>
-          </RouterLink>
-        </template>
+    <!-- Header -->
+    <div class="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
+      <div>
+        <h1 class="page-title">{{ $t('nav.dashboard') }}</h1>
+        <p class="page-subtitle mt-0.5">{{ $t('dashboard.overviewSub') }}</p>
+      </div>
+      <template v-if="session.canSubmitCampaign">
+        <RouterLink v-if="kycComplete" to="/campaigns/new">
+          <Button><PhMegaphone :size="18" /> {{ $t('dashboard.quickStart') }}</Button>
+        </RouterLink>
+        <RouterLink v-else to="/verify">
+          <Button variant="outline"><PhSealCheck :size="18" /> {{ $t('verification.gateCta') }}</Button>
+        </RouterLink>
       </template>
-    </PageHeader>
-
-    <!-- KPI tiles -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard :label="$t('dashboard.walletBalance')" :value="wallet ? formatKobo(wallet.balanceKobo, { showDecimals: false }) : '—'">
-        <template #icon><PhWallet :size="20" /></template>
-        <template v-if="lowBalance" #footer>
-          <RouterLink to="/billing" class="inline-flex items-center gap-1 font-medium text-clay-600 hover:underline">
-            {{ $t('dashboard.lowBalance') }} <PhArrowRight :size="12" />
-          </RouterLink>
-        </template>
-      </StatCard>
-
-      <StatCard :label="$t('dashboard.activeCampaigns')" :value="activeCount">
-        <template #icon><PhMegaphone :size="20" /></template>
-      </StatCard>
-
-      <StatCard label="In review" :value="inReview">
-        <template #icon><PhClockCountdown :size="20" /></template>
-      </StatCard>
-
-      <StatCard label="Total campaigns" :value="list.length">
-        <template #icon><PhStack :size="20" /></template>
-      </StatCard>
     </div>
 
-    <!-- Detail row -->
-    <div class="mt-6 grid gap-5 lg:grid-cols-5">
-      <Card class="lg:col-span-3">
-        <p class="mb-4 text-sm font-semibold text-neutral-900">{{ $t('dashboard.byStatus') }}</p>
-        <ul v-if="statusRows.length" class="divide-y divide-neutral-100">
-          <li v-for="[st, n] in statusRows" :key="st" class="flex items-center justify-between py-2.5">
-            <Badge :tone="statusTone(st)">{{ statusLabel(st) }}</Badge>
-            <span class="font-mono text-sm font-semibold text-neutral-700">{{ n }}</span>
-          </li>
-        </ul>
-        <p v-else class="py-6 text-center text-sm text-neutral-400">{{ $t('campaigns.empty') }}</p>
-      </Card>
+    <!-- Low-balance nudge -->
+    <RouterLink
+      v-if="lowBalance"
+      to="/billing"
+      class="mb-5 flex items-center gap-2 rounded-lg border border-gold-200/60 bg-gold-50 px-4 py-2.5 text-sm text-gold-800 hover:bg-gold-100/60"
+    >
+      <PhWarningCircle :size="18" weight="fill" class="text-gold-500" />
+      {{ $t('dashboard.lowBalance') }}
+    </RouterLink>
 
+    <!-- Controls -->
+    <div class="mb-5 flex flex-wrap items-center gap-2">
+      <div class="relative min-w-[12rem] flex-1">
+        <PhMagnifyingGlass :size="15" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <input v-model="search" :placeholder="$t('dashboard.searchPlaceholder')" class="input py-1.5 pl-8 text-sm" />
+      </div>
+      <div class="flex overflow-hidden rounded-lg border border-line-strong">
+        <button
+          v-for="opt in (['current', 'archived', 'all'] as const)"
+          :key="opt"
+          class="px-3 py-1.5 text-sm capitalize"
+          :class="scope === opt ? 'bg-clay-50 text-clay-700' : 'text-neutral-600 hover:bg-neutral-50'"
+          @click="scope = opt"
+        >
+          {{ $t('dashboard.scope' + opt.charAt(0).toUpperCase() + opt.slice(1)) }}
+        </button>
+      </div>
+      <select v-model.number="period" :aria-label="$t('reports.period')" class="select w-auto py-1.5 text-sm">
+        <option :value="7">{{ $t('reports.days7') }}</option>
+        <option :value="30">{{ $t('reports.days30') }}</option>
+        <option :value="90">{{ $t('reports.days90') }}</option>
+      </select>
+    </div>
+
+    <!-- Metrics row -->
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <MetricTile :label="$t('dashboard.mImpressions')" :value="impressions.toLocaleString('en-NG')" />
+      <MetricTile :label="$t('dashboard.mSpend')" :value="formatKobo(String(spendKobo), { showDecimals: false })" />
+      <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" />
+      <MetricTile :label="$t('dashboard.mScreens')" :value="screensLive" />
+      <MetricTile :label="$t('dashboard.mCpm')" :value="cpmKobo ? formatKobo(String(cpmKobo)) : '—'" />
+    </div>
+
+    <!-- Chart -->
+    <Card class="mt-5">
+      <p class="mb-4 text-sm font-semibold text-neutral-900">{{ $t('dashboard.chartTitle') }}</p>
+      <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" />
+    </Card>
+
+    <!-- Table + insights -->
+    <div class="mt-5 grid gap-5 lg:grid-cols-5">
+      <Card class="lg:col-span-3" padding="sm">
+        <CampaignsTable :campaigns="filtered" :empty-text="$t('dashboard.noMatch')" />
+      </Card>
       <Card class="lg:col-span-2">
-        <p class="mb-4 text-sm font-semibold text-neutral-900">{{ $t('dashboard.pending') }}</p>
-        <ul class="space-y-3 text-sm">
-          <li v-if="lowBalance" class="flex items-start gap-2.5 text-neutral-700">
-            <PhWarningCircle :size="18" class="mt-0.5 shrink-0 text-gold-500" weight="fill" />
-            <span>{{ $t('dashboard.lowBalance') }}</span>
-          </li>
-          <li v-if="inReview" class="flex items-start gap-2.5 text-neutral-700">
-            <PhClockCountdown :size="18" class="mt-0.5 shrink-0 text-clay-500" />
-            <span>{{ $t('dashboard.creativesInReview', { n: inReview }) }}</span>
-          </li>
-          <li v-if="!lowBalance && !inReview" class="flex items-start gap-2.5 text-neutral-500">
-            <PhCheckCircle :size="18" class="mt-0.5 shrink-0 text-moss-500" weight="fill" />
-            <span>{{ $t('dashboard.allClear') }}</span>
-          </li>
-        </ul>
+        <InsightsPanel :campaigns="filtered" :empty-text="$t('dashboard.insightsEmpty')" />
       </Card>
     </div>
   </div>

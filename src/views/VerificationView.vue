@@ -44,7 +44,7 @@ async function onStart() {
 
 <template>
   <div>
-    <PageHeader :title="$t('verification.hubTitle')" />
+    <PageHeader :title="$t('verification.hubTitle')" :subtitle="$t('verification.hubSubtitle')" />
 
     <div class="max-w-2xl">
     <Card>

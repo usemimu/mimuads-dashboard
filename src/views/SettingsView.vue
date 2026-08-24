@@ -205,7 +205,7 @@ async function onSignOut() {
 
 <template>
   <div>
-    <PageHeader :title="$t('settings.title')" />
+    <PageHeader :title="$t('settings.title')" :subtitle="$t('settings.subtitle')" />
 
     <div class="max-w-3xl space-y-6">
       <!-- Account + avatar -->

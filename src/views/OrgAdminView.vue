@@ -60,7 +60,7 @@ async function makeKey() {
 
 <template>
   <div>
-    <PageHeader :title="$t('orgAdmin.title')" />
+    <PageHeader :title="$t('orgAdmin.title')" :subtitle="$t('orgAdmin.subtitle')" />
     <div class="mb-5 flex gap-1 border-b border-neutral-200">
       <button v-for="t in (['members','workspaces','verification','apikeys'] as const)" :key="t"
         class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors"

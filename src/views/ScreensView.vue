@@ -156,7 +156,9 @@ function saveSet() {
   <!-- Full-bleed map surface (breaks out of the page-body padding), with every
        control layered on top as floating panels — the mobile screens map,
        adapted for the desktop buying flow. -->
-  <div class="relative -mx-6 -my-5 h-[calc(100vh-2.75rem)] overflow-hidden bg-neutral-100">
+  <!-- Fills the floating content card: 100vh minus shell padding (24px),
+       topbar (48px), the gap (12px) and the card border. -->
+  <div class="relative -mx-6 -my-5 h-[calc(100vh-5.5rem)] overflow-hidden rounded-2xl bg-neutral-100">
     <!-- Map -->
     <ScreensMap
       v-show="view === 'map'"

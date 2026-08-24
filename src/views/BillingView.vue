@@ -138,7 +138,7 @@ async function doTransfer() {
 
 <template>
   <div>
-    <PageHeader :title="$t('billing.title')" />
+    <PageHeader :title="$t('billing.title')" :subtitle="$t('billing.subtitle')" />
 
     <!-- Wallet card -->
     <Card class="mb-6 bg-gradient-to-br from-white to-clay-50/40">

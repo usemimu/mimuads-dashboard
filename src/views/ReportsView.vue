@@ -5,6 +5,7 @@ import { PhDownloadSimple } from '@phosphor-icons/vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
+import MetricTile from '@/components/dashboard/MetricTile.vue'
 import { useSession } from '@/stores/session'
 import { getOrgSummary, campaignExportUrl } from '@/api/org'
 import { listCampaigns } from '@/api/campaigns'
@@ -33,11 +34,28 @@ const { data: campaigns } = useQuery({
 
 const byWorkspace = computed(() => summary.value?.byWorkspace ?? [])
 const kobo = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? formatKobo(String(v)) : '—')
+
+// Metric strip over the period totals (falls back to the campaigns rollup).
+function pluck(obj: unknown, keys: string[]): number {
+  const o = obj as Record<string, unknown> | null | undefined
+  if (!o) return 0
+  for (const k of keys) {
+    const v = o[k]
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+    if (typeof v === 'string' && /^\d+$/.test(v)) return Number(v)
+  }
+  return 0
+}
+const campaignList = computed(() => campaigns.value?.campaigns ?? [])
+const totalSpendKobo = computed(
+  () => pluck(summary.value?.totals, ['spendKobo']) || campaignList.value.reduce((s, c) => s + Number(c.spentKobo || 0), 0),
+)
+const verifiedViews = computed(() => pluck(summary.value?.totals, ['verifiedViews', 'plays', 'impressions']))
 </script>
 
 <template>
   <div>
-    <PageHeader :title="$t('reports.title')">
+    <PageHeader :title="$t('reports.title')" :subtitle="$t('reports.subtitle')">
       <template #actions>
         <select v-model.number="period" :aria-label="$t('reports.period')" class="select max-w-[11rem] text-sm">
           <option :value="7">{{ $t('reports.days7') }}</option>
@@ -46,6 +64,13 @@ const kobo = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? f
         </select>
       </template>
     </PageHeader>
+
+    <!-- Metric strip -->
+    <div class="mb-6 grid grid-cols-3 gap-4">
+      <MetricTile :label="$t('reports.spend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" />
+      <MetricTile :label="$t('reports.verifiedViews')" :value="verifiedViews.toLocaleString('en-NG')" />
+      <MetricTile :label="$t('reports.campaigns')" :value="campaignList.length" />
+    </div>
 
     <!-- Per-workspace rollup (agencies) -->
     <Card v-if="byWorkspace.length" padding="none" class="mb-6 overflow-hidden">

@@ -13,6 +13,7 @@ function complete(): WizardState {
     hours: [9, 10, 18],
     budgetNaira: 2_000_000,
     dailyCapNaira: null,
+    isEvenPacing: false,
     creativeId: '22222222-2222-2222-2222-222222222222',
   }
 }

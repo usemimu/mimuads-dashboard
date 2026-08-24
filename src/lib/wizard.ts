@@ -17,6 +17,7 @@ export interface WizardState {
   hours: number[] // 0-23, empty = all
   budgetNaira: number | null
   dailyCapNaira: number | null
+  isEvenPacing: boolean // delivery: false = standard, true = even
   creativeId: string | ''
 }
 
@@ -32,12 +33,32 @@ export function emptyWizard(): WizardState {
     hours: [],
     budgetNaira: null,
     dailyCapNaira: null,
+    isEvenPacing: false,
     creativeId: '',
   }
 }
 
 export const WIZARD_STEPS = ['objective', 'screens', 'schedule', 'budget', 'creative', 'review'] as const
 export type WizardStep = (typeof WIZARD_STEPS)[number]
+
+/**
+ * The X-style presentation groups the six sub-steps into four rail phases.
+ * State + validation stay per-step; a phase is complete when all its sub-steps
+ * validate.
+ */
+export const WIZARD_PHASES = ['objective', 'audience', 'creative', 'launch'] as const
+export type WizardPhase = (typeof WIZARD_PHASES)[number]
+
+const PHASE_STEPS: Record<WizardPhase, WizardStep[]> = {
+  objective: ['objective'],
+  audience: ['screens', 'schedule', 'budget'],
+  creative: ['creative'],
+  launch: ['review'],
+}
+
+export function phaseValid(s: WizardState, phase: WizardPhase): boolean {
+  return PHASE_STEPS[phase].every((st) => stepValid(s, st))
+}
 
 /** Whether a given step's inputs are complete enough to advance. */
 export function stepValid(s: WizardState, step: WizardStep): boolean {
@@ -77,5 +98,6 @@ export function buildCreatePayload(s: WizardState): CreateCampaignRequest {
     dailyBudgetCapKobo: s.dailyCapNaira != null ? String(nairaToKobo(s.dailyCapNaira)) : undefined,
     startDate: toIso(s.startDate),
     endDate: toIso(s.endDate),
+    isEvenPacing: s.isEvenPacing || undefined,
   }
 }
