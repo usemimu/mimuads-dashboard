@@ -2,18 +2,20 @@
 import { computed, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { PhMagnifyingGlass } from '@phosphor-icons/vue'
-import { getScreensMap } from '@/api/screens'
+import { listScreens } from '@/api/screens'
 import { isOnline, type Screen } from '@/api/contracts/screens'
 import { useSession } from '@/stores/session'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
-import { applyClientFilters } from '@/lib/screens'
+import { VENUE_TYPES, LAGOS_LGAS, mergeOptions } from '@/lib/taxonomy'
 import ScreensMap from '@/components/screens/ScreensMap.vue'
 
 /**
- * Inline screen picker for the campaign wizard — the Screens page's map + list,
- * embedded so buyers select inventory without leaving the flow. Two-way binds
- * the chosen screen IDs; the wizard writes these straight into `screenIds`.
+ * Inline screen picker for the campaign wizard. Mirrors the mobile campaign
+ * flow (`create_screens_screen.dart` → `availableScreensProvider`): fetch
+ * bookable inventory from the screens LIST endpoint filtered to `status:
+ * 'active'` (NOT `/screens/map`, which also returns offline screens you can't
+ * run on). Two-way binds the chosen IDs; the wizard writes them into `screenIds`.
  */
 const selected = defineModel<string[]>({ required: true })
 
@@ -22,7 +24,6 @@ const session = useSession()
 const search = ref('')
 const lga = ref('')
 const venueType = ref('')
-const onlineOnly = ref(false)
 
 const filters = computed(() => ({
   lga: lga.value || undefined,
@@ -32,18 +33,17 @@ const filters = computed(() => ({
 
 const { data, isLoading } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'screens', 'picker', JSON.stringify(filters.value))),
-  queryFn: () => getScreensMap(filters.value),
+  // status: 'active' + limit 100 matches the mobile campaign picker exactly.
+  queryFn: () => listScreens({ ...filters.value, status: 'active', limit: 100 }),
 })
 
-const allScreens = computed<Screen[]>(() => data.value ?? [])
-const lgaOptions = computed(() => [...new Set(allScreens.value.map((s) => s.lga))].sort())
-const venueOptions = computed(() => [...new Set(allScreens.value.map((s) => s.venueType))].sort())
+const allScreens = computed<Screen[]>(() => data.value?.screens ?? [])
+// Same canonical LGA / venue-type vocabulary as the Screens page + admin.
+const lgaOptions = computed(() => mergeOptions(LAGOS_LGAS, allScreens.value.map((s) => s.lga)))
+const venueOptions = computed(() => mergeOptions(VENUE_TYPES, allScreens.value.map((s) => s.venueType)))
 
-const filtered = computed(() => {
-  let list = applyClientFilters(allScreens.value, {})
-  if (onlineOnly.value) list = list.filter((s) => isOnline(s.status))
-  return list
-})
+// Every screen here is active/bookable; no client-side status filtering needed.
+const filtered = computed(() => allScreens.value)
 
 // Keep a lookup of every screen we've loaded so the reach total survives
 // filter changes (a selected screen may be filtered out of the current view).
@@ -93,10 +93,6 @@ function clearAll() {
         <option value="">{{ $t('screens.allVenues') }}</option>
         <option v-for="v in venueOptions" :key="v" :value="v">{{ v }}</option>
       </select>
-      <label class="flex items-center gap-1.5 text-sm text-neutral-600">
-        <input v-model="onlineOnly" type="checkbox" class="rounded border-neutral-300 text-clay-500 focus:ring-clay-400" />
-        {{ $t('screens.online') }}
-      </label>
     </div>
 
     <!-- Map -->

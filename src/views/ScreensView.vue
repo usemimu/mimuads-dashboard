@@ -13,7 +13,7 @@ import {
 import Button from '@/components/ui/Button.vue'
 import ScreensMap from '@/components/screens/ScreensMap.vue'
 import ScreenDetailDrawer from '@/components/screens/ScreenDetailDrawer.vue'
-import { getScreensMap } from '@/api/screens'
+import { getScreensMap, listScreens } from '@/api/screens'
 import { isOnline, type Screen } from '@/api/contracts/screens'
 import { useRouter } from 'vue-router'
 import { useSession } from '@/stores/session'
@@ -22,6 +22,7 @@ import { useWizard } from '@/stores/wizard'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
 import { applyClientFilters, screensToCsv } from '@/lib/screens'
+import { VENUE_TYPES, LAGOS_LGAS, mergeOptions } from '@/lib/taxonomy'
 
 const session = useSession()
 const basket = useBasket()
@@ -55,22 +56,56 @@ const filters = computed(() => ({
   search: search.value || undefined,
 }))
 
-const { data, isLoading } = useQuery({
+// Two sources, mirroring the mobile screens directory:
+//  • MAP view → /advertiser/screens/map — GeoJSON, but the backend DROPS any
+//    screen without coordinates (see screen.controller.ts), so it can only ever
+//    plot located screens.
+//  • LIST view → /advertiser/screens — the plain list, which returns EVERY
+//    screen in the system (coordinates or not). This is what guarantees the
+//    page shows all our inventory, not just the mapped subset.
+const { data: mapData, isLoading: mapLoading } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'screens', 'map', JSON.stringify(filters.value))),
   queryFn: () => getScreensMap(filters.value),
 })
+const { data: listData, isLoading: listLoading } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'screens', 'list', JSON.stringify(filters.value))),
+  queryFn: () => listScreens({ ...filters.value, limit: 100 }),
+})
 
-const allScreens = computed<Screen[]>(() => data.value ?? [])
-const lgaOptions = computed(() => [...new Set(allScreens.value.map((s) => s.lga))].sort())
-const venueOptions = computed(() => [...new Set(allScreens.value.map((s) => s.venueType))].sort())
+const mapScreens = computed<Screen[]>(() => mapData.value ?? [])
+const listAll = computed<Screen[]>(() => listData.value?.screens ?? [])
 
-const filtered = computed(() => {
-  let list = applyClientFilters(allScreens.value, {
+// LGA/venue dropdowns = the canonical admin vocabulary, merged with any values
+// actually present in inventory (so nothing is unfilterable). Built off the
+// full list so options appear even for screens with no coordinates.
+const lgaOptions = computed(() => mergeOptions(LAGOS_LGAS, listAll.value.map((s) => s.lga)))
+const venueOptions = computed(() => mergeOptions(VENUE_TYPES, listAll.value.map((s) => s.venueType)))
+
+/** Client-side band + online filters (no server support — done here). */
+function applyBands(list: Screen[]): Screen[] {
+  let out = applyClientFilters(list, {
     minReach: minReach.value ?? undefined,
     maxPriceKobo: maxPriceNaira.value != null ? maxPriceNaira.value * 100 : undefined,
   })
-  if (onlineOnly.value) list = list.filter((s) => isOnline(s.status))
-  return list
+  if (onlineOnly.value) out = out.filter((s) => isOnline(s.status))
+  return out
+}
+
+const filteredMap = computed(() => applyBands(mapScreens.value))
+const filteredList = computed(() => applyBands(listAll.value))
+
+// The set the "N screens" count, select-all and CSV act on = whatever view
+// you're looking at.
+const activeFiltered = computed(() => (view.value === 'map' ? filteredMap.value : filteredList.value))
+const isLoading = computed(() => (view.value === 'map' ? mapLoading.value : listLoading.value))
+
+// Detail lookups can resolve against either source (a mapped screen or a
+// list-only one).
+const screenById = computed(() => {
+  const m = new Map<string, Screen>()
+  for (const s of listAll.value) m.set(s.id, s)
+  for (const s of mapScreens.value) m.set(s.id, s)
+  return m
 })
 
 const activeFilterCount = computed(
@@ -85,8 +120,8 @@ const activeFilterCount = computed(
     ].filter(Boolean).length,
 )
 
-const cardScreen = computed(() => filtered.value.find((s) => s.id === selectedId.value) ?? null)
-const drawerScreen = computed(() => filtered.value.find((s) => s.id === drawerId.value) ?? null)
+const cardScreen = computed(() => (selectedId.value ? screenById.value.get(selectedId.value) ?? null : null))
+const drawerScreen = computed(() => (drawerId.value ? screenById.value.get(drawerId.value) ?? null : null))
 
 function clearFilters() {
   search.value = ''
@@ -98,10 +133,10 @@ function clearFilters() {
 }
 function selectAllInLga() {
   if (!lga.value) return
-  basket.addMany(filtered.value.filter((s) => s.lga === lga.value))
+  basket.addMany(activeFiltered.value.filter((s) => s.lga === lga.value))
 }
 function exportCsv() {
-  const blob = new Blob([screensToCsv(filtered.value)], { type: 'text/csv;charset=utf-8' })
+  const blob = new Blob([screensToCsv(activeFiltered.value)], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -126,7 +161,7 @@ function saveSet() {
     <ScreensMap
       v-show="view === 'map'"
       class="absolute inset-0"
-      :screens="filtered"
+      :screens="filteredMap"
       :selected-ids="basket.ids"
       @select="(s) => (selectedId = s.id)"
     />
@@ -144,7 +179,7 @@ function saveSet() {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="s in filtered" :key="s.id" class="border-t border-neutral-100 hover:bg-neutral-50">
+          <tr v-for="s in filteredList" :key="s.id" class="border-t border-neutral-100 hover:bg-neutral-50">
             <td class="px-4 py-2">
               <button class="font-medium text-neutral-900 hover:text-clay-600" @click="drawerId = s.id">{{ s.name }}</button>
               <span class="ml-2 inline-block h-2 w-2 rounded-full" :class="isOnline(s.status) ? 'bg-moss-500' : 'bg-neutral-400'" />
@@ -180,7 +215,7 @@ function saveSet() {
             {{ activeFilterCount }}
           </span>
           <span class="ml-auto text-[11px] text-neutral-400" data-testid="result-count">
-            {{ isLoading ? $t('common.loading') : $t('screens.resultCount', { count: filtered.length }) }}
+            {{ isLoading ? $t('common.loading') : $t('screens.resultCount', { count: activeFiltered.length }) }}
           </span>
           <PhCaretDown :size="14" class="shrink-0 text-neutral-400 transition-transform" :class="filtersOpen ? '' : '-rotate-90'" />
         </button>

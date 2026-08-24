@@ -15,7 +15,6 @@ import {
   PhCaretDown,
   PhCaretUpDown,
 } from '@phosphor-icons/vue'
-import OrgWorkspaceSwitcher from '@/components/OrgWorkspaceSwitcher.vue'
 import VerificationBanner from '@/components/VerificationBanner.vue'
 import { useSession } from '@/stores/session'
 
@@ -97,10 +96,6 @@ async function onSignOut() {
           </RouterLink>
         </div>
       </nav>
-
-      <div class="border-t border-[var(--border)] px-2.5 py-3">
-        <OrgWorkspaceSwitcher />
-      </div>
 
       <div class="sb-user" @click="goSettings">
         <img

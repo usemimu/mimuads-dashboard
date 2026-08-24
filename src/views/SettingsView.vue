@@ -15,6 +15,7 @@ import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
+import OrgWorkspaceSwitcher from '@/components/OrgWorkspaceSwitcher.vue'
 import { useI18n } from 'vue-i18n'
 import { useSession } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
@@ -51,8 +52,6 @@ const businessTypes = BusinessTypeSchema.options
 
 const roleLabel = computed(() => pretty(session.role) ?? '—')
 const tierLabel = computed(() => pretty(session.context.tier) ?? '—')
-const orgLabel = computed(() => session.context.orgId?.slice(0, 8) ?? '—')
-const wsLabel = computed(() => session.context.workspaceId?.slice(0, 8) ?? null)
 const initials = computed(() => {
   const parts = String(session.user?.name ?? '').trim().split(/\s+/).filter(Boolean)
   return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || 'M'
@@ -399,6 +398,13 @@ async function onSignOut() {
             <p class="text-sm text-neutral-500">{{ $t('settings.accessHint') }}</p>
           </div>
         </div>
+
+        <!-- Active organization / workspace — switch context here. -->
+        <div class="mb-5">
+          <p class="label mb-1.5">{{ $t('settings.organization') }}</p>
+          <OrgWorkspaceSwitcher />
+        </div>
+
         <dl class="divide-y divide-neutral-100">
           <div class="flex items-center justify-between py-3">
             <dt class="text-sm text-neutral-500">{{ $t('settings.role') }}</dt>
@@ -407,17 +413,6 @@ async function onSignOut() {
           <div class="flex items-center justify-between py-3">
             <dt class="text-sm text-neutral-500">{{ $t('settings.tier') }}</dt>
             <dd><Badge tone="info" class="capitalize">{{ tierLabel }}</Badge></dd>
-          </div>
-          <div class="flex items-center justify-between py-3">
-            <dt class="text-sm text-neutral-500">{{ $t('settings.organization') }}</dt>
-            <dd class="font-mono text-sm text-neutral-700">{{ orgLabel }}</dd>
-          </div>
-          <div class="flex items-center justify-between py-3">
-            <dt class="text-sm text-neutral-500">{{ $t('settings.workspace') }}</dt>
-            <dd class="text-sm text-neutral-700">
-              <span v-if="wsLabel" class="font-mono">{{ wsLabel }}</span>
-              <span v-else class="text-neutral-400">{{ $t('settings.orgMaster') }}</span>
-            </dd>
           </div>
         </dl>
         <div class="mt-5 flex justify-end border-t border-neutral-100 pt-4">
