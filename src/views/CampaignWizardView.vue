@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
@@ -40,6 +40,11 @@ const session = useSession()
 const toast = useToastStore()
 const { t } = useI18n()
 const s = wizard.state
+
+// Start the creative step blank on every fresh entry: the in-memory wizard
+// store can survive navigation, so a returning draft could otherwise re-show a
+// previously attached ad. Clearing on mount forces an upload this session.
+onMounted(() => { s.creativeId = '' })
 
 // Schedule window: campaigns can't exceed 90 days (backend cap). Start no
 // earlier than tomorrow; picking a start seeds a 13-day flight and clamps any
@@ -369,19 +374,18 @@ async function finish(submit: boolean) {
             <p class="text-sm text-neutral-500">{{ $t('wizard.creative.body') }}</p>
           </div>
           <p class="rounded-lg bg-gold-50 px-3 py-2 text-sm text-gold-800">{{ $t('campaigns.creativePending') }}</p>
-          <div v-if="creatives && creatives.creatives.length" class="space-y-2">
-            <label v-for="c in creatives.creatives" :key="c.id"
-              class="flex cursor-pointer items-center gap-3 rounded-lg border p-3"
-              :class="s.creativeId === c.id ? 'border-clay-500 bg-clay-50' : 'border-line-strong'">
-              <input v-model="s.creativeId" type="radio" :value="c.id" name="creative" class="text-clay-500 focus:ring-clay-400" />
-              <span class="text-sm text-neutral-900">{{ c.name || c.filename }}</span>
-              <span class="ml-auto text-xs capitalize text-neutral-500">{{ c.status.replace(/_/g, ' ') }}</span>
-            </label>
+
+          <!-- Only the creative for THIS campaign — the one just uploaded, or the
+               one already attached to this draft. The full library of everything
+               you've uploaded lives under Campaigns → Ads, not in the wizard. -->
+          <div v-if="selectedCreative"
+            class="flex items-center gap-3 rounded-lg border border-clay-500 bg-clay-50 p-3">
+            <span class="text-sm text-neutral-900">{{ selectedCreative.name || selectedCreative.filename }}</span>
+            <span class="ml-auto text-xs capitalize text-neutral-500">{{ selectedCreative.status.replace(/_/g, ' ') }}</span>
           </div>
-          <p v-else class="text-sm text-neutral-400">{{ $t('campaigns.noCreatives') }}</p>
           <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-clay-600">
             <input type="file" accept="image/*,video/mp4" class="hidden" @change="onUpload" />
-            <span class="hover:underline">{{ uploading ? $t('common.loading') : $t('campaigns.uploadCreative') }}</span>
+            <span class="hover:underline">{{ uploading ? $t('common.loading') : (selectedCreative ? $t('campaigns.replaceCreative') : $t('campaigns.uploadCreative')) }}</span>
           </label>
 
           <!-- Preview the selected creative — native video/image, same as the

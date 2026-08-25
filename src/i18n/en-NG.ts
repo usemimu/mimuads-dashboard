@@ -284,7 +284,7 @@ export default {
     },
     creative: {
       title: 'Craft your ad',
-      body: "Upload an image or video, or pick one you've used before.",
+      body: 'Upload the image or video for this campaign.',
     },
     launch: {
       title: 'Review & launch',
@@ -362,9 +362,16 @@ export default {
     address: 'Address',
     peakHoursNote: 'Curve estimated from published peak hours.',
   },
+  creatives: {
+    title: 'Ads',
+    subtitle: "Every ad you've uploaded, across all campaigns and statuses.",
+    tabAds: 'Ads',
+    empty: 'No ads yet — upload one when you create a campaign.',
+  },
   campaigns: {
     title: 'Campaigns',
     subtitle: 'Create, launch, and track every campaign.',
+    tabCampaigns: 'Campaigns',
     newCampaign: 'New campaign',
     gridView: 'Preview grid',
     listView: 'List',
@@ -420,7 +427,8 @@ export default {
     quoteScreens: 'Eligible screens',
     quoteLoading: 'Calculating quote…',
     chooseCreative: 'Choose a creative',
-    uploadCreative: 'Upload new',
+    uploadCreative: 'Upload an image or video',
+    replaceCreative: 'Replace',
     creativePending: 'Creatives go through ARCON review before going live.',
     noCreatives: 'No creatives yet — upload one to continue.',
     creativeReadFailed: "Couldn't read that file. Try another.",

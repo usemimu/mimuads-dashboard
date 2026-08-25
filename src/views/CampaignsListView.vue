@@ -9,6 +9,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
+import CampaignsTabs from '@/components/CampaignsTabs.vue'
 import { listCampaigns, pauseCampaign, resumeCampaign } from '@/api/campaigns'
 import type { Campaign } from '@/api/contracts/campaigns'
 import { useSession } from '@/stores/session'
@@ -99,6 +100,8 @@ function startWizard() {
     </Card>
 
     <template v-else>
+    <CampaignsTabs />
+
     <!-- Metric strip -->
     <div class="mb-5 grid grid-cols-3 gap-4">
       <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" />
