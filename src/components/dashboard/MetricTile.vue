@@ -17,7 +17,7 @@ withDefaults(
 
 <template>
   <div
-    class="rounded-xl border bg-white p-4 shadow-card [container-type:inline-size]"
+    class="rounded-xl border bg-surface p-4 shadow-card [container-type:inline-size]"
     :class="active ? 'border-clay-300 ring-1 ring-clay-500/20' : 'border-line'"
   >
     <p class="eyebrow">{{ label }}</p>

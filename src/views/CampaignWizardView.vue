@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
+import CreativePreview from '@/components/CreativePreview.vue'
 import ScreenPicker from '@/components/screens/ScreenPicker.vue'
 import WizardShell from '@/components/wizard/WizardShell.vue'
 import PhaseRail from '@/components/wizard/PhaseRail.vue'
@@ -144,6 +145,9 @@ const { data: creatives, refetch: refetchCreatives } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'creatives')),
   queryFn: listCreatives,
 })
+const selectedCreative = computed(
+  () => creatives.value?.creatives.find((c) => c.id === s.creativeId) ?? null,
+)
 const uploading = ref(false)
 async function onUpload(e: Event) {
   const input = e.target as HTMLInputElement
@@ -230,10 +234,10 @@ async function finish(submit: boolean) {
       </template>
 
       <!-- Center: step form -->
-      <div class="rounded-xl border border-line bg-white p-6 shadow-card">
+      <div class="rounded-xl border border-line bg-surface p-6 shadow-card">
         <!-- Phase 1 · Objective -->
         <div v-if="currentPhase === 'objective'" class="space-y-5">
-          <div class="rounded-xl border border-line bg-gradient-to-br from-clay-50/60 to-white p-4">
+          <div class="rounded-xl border border-line bg-surface p-4">
             <p class="font-display text-lg font-semibold text-neutral-900">{{ $t('wizard.welcomeTitle') }}</p>
             <p class="mt-1 text-sm text-neutral-500">{{ $t('wizard.welcomeBody') }}</p>
           </div>
@@ -370,6 +374,19 @@ async function finish(submit: boolean) {
             <input type="file" accept="image/*,video/mp4" class="hidden" @change="onUpload" />
             <span class="hover:underline">{{ uploading ? $t('common.loading') : $t('campaigns.uploadCreative') }}</span>
           </label>
+
+          <!-- Preview the selected creative — native video/image, same as the
+               admin review console (no player library). -->
+          <div v-if="selectedCreative" class="pt-1">
+            <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+              {{ $t('campaigns.creativePreview') }}
+            </p>
+            <CreativePreview
+              :format="selectedCreative.format"
+              :src="selectedCreative.previewUrl ?? selectedCreative.cdnUrl"
+              :poster="selectedCreative.posterUrl"
+            />
+          </div>
         </div>
 
         <!-- Phase 4 · Launch (review) -->

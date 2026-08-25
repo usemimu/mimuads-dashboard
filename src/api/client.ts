@@ -6,6 +6,7 @@
 import { z } from 'zod'
 import { env } from '@/env'
 import { getAccessToken, setAccessToken } from './token'
+import { getCsrfToken, setCsrfToken } from './csrf'
 import {
   ApiError,
   normalizeHttpError,
@@ -41,6 +42,12 @@ function isMutation(method: Method): boolean {
   return method !== 'GET'
 }
 
+// The double-submit token for X-CSRF-Token. Prefer the persisted value (survives
+// a page refresh and works cross-subdomain); fall back to the readable cookie.
+function csrfHeaderValue(): string | null {
+  return getCsrfToken() ?? readCookie(CSRF_COOKIE)
+}
+
 // Called when refresh fails — the app registers a hard-logout handler.
 let onAuthFailure: () => void = () => {}
 export function registerAuthFailureHandler(fn: () => void): void {
@@ -63,7 +70,7 @@ async function refreshOnce(): Promise<boolean> {
           'Content-Type': 'application/json',
           'X-Auth-Transport': 'cookie',
         }
-        const csrf = readCookie(CSRF_COOKIE)
+        const csrf = csrfHeaderValue()
         if (csrf) refreshHeaders['X-CSRF-Token'] = csrf
         const res = await fetch(env.apiBaseUrl + REFRESH_PATH, {
           method: 'POST',
@@ -76,6 +83,8 @@ async function refreshOnce(): Promise<boolean> {
         const parsed = RefreshTokenResponseSchema.safeParse(json)
         if (!parsed.success || !parsed.data.accessToken) return false
         setAccessToken(parsed.data.accessToken)
+        // Keep the persisted CSRF token in sync with the rotated cookie.
+        if (parsed.data.csrfToken) setCsrfToken(parsed.data.csrfToken)
         return true
       } catch {
         return false
@@ -110,7 +119,7 @@ async function doFetch(path: string, opts: RequestOptions<unknown>): Promise<Res
     if (token) headers['Authorization'] = `Bearer ${token}`
   }
   if (isMutation(method)) {
-    const csrf = readCookie(CSRF_COOKIE)
+    const csrf = csrfHeaderValue()
     if (csrf) headers['X-CSRF-Token'] = csrf
   }
 

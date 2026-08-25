@@ -206,7 +206,7 @@ function saveSet() {
 
     <!-- TOP-LEFT: Filters panel -->
     <div class="absolute left-4 top-4 z-[2] w-[280px] max-w-[calc(100%-2rem)]">
-      <div class="overflow-hidden rounded-xl border border-line bg-white/95 shadow-pop backdrop-blur">
+      <div class="overflow-hidden rounded-xl border border-line bg-surface/95 shadow-pop backdrop-blur">
         <button
           class="flex w-full items-center gap-2 px-3.5 py-2.5 text-left"
           @click="filtersOpen = !filtersOpen"
@@ -256,7 +256,7 @@ function saveSet() {
 
     <!-- TOP-RIGHT: view toggle + export -->
     <div class="absolute right-4 top-4 z-[2] flex items-center gap-2">
-      <div class="flex overflow-hidden rounded-lg border border-line bg-white shadow-card">
+      <div class="flex overflow-hidden rounded-lg border border-line bg-surface shadow-card">
         <button class="flex items-center gap-1 px-3 py-1.5 text-sm" :class="view === 'map' ? 'bg-clay-50 text-clay-700' : 'text-neutral-600'" @click="view = 'map'">
           <PhMapTrifold :size="16" /> {{ $t('screens.mapView') }}
         </button>
@@ -271,7 +271,7 @@ function saveSet() {
 
     <!-- BOTTOM-LEFT: selected screen quick card (mobile-style) -->
     <div v-if="cardScreen" class="absolute bottom-4 left-4 z-[2] w-[340px] max-w-[calc(100%-2rem)]">
-      <div class="rounded-xl border border-line bg-white p-4 shadow-pop">
+      <div class="rounded-xl border border-line bg-surface p-4 shadow-pop">
         <div class="flex items-start gap-3">
           <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-clay-50 text-clay-600">
             <PhMapTrifold :size="22" />
@@ -306,7 +306,7 @@ function saveSet() {
 
     <!-- BOTTOM-RIGHT: Selection basket -->
     <div class="absolute bottom-4 right-4 z-[2] w-[260px] max-w-[calc(100%-2rem)]">
-      <div class="overflow-hidden rounded-xl border border-line bg-white shadow-pop">
+      <div class="overflow-hidden rounded-xl border border-line bg-surface shadow-pop">
         <button class="flex w-full items-center gap-2 px-3.5 py-2.5 text-left" @click="basketOpen = !basketOpen">
           <span class="text-[13px] font-semibold text-neutral-900">{{ $t('screens.basket') }}</span>
           <span class="rounded bg-clay-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-clay-600" data-testid="basket-count">

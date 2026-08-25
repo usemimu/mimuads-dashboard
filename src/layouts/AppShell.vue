@@ -16,12 +16,24 @@ import {
   PhCaretUpDown,
   PhPlus,
   PhSidebarSimple,
+  PhSun,
+  PhMoon,
 } from '@phosphor-icons/vue'
 import VerificationBanner from '@/components/VerificationBanner.vue'
 import { useSession } from '@/stores/session'
 
 const session = useSession()
 const router = useRouter()
+
+// Light / dark theme — mirrors mimu-admin: flip `data-theme` on <html>, persist
+// in localStorage. The initial attribute is set in main.ts (before mount) to
+// avoid a flash; here we just keep the ref in sync and toggle.
+const theme = ref(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light')
+function toggleTheme() {
+  theme.value = theme.value === 'dark' ? 'light' : 'dark'
+  document.documentElement.setAttribute('data-theme', theme.value)
+  localStorage.setItem('mimu-platform-theme', theme.value)
+}
 
 // Sidebar collapse (icon rail). With no stored preference the default follows
 // the viewport — collapsed on mobile (<768px), expanded on desktop — and tracks
@@ -91,7 +103,7 @@ async function onSignOut() {
 <template>
   <!-- Floating-panel shell (X Ads Manager): tinted base, with the sidebar,
        topbar and main content as separate rounded cards lifted off it. -->
-  <div class="flex h-screen gap-3 bg-neutral-200 p-3">
+  <div class="flex h-screen gap-3 bg-[rgb(var(--shell-base))] p-3">
     <!-- Sidebar card -->
     <aside
       class="flex shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-[var(--sidebar-bg)] shadow-float transition-[width] duration-200"
@@ -177,7 +189,7 @@ async function onSignOut() {
     <div class="flex min-w-0 flex-1 flex-col gap-3">
       <!-- Topbar card -->
       <header
-        class="flex h-12 shrink-0 items-center gap-3 rounded-2xl border border-line bg-white px-3 shadow-float"
+        class="flex h-12 shrink-0 items-center gap-3 rounded-2xl border border-line bg-surface px-3 shadow-float"
       >
         <button
           class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
@@ -195,6 +207,15 @@ async function onSignOut() {
         </div>
 
         <div class="flex items-center gap-1.5">
+          <button
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+            :title="$t('nav.toggleTheme')"
+            @click="toggleTheme"
+          >
+            <PhMoon v-if="theme === 'light'" :size="18" />
+            <PhSun v-else :size="18" />
+          </button>
+
           <button
             class="relative flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100"
             title="Notifications"
@@ -226,7 +247,7 @@ async function onSignOut() {
             <template v-if="menuOpen">
               <div class="fixed inset-0 z-[40]" @click="menuOpen = false" />
               <div
-                class="absolute right-0 top-full z-[50] mt-1.5 w-56 overflow-hidden rounded-xl border border-line bg-white shadow-pop"
+                class="absolute right-0 top-full z-[50] mt-1.5 w-56 overflow-hidden rounded-xl border border-line bg-surface shadow-pop"
               >
                 <div class="border-b border-line p-3">
                   <div class="text-sm font-semibold text-neutral-900">{{ userName }}</div>

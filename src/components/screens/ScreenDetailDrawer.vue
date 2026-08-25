@@ -43,7 +43,7 @@ function toggle() {
 </script>
 
 <template>
-  <aside class="flex h-full w-96 flex-col border-l border-neutral-200 bg-white shadow-card">
+  <aside class="flex h-full w-96 flex-col border-l border-neutral-200 bg-surface shadow-card">
     <header class="flex items-start justify-between border-b border-neutral-100 p-5">
       <div>
         <h2 class="font-display text-xl font-semibold text-neutral-900">{{ screen?.name }}</h2>

@@ -15,6 +15,13 @@ import { useSession } from './stores/session'
 // and boot) if VITE_APP_ENV or a derived value is missing/invalid.
 import './env'
 
+// Apply the persisted theme before mount so there's no flash of the wrong
+// palette on load. Defaults to light. The topbar toggle updates this + storage.
+document.documentElement.setAttribute(
+  'data-theme',
+  localStorage.getItem('mimu-platform-theme') === 'dark' ? 'dark' : 'light',
+)
+
 const app = createApp(App)
 const pinia = createPinia()
 

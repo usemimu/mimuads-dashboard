@@ -36,6 +36,7 @@ export const PasswordLoginResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
   expiresIn: z.number().int().positive(),
+  csrfToken: z.string().optional(),
   user: PasswordLoginUserSchema,
 })
 export type PasswordLoginResponse = z.infer<typeof PasswordLoginResponseSchema>
@@ -55,6 +56,7 @@ export const AuthTokensResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
   expiresIn: z.number().int().positive(),
+  csrfToken: z.string().optional(),
   user: VerifyOtpUserSchema,
 })
 export type AuthTokensResponse = z.infer<typeof AuthTokensResponseSchema>
@@ -102,6 +104,7 @@ export const RefreshTokenResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
   expiresIn: z.number().int().positive(),
+  csrfToken: z.string().optional(),
 })
 
 // ── Switch context: POST /advertiser/auth/switch-org | switch-workspace ─────

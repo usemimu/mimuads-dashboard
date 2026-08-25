@@ -18,11 +18,38 @@ const emit = defineEmits<{ (e: 'select', screen: Screen): void }>()
 
 const LAGOS = { lat: 6.5244, lng: 3.3792 }
 
+// Dark map tiles (ported from the mobile app) — applied when the console is in
+// dark theme, Google's default light style otherwise. Nudged toward the warm
+// ink palette so the map sits with the rest of the dark UI.
+const DARK_MAP_STYLE: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#14130f' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#9a938a' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#14130f' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#5e574f' }] },
+  { featureType: 'administrative.country', elementType: 'labels.text.fill', stylers: [{ color: '#a89f94' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#c8a98f' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#8f877d' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#1b241b' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#5a6b58' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#26221b' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#9a938a' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#332d25' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#4a4038' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#d9a07b' }] },
+  { featureType: 'transit', elementType: 'labels.text.fill', stylers: [{ color: '#8f877d' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0b0a08' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4d5560' }] },
+]
+function isDarkTheme(): boolean {
+  return document.documentElement.getAttribute('data-theme') === 'dark'
+}
+
 const el = ref<HTMLDivElement | null>(null)
 const failed = ref(false)
 const hasKey = Boolean(env.googleMapsApiKey)
 
 let map: google.maps.Map | null = null
+let themeObserver: MutationObserver | null = null
 
 // The pulse layer. Its concrete class extends google.maps.OverlayView, which
 // only exists after the Maps library loads — so it's built in a factory once
@@ -152,7 +179,14 @@ onMounted(async () => {
       disableDefaultUI: true,
       zoomControl: true,
       clickableIcons: false,
+      styles: isDarkTheme() ? DARK_MAP_STYLE : undefined,
     })
+    // Swap tiles live when the light/dark toggle flips `data-theme` on <html>.
+    themeObserver = new MutationObserver(() => {
+      map?.setOptions({ styles: isDarkTheme() ? DARK_MAP_STYLE : null })
+    })
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+
     layer = createPulseLayer((s) => emit('select', s))
     layer.setScreens(props.screens)
     layer.setSelected(props.selectedIds)
@@ -166,6 +200,8 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   layer?.setMap(null)
   layer = null
+  themeObserver?.disconnect()
+  themeObserver = null
 })
 
 // The filtered set changing rebuilds the dots and re-frames the camera; a pure

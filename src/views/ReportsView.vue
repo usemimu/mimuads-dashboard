@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
+import TimeSeriesChart from '@/components/charts/TimeSeriesChart.vue'
 import { useSession } from '@/stores/session'
 import { getOrgSummary, campaignExportUrl } from '@/api/org'
 import { listCampaigns } from '@/api/campaigns'
@@ -20,10 +21,12 @@ import { statusTone, statusLabel } from '@/lib/status'
 const session = useSession()
 const period = ref(30)
 
+type DayPoint = { day: string; plays: number; verifiedImpressions: number; spendKobo: string }
 const { data: summary } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'org-summary', period.value)),
   queryFn: () => getOrgSummary(period.value) as Promise<{
     totals?: Record<string, unknown>
+    byDay?: DayPoint[]
     byWorkspace?: Array<Record<string, unknown>>
   }>,
 })
@@ -48,9 +51,22 @@ function pluck(obj: unknown, keys: string[]): number {
 }
 const campaignList = computed(() => campaigns.value?.campaigns ?? [])
 const totalSpendKobo = computed(
-  () => pluck(summary.value?.totals, ['spendKobo']) || campaignList.value.reduce((s, c) => s + Number(c.spentKobo || 0), 0),
+  () =>
+    pluck(summary.value?.totals, ['attributedSpendKobo', 'spendKobo']) ||
+    campaignList.value.reduce((s, c) => s + Number(c.spentKobo || 0), 0),
 )
-const verifiedViews = computed(() => pluck(summary.value?.totals, ['verifiedViews', 'plays', 'impressions']))
+const verifiedViews = computed(() => pluck(summary.value?.totals, ['verifiedImpressions', 'plays']))
+
+// Daily trend (verified impressions) from the plays pipeline — same series the
+// dashboard chart uses, scoped to the selected period.
+function shortDate(d: string): string {
+  const t = Date.parse(d)
+  if (Number.isNaN(t)) return d
+  return new Date(t).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
+}
+const byDay = computed<DayPoint[]>(() => summary.value?.byDay ?? [])
+const chartPoints = computed(() => byDay.value.map((d) => d.verifiedImpressions))
+const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
 </script>
 
 <template>
@@ -72,6 +88,12 @@ const verifiedViews = computed(() => pluck(summary.value?.totals, ['verifiedView
       <MetricTile :label="$t('reports.campaigns')" :value="campaignList.length" />
     </div>
 
+    <!-- Trend -->
+    <Card class="mb-6">
+      <p class="mb-4 text-sm font-semibold text-neutral-900">{{ $t('reports.trendTitle') }}</p>
+      <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" />
+    </Card>
+
     <!-- Per-workspace rollup (agencies) -->
     <Card v-if="byWorkspace.length" padding="none" class="mb-6 overflow-hidden">
       <div class="border-b border-neutral-100 px-5 py-3 text-sm font-semibold text-neutral-900">{{ $t('reports.perWorkspace') }}</div>
@@ -87,7 +109,7 @@ const verifiedViews = computed(() => pluck(summary.value?.totals, ['verifiedView
           <tr v-for="(w, i) in byWorkspace" :key="i" class="border-t border-neutral-100">
             <td class="px-5 py-3 text-neutral-900">{{ w.workspaceName ?? w.name ?? w.workspaceId ?? '—' }}</td>
             <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ kobo(w.spendKobo ?? w.spend) }}</td>
-            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ w.verifiedViews ?? w.plays ?? '—' }}</td>
+            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ w.verifiedImpressions ?? w.plays ?? '—' }}</td>
           </tr>
         </tbody>
       </table>

@@ -48,23 +48,33 @@ export default {
           800: '#44330A',
           900: '#261E05',
         },
+        // Theme-aware ramp — the values live as RGB triplets in main.css
+        // (`:root` = light, `[data-theme="dark"]` = dark) so every neutral
+        // utility flips with the theme. `<alpha-value>` keeps opacity modifiers
+        // (e.g. `bg-neutral-900/[0.04]`) working.
         neutral: {
-          50: '#F7F5F2',
-          100: '#EDE9E3',
-          200: '#DDD8D0',
-          300: '#C5BDB3',
-          400: '#A89F94',
-          500: '#7E766C',
-          600: '#5E574F',
-          700: '#403C36',
-          800: '#282420',
-          900: '#0E0D0B',
+          50: 'rgb(var(--n-50) / <alpha-value>)',
+          100: 'rgb(var(--n-100) / <alpha-value>)',
+          200: 'rgb(var(--n-200) / <alpha-value>)',
+          300: 'rgb(var(--n-300) / <alpha-value>)',
+          400: 'rgb(var(--n-400) / <alpha-value>)',
+          500: 'rgb(var(--n-500) / <alpha-value>)',
+          600: 'rgb(var(--n-600) / <alpha-value>)',
+          700: 'rgb(var(--n-700) / <alpha-value>)',
+          800: 'rgb(var(--n-800) / <alpha-value>)',
+          900: 'rgb(var(--n-900) / <alpha-value>)',
         },
-        // Warm hairline borders (mirrors the admin console's --border tokens)
-        // so cards, sidebar and tables read "considered", not grey.
+        // Card/panel surfaces (was hardcoded `bg-white`) — theme-aware so cards
+        // go dark. Tailwind's real `white` is left alone for `text-white`.
+        surface: {
+          DEFAULT: 'rgb(var(--surface) / <alpha-value>)',
+          raised: 'rgb(var(--surface-raised) / <alpha-value>)',
+          sunken: 'rgb(var(--surface-sunken) / <alpha-value>)',
+        },
+        // Warm hairline borders (mirrors the admin console's --border tokens).
         line: {
-          DEFAULT: '#E6E1D9',
-          strong: '#DDD8D0',
+          DEFAULT: 'rgb(var(--line) / <alpha-value>)',
+          strong: 'rgb(var(--line-strong) / <alpha-value>)',
         },
       },
       fontFamily: {

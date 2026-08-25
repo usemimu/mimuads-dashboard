@@ -439,8 +439,8 @@ async function onSignOut() {
 
     <!-- Delete confirmation modal -->
     <div v-if="showDelete" class="fixed inset-0 z-40 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm" @click="showDelete = false" />
-      <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-pop">
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showDelete = false" />
+      <div class="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-pop">
         <h3 class="font-display text-xl font-semibold text-neutral-900">{{ $t('settings.deleteConfirmTitle') }}</h3>
         <p class="mt-1 text-sm text-neutral-500">{{ $t('settings.deleteConfirmBody') }}</p>
         <label class="mt-4 block">

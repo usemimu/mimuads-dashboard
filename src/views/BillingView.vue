@@ -141,7 +141,7 @@ async function doTransfer() {
     <PageHeader :title="$t('billing.title')" :subtitle="$t('billing.subtitle')" />
 
     <!-- Wallet card -->
-    <Card class="mb-6 bg-gradient-to-br from-white to-clay-50/40">
+    <Card class="mb-6">
       <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('billing.balance') }}</p>
       <p class="mt-1.5 font-mono text-4xl font-semibold text-neutral-900" data-testid="wallet-balance">
         {{ wallet ? formatKobo(wallet.balanceKobo) : '—' }}

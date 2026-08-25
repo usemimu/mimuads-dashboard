@@ -9,7 +9,7 @@ const tone: Record<ToastKind, string> = {
   success: 'border-moss-200 bg-moss-50 text-moss-800',
   error: 'border-clay-200 bg-clay-50 text-clay-800',
   warning: 'border-gold-200 bg-gold-50 text-gold-800',
-  info: 'border-neutral-200 bg-white text-neutral-800',
+  info: 'border-neutral-200 bg-surface text-neutral-800',
 }
 const iconTone: Record<ToastKind, string> = {
   success: 'text-moss-500',

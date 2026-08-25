@@ -68,30 +68,30 @@ function pluck(obj: unknown, keys: string[]): number {
   }
   return 0
 }
+// Real numbers from the CV plays pipeline (org/reports/summary): verified
+// impressions, plays, and attributed spend over the selected period.
+type DayPoint = { day: string; plays: number; verifiedImpressions: number; spendKobo: string }
 const totals = computed(() => (summary.value as { totals?: unknown } | undefined)?.totals ?? null)
-const impressions = computed(() => pluck(totals.value, ['impressions', 'plays', 'verifiedViews']))
-const spendKobo = computed(() => filtered.value.reduce((sum, c) => sum + Number(c.spentKobo || 0), 0))
+const byDay = computed<DayPoint[]>(() => (summary.value as { byDay?: DayPoint[] } | undefined)?.byDay ?? [])
+
+const impressions = computed(() => pluck(totals.value, ['verifiedImpressions', 'plays']))
+const spendKobo = computed(
+  () => pluck(totals.value, ['attributedSpendKobo']) || filtered.value.reduce((sum, c) => sum + Number(c.spentKobo || 0), 0),
+)
 const activeCount = computed(() => filtered.value.filter((c) => c.status === 'active').length)
 const screensLive = computed(() =>
   filtered.value.filter((c) => c.status === 'active').reduce((sum, c) => sum + (c.screenCount ?? 0), 0),
 )
 const cpmKobo = computed(() => (impressions.value > 0 ? Math.round((spendKobo.value / impressions.value) * 1000) : 0))
 
-// ── Chart: cumulative spend by campaign start date (real, quasi-temporal) ──
+// ── Chart: verified impressions by day (real time series from the plays data) ──
 function shortDate(d: string): string {
   const t = Date.parse(d)
   if (Number.isNaN(t)) return d
   return new Date(t).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
 }
-const chartCampaigns = computed(() => [...filtered.value].sort((a, b) => a.startDate.localeCompare(b.startDate)))
-const chartPoints = computed(() => {
-  let acc = 0
-  return chartCampaigns.value.map((c) => {
-    acc += Number(c.spentKobo || 0) / 100
-    return Math.round(acc)
-  })
-})
-const chartLabels = computed(() => chartCampaigns.value.map((c) => shortDate(c.startDate)))
+const chartPoints = computed(() => byDay.value.map((d) => d.verifiedImpressions))
+const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
 
 const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKobo) < 500_000_00 : false))
 </script>

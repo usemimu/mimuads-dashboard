@@ -14,7 +14,7 @@ const titleKey = computed(() => (route.meta.titleKey as string) ?? 'app.name')
       {{ $t(titleKey) }}
     </h1>
     <div
-      class="flex h-64 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-neutral-200 bg-white/50"
+      class="flex h-64 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-neutral-200 bg-surface/50"
     >
       <PhWrench :size="28" class="text-neutral-300" />
       <span class="text-sm font-medium text-neutral-400">{{ $t('common.comingSoon') }}</span>

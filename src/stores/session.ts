@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { api } from '@/api/client'
 import { getProfile } from '@/api/profile'
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/token'
+import { clearCsrfToken, setCsrfToken } from '@/api/csrf'
 import { resetQueryCacheForContextSwitch } from '@/api/query'
 import { decodeAccessClaims } from '@/lib/jwt'
 import type { MembershipRole, OrgTier } from '@/api/contracts/common'
@@ -69,6 +70,7 @@ export const useSession = defineStore('session', () => {
 
   function clearSession(): void {
     clearAccessToken()
+    clearCsrfToken()
     context.value = { ...EMPTY_CONTEXT }
     user.value = null
     resetQueryCacheForContextSwitch()
@@ -91,6 +93,7 @@ export const useSession = defineStore('session', () => {
       PasswordLoginResponseSchema,
     )
     user.value = toSessionUser(res.user)
+    setCsrfToken(res.csrfToken)
     applyToken(res.accessToken)
   }
 
@@ -98,6 +101,7 @@ export const useSession = defineStore('session', () => {
     const body = VerifyOtpSchema.parse({ phone, code })
     const res = await api.post('/advertiser/auth/verify-otp', body, AuthTokensResponseSchema)
     user.value = toSessionUser(res.user)
+    setCsrfToken(res.csrfToken)
     applyToken(res.accessToken)
   }
 
@@ -139,6 +143,7 @@ export const useSession = defineStore('session', () => {
     try {
       const res = await api.post('/advertiser/auth/refresh', {}, RefreshTokenResponseSchema)
       if (res.accessToken) {
+        setCsrfToken(res.csrfToken)
         applyToken(res.accessToken)
         // The token has no name/email — hydrate the display user so a
         // page refresh shows the person, not their raw id. Best-effort:

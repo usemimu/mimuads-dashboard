@@ -51,10 +51,27 @@
   :root {
     color-scheme: light;
 
-    /* Admin-console tokens (light). Ported from mimu-admin so this
-       console's shell + page chrome read identically. The palette is the
-       same clay/neutral system as Tailwind's tokens; these vars let the
-       shell/page classes below match admin's markup 1:1. */
+    /* Theme-aware ramp (RGB triplets → Tailwind `neutral-*` / `surface` /
+       `line`). Light = the warm sand→ink palette. See `[data-theme="dark"]`. */
+    --n-50: 247 245 242;
+    --n-100: 237 233 227;
+    --n-200: 221 216 208;
+    --n-300: 197 189 179;
+    --n-400: 168 159 148;
+    --n-500: 126 118 108;
+    --n-600: 94 87 79;
+    --n-700: 64 60 54;
+    --n-800: 40 36 32;
+    --n-900: 14 13 11;
+    --surface: 255 255 255;
+    --surface-raised: 255 255 255;
+    --surface-sunken: 237 233 227;
+    --line: 230 225 217;
+    --line-strong: 221 216 208;
+    --shell-base: 221 216 208; /* tint behind the floating shell panels */
+
+    /* Semantic tokens used by the var-based component classes (.card, .page-*,
+       .sb-*, .topbar, .pill, .input…). Ported from mimu-admin. */
     --bg: #f7f5f2;
     --bg-raised: #ffffff;
     --bg-sunken: #ede9e3;
@@ -75,6 +92,47 @@
 
     --ease: cubic-bezier(0.2, 0, 0.1, 1);
     --dur-med: 160ms;
+  }
+
+  /* Dark theme — surfaces darken, text lightens (a designed ramp, not a naive
+     inversion). Toggled by setting `data-theme="dark"` on <html>. */
+  [data-theme='dark'] {
+    color-scheme: dark;
+
+    --n-50: 18 15 10;
+    --n-100: 30 26 20;
+    --n-200: 38 34 27;
+    --n-300: 51 45 37;
+    --n-400: 107 99 88;
+    --n-500: 126 118 108;
+    --n-600: 168 159 148;
+    --n-700: 197 189 179;
+    --n-800: 221 216 208;
+    --n-900: 242 239 233;
+    --surface: 23 21 15;
+    --surface-raised: 30 26 20;
+    --surface-sunken: 10 9 7;
+    --line: 38 34 27;
+    --line-strong: 51 45 37;
+    --shell-base: 10 9 7;
+
+    --bg: #0e0d0b;
+    --bg-raised: #17150f;
+    --bg-sunken: #0a0907;
+    --bg-hover: rgba(255, 255, 255, 0.04);
+    --bg-active: rgba(200, 119, 76, 0.14);
+    --bg-selected: rgba(200, 119, 76, 0.16);
+    --border: #26221b;
+    --border-strong: #332d25;
+    --border-focus: #c8774c;
+    --fg: #f2efe9;
+    --fg-2: #a89f94;
+    --fg-3: #6b6358;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 50px rgba(0, 0, 0, 0.75);
+    --sidebar-bg: #120f0a;
+    --topbar-bg: rgba(14, 13, 11, 0.85);
   }
 
   html,
@@ -120,7 +178,7 @@
      Prefer the <Card> component; this class is here for one-off markup.
      Shadow is inlined so it never depends on a custom utility. */
   .card {
-    @apply rounded-xl border border-line bg-white;
+    @apply rounded-xl border border-line bg-surface;
     box-shadow: 0 1px 2px rgba(14, 13, 11, 0.05);
   }
 
@@ -131,7 +189,7 @@
   }
   .input,
   .select {
-    @apply w-full rounded-lg border-line-strong bg-white py-2 text-sm text-neutral-900 transition
+    @apply w-full rounded-lg border-line-strong bg-surface py-2 text-sm text-neutral-900 transition
       placeholder:text-neutral-400 focus:border-clay-400 focus:ring-2 focus:ring-clay-400/25;
   }
 

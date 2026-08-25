@@ -100,7 +100,7 @@ async function pickWorkspace(workspaceId: string | null) {
       <div v-if="open" class="fixed inset-0 z-[998]" @click="open = false" />
       <div
         v-if="open"
-        class="fixed z-[999] overflow-hidden rounded-xl bg-white py-1.5 shadow-pop ring-1 ring-neutral-200/70"
+        class="fixed z-[999] overflow-hidden rounded-xl bg-surface py-1.5 shadow-pop ring-1 ring-neutral-200/70"
         :style="{
           left: `${menuPos.left}px`,
           width: `${menuPos.width}px`,

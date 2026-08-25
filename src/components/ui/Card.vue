@@ -27,7 +27,7 @@ const pad = {
 
 const classes = computed(() =>
   cn(
-    'rounded-xl border border-line bg-white shadow-card',
+    'rounded-xl border border-line bg-surface shadow-card',
     pad[props.padding],
     props.interactive &&
       'cursor-pointer transition-all duration-200 hover:border-line-strong hover:shadow-card-hover',

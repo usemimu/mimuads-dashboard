@@ -98,6 +98,8 @@ export function buildCreatePayload(s: WizardState): CreateCampaignRequest {
     dailyBudgetCapKobo: s.dailyCapNaira != null ? String(nairaToKobo(s.dailyCapNaira)) : undefined,
     startDate: toIso(s.startDate),
     endDate: toIso(s.endDate),
-    isEvenPacing: s.isEvenPacing || undefined,
+    // Always send the explicit choice — the backend DEFAULTS to even pacing, so
+    // omitting `false` (Standard) would silently flip the campaign to Even.
+    isEvenPacing: s.isEvenPacing,
   }
 }

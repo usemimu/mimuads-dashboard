@@ -62,7 +62,7 @@ const axisLabels = computed(() => {
           </linearGradient>
         </defs>
         <!-- baseline gridline -->
-        <line x1="0" :y1="H - 6" :x2="W" :y2="H - 6" stroke="#E6E1D9" stroke-width="0.5" vector-effect="non-scaling-stroke" />
+        <line x1="0" :y1="H - 6" :x2="W" :y2="H - 6" stroke="var(--border)" stroke-width="0.5" vector-effect="non-scaling-stroke" />
         <path :d="areaPath" fill="url(#ts-fill)" />
         <path
           :d="linePath"

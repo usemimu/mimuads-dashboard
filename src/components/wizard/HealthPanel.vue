@@ -17,7 +17,7 @@ const impactClass: Record<string, string> = {
 </script>
 
 <template>
-  <div class="rounded-xl border border-line bg-white p-4 shadow-card">
+  <div class="rounded-xl border border-line bg-surface p-4 shadow-card">
     <div class="mb-3 flex items-center gap-2">
       <PhCheckCircle v-if="!suggestions.length" :size="18" weight="fill" class="text-moss-500" />
       <PhWarningCircle v-else :size="18" weight="fill" class="text-gold-500" />

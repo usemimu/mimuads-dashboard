@@ -11290,6 +11290,9 @@
             "minimum": 0,
             "exclusiveMinimum": true
           },
+          "csrfToken": {
+            "type": "string"
+          },
           "user": {
             "type": "object",
             "properties": {
@@ -11363,6 +11366,9 @@
             "type": "integer",
             "minimum": 0,
             "exclusiveMinimum": true
+          },
+          "csrfToken": {
+            "type": "string"
           }
         },
         "required": [

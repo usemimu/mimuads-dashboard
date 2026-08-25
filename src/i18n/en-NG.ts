@@ -21,6 +21,7 @@ export default {
     groupAdvertising: 'Advertising',
     groupAccount: 'Account',
     toggleSidebar: 'Toggle sidebar',
+    toggleTheme: 'Toggle light / dark',
   },
   settings: {
     title: 'Settings',
@@ -416,6 +417,7 @@ export default {
     creativeReadFailed: "Couldn't read that file. Try another.",
     creativeVideoDuration: 'Video must be between 5 and 180 seconds.',
     creativeVideoPortrait: "Use a landscape (16:9) video — portrait isn't supported.",
+    creativePreview: 'Preview',
     maxDurationHint: 'Campaigns can run up to 90 days.',
     reviewTitle: 'Review & submit',
     saveDraft: 'Save draft',
@@ -505,6 +507,7 @@ export default {
   reports: {
     title: 'Reports',
     subtitle: 'Spend, delivery, and exports across campaigns.',
+    trendTitle: 'Verified impressions by day',
     period: 'Period',
     days30: 'Last 30 days',
     days7: 'Last 7 days',
@@ -540,7 +543,7 @@ export default {
     mActive: 'Active',
     mScreens: 'Screens live',
     mCpm: 'Cost / 1,000',
-    chartTitle: 'Spend to date',
+    chartTitle: 'Verified impressions by day',
     noData: 'No data for this period',
     colStatus: 'Status',
     colBudget: 'Budget',
