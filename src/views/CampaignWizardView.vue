@@ -98,12 +98,23 @@ const scheduleReady = computed(() => stepValid(s, 'schedule'))
 const targetReady = computed(() => s.isWildcard || s.screenIds.length > 0)
 const quoteReady = computed(() => scheduleReady.value && targetReady.value)
 
+// Debounce the quote inputs so rapid changes (picking screens, nudging dates)
+// coalesce into ONE request instead of firing on every click. Dayparts/days are
+// intentionally excluded — they refine pacing, not the headline estimate, and
+// leaving them out avoids a request (and the single-value query error) on every
+// hour/day toggle.
+const quoteSig = computed(() =>
+  JSON.stringify({ w: s.isWildcard, ids: s.screenIds, sd: s.startDate, ed: s.endDate }),
+)
+const debouncedSig = ref(quoteSig.value)
+let quoteTimer: ReturnType<typeof setTimeout> | undefined
+watch(quoteSig, (v) => {
+  clearTimeout(quoteTimer)
+  quoteTimer = setTimeout(() => (debouncedSig.value = v), 500)
+})
+
 const { data: quote, isFetching: quoteLoading } = useQuery({
-  queryKey: computed(() =>
-    ctxKey(session.context, 'quote', JSON.stringify({
-      w: s.isWildcard, ids: s.screenIds, sd: s.startDate, ed: s.endDate, h: s.hours, d: s.daysOfWeek,
-    })),
-  ),
+  queryKey: computed(() => ctxKey(session.context, 'quote', debouncedSig.value)),
   enabled: quoteReady,
   queryFn: () =>
     getQuote({
@@ -111,8 +122,6 @@ const { data: quote, isFetching: quoteLoading } = useQuery({
       screenIds: s.isWildcard ? undefined : s.screenIds,
       startDate: new Date(`${s.startDate}T00:00:00Z`).toISOString(),
       endDate: new Date(`${s.endDate}T00:00:00Z`).toISOString(),
-      targetHours: s.hours.length ? s.hours : undefined,
-      targetDaysOfWeek: s.daysOfWeek.length ? s.daysOfWeek : undefined,
     }),
 })
 
@@ -420,7 +429,13 @@ async function finish(submit: boolean) {
 
       <!-- Right: estimate + health -->
       <template #aside>
-        <EstimatePanel :quote="quote" :loading="quoteLoading" :ready="quoteReady" :breadth="breadth" />
+        <EstimatePanel
+          :quote="quote"
+          :loading="quoteLoading"
+          :ready="quoteReady"
+          :breadth="breadth"
+          :budget-kobo="s.budgetNaira != null ? s.budgetNaira * 100 : null"
+        />
         <HealthPanel :suggestions="health" />
       </template>
     </WizardShell>

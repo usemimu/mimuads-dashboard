@@ -57,10 +57,17 @@ export const CampaignSchema = z
     spentKobo: z.string(),
     remainingKobo: z.string(),
     dailyBudgetCapKobo: z.string().nullable().optional(),
+    // Committed CPM (kobo) locked at submit + a display-formatted version.
+    // Present on the detail response; null on legacy rows.
+    bidCpmKobo: z.string().nullable().optional(),
+    formattedBidCpm: z.string().nullable().optional(),
     startDate: z.string(),
     endDate: z.string(),
     createdAt: z.string(),
     creative: z.unknown().optional(),
+    // Signed poster (cover image) for the campaign's creative — populated by the
+    // list endpoint so the console can render a preview grid.
+    posterUrl: z.string().nullable().optional(),
     pausedReason: z.string().nullable().optional(),
     suspensionReason: z.string().nullable().optional(),
     apconRejectionReason: z.string().nullable().optional(),
@@ -117,7 +124,12 @@ export const QuoteResponseSchema = z
     netKobo: z.string(),
     estimatedImpressions: z.number(),
     estimatedPlays: z.number(),
+    // Unique daily audience of the selection; impressions ÷ reach ≈ frequency.
+    estimatedReach: z.number().optional(),
     costPerThousandImpressions: z.number(),
+    // Committed CPM (kobo) that will be locked at submit — what the engine
+    // bills against. Prefer this over costPerThousandImpressions for display.
+    bidCpmKobo: z.string().optional(),
     durationDays: z.number(),
     totalScreens: z.number().optional(),
   })

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass } from '@phosphor-icons/vue'
+import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -32,6 +32,7 @@ const { kycComplete, isLoading: kycLoading } = useKyc()
 const statusFilter = ref('')
 const search = ref('')
 const selected = ref<Set<string>>(new Set())
+const view = ref<'grid' | 'list'>('grid') // preview cards vs table
 
 const { data, isLoading } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'campaigns', statusFilter.value || 'all')),
@@ -128,9 +129,62 @@ function startWizard() {
         <Button size="sm" variant="secondary" @click="bulk('pause')">{{ $t('campaigns.bulkPause') }}</Button>
         <Button size="sm" variant="secondary" @click="bulk('resume')">{{ $t('campaigns.bulkResume') }}</Button>
       </template>
+      <div class="flex overflow-hidden rounded-lg border border-line-strong">
+        <button class="flex items-center gap-1 px-3 py-1.5 text-sm" :class="view === 'grid' ? 'bg-clay-50 text-clay-700' : 'text-neutral-600'" :title="$t('campaigns.gridView')" @click="view = 'grid'">
+          <PhSquaresFour :size="16" />
+        </button>
+        <button class="flex items-center gap-1 px-3 py-1.5 text-sm" :class="view === 'list' ? 'bg-clay-50 text-clay-700' : 'text-neutral-600'" :title="$t('campaigns.listView')" @click="view = 'list'">
+          <PhListBullets :size="16" />
+        </button>
+      </div>
     </div>
 
-    <Card padding="none" class="overflow-hidden">
+    <!-- Preview grid: each campaign as a card with its creative poster. -->
+    <div v-if="view === 'grid'">
+      <p v-if="isLoading" class="py-10 text-center text-sm text-neutral-400">{{ $t('common.loading') }}</p>
+      <Card v-else-if="!visible.length">
+        <EmptyState :title="$t('campaigns.empty')">
+          <template #icon><PhMegaphone :size="24" /></template>
+          <template v-if="session.canSubmitCampaign" #actions>
+            <Button @click="startWizard"><PhPlus :size="16" /> {{ $t('campaigns.newCampaign') }}</Button>
+          </template>
+        </EmptyState>
+      </Card>
+      <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <RouterLink
+          v-for="c in visible"
+          :key="c.id"
+          :to="`/campaigns/${c.id}`"
+          class="group overflow-hidden rounded-xl border border-line bg-surface shadow-card transition-all hover:border-line-strong hover:shadow-card-hover"
+        >
+          <div class="relative aspect-video overflow-hidden bg-black">
+            <img
+              v-if="c.posterUrl"
+              :src="c.posterUrl"
+              alt=""
+              class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            />
+            <div v-else class="flex h-full w-full items-center justify-center text-neutral-600">
+              <PhFilmSlate :size="32" />
+            </div>
+            <Badge :tone="statusTone(c.status)" class="absolute left-2 top-2 shadow-sm">{{ statusLabel(c.status) }}</Badge>
+          </div>
+          <div class="p-3">
+            <p class="truncate font-medium text-neutral-900 group-hover:text-clay-600">{{ c.name }}</p>
+            <p class="text-xs capitalize text-neutral-400">{{ c.objective }}</p>
+            <div class="mt-2 flex items-center justify-between text-xs">
+              <span class="font-mono text-neutral-500">{{ formatKobo(c.spentKobo, { showDecimals: false }) }} / {{ formatKobo(c.budgetKobo, { showDecimals: false }) }}</span>
+              <span class="font-mono text-neutral-400">{{ pacing(c) }}%</span>
+            </div>
+            <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
+              <div class="h-full rounded-full bg-clay-500" :style="{ width: pacing(c) + '%' }" />
+            </div>
+          </div>
+        </RouterLink>
+      </div>
+    </div>
+
+    <Card v-else padding="none" class="overflow-hidden">
       <table class="w-full text-sm">
         <thead class="text-left text-[11px] uppercase tracking-wider text-neutral-400">
           <tr class="border-b border-neutral-100">

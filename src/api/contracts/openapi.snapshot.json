@@ -13213,8 +13213,14 @@
           "estimatedPlays": {
             "type": "number"
           },
+          "estimatedReach": {
+            "type": "number"
+          },
           "costPerThousandImpressions": {
             "type": "number"
+          },
+          "bidCpmKobo": {
+            "type": "string"
           },
           "breakdown": {
             "type": "array",
@@ -13485,6 +13491,14 @@
           "dailyBudgetCapKobo": {
             "type": "string"
           },
+          "bidCpmKobo": {
+            "type": "string",
+            "nullable": true
+          },
+          "formattedBidCpm": {
+            "type": "string",
+            "nullable": true
+          },
           "startDate": {
             "type": "string",
             "format": "date-time"
@@ -13531,6 +13545,10 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "posterUrl": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
