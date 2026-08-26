@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate, PhPlay, PhArrowsOut, PhVideoCamera, PhImage } from '@phosphor-icons/vue'
@@ -66,6 +66,39 @@ const totalSpendKobo = computed(() => campaigns.value.reduce((s, c) => s + Numbe
 function pacing(c: Campaign): number {
   const b = Number(c.budgetKobo)
   return b ? Math.min(100, Math.round((Number(c.spentKobo) / b) * 100)) : 0
+}
+
+// Creative format for the card marker + play button. Prefer the top-level
+// `creativeFormat` (added to the list endpoint) but fall back to the nested
+// `creative.format` the API already returns today, so this works before the
+// backend change ships.
+function fmt(c: Campaign): 'video' | 'image' | null {
+  const f = c.creativeFormat ?? (c.creative as { format?: string } | undefined)?.format
+  return f === 'video' || f === 'image' ? f : null
+}
+
+// The backend mints a NEW presigned previewUrl on every list fetch (rotating
+// X-Amz-Signature), so the 30s live-refetch would otherwise swap each <video>
+// src and force a full re-download/flicker. Memoise the first URL we see per
+// campaign (keyed by the stable S3 path, ignoring the query) so the media stays
+// put across refetches; only refresh it if the underlying object actually changes.
+const mediaUrlById = ref<Record<string, string>>({})
+watch(
+  campaigns,
+  (list) => {
+    const next = { ...mediaUrlById.value }
+    for (const c of list) {
+      if (!c.previewUrl) continue
+      const path = c.previewUrl.split('?')[0]
+      const existing = next[c.id]
+      if (!existing || existing.split('?')[0] !== path) next[c.id] = c.previewUrl
+    }
+    mediaUrlById.value = next
+  },
+  { immediate: true },
+)
+function mediaUrl(c: Campaign): string | null {
+  return mediaUrlById.value[c.id] ?? c.previewUrl ?? null
 }
 
 function toggle(id: string) {
@@ -175,9 +208,9 @@ function startWizard() {
             <!-- Inline playback once the user hits play; native controls, same
                  approach as the creative review preview. -->
             <video
-              v-if="playing === c.id && c.previewUrl"
-              :key="c.previewUrl"
-              :src="c.previewUrl"
+              v-if="playing === c.id && mediaUrl(c)"
+              :key="c.id"
+              :src="mediaUrl(c)!"
               :poster="c.posterUrl || undefined"
               controls
               autoplay
@@ -196,8 +229,9 @@ function startWizard() {
                    show a real frame. preload=metadata keeps it from pulling the
                    whole clip. -->
               <video
-                v-else-if="c.previewUrl"
-                :src="`${c.previewUrl}#t=1`"
+                v-else-if="mediaUrl(c)"
+                :key="c.id"
+                :src="`${mediaUrl(c)}#t=1`"
                 muted
                 playsinline
                 preload="metadata"
@@ -206,11 +240,12 @@ function startWizard() {
               <div v-else class="flex h-full w-full items-center justify-center text-neutral-600">
                 <PhFilmSlate :size="32" />
               </div>
-              <!-- Play button for video creatives — plays the preview in place. -->
+              <!-- Play button for video creatives — always visible (darkens the
+                   overlay on hover), plays the preview in place. -->
               <button
-                v-if="c.creativeFormat === 'video' && c.previewUrl"
+                v-if="fmt(c) === 'video' && c.previewUrl"
                 type="button"
-                class="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                class="absolute inset-0 flex items-center justify-center bg-black/10 transition-colors group-hover:bg-black/30"
                 :title="$t('campaigns.play')"
                 :aria-label="$t('campaigns.play')"
                 @click="playing = c.id"
@@ -222,13 +257,13 @@ function startWizard() {
               <Badge :tone="statusTone(c.status)" class="absolute left-2 top-2 shadow-sm">{{ statusLabel(c.status) }}</Badge>
               <!-- Format marker so video vs image campaigns are distinguishable at a glance. -->
               <span
-                v-if="c.creativeFormat"
+                v-if="fmt(c)"
                 class="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm backdrop-blur-sm"
-                :title="c.creativeFormat === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage')"
+                :title="fmt(c) === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage')"
               >
-                <PhVideoCamera v-if="c.creativeFormat === 'video'" :size="12" weight="fill" />
+                <PhVideoCamera v-if="fmt(c) === 'video'" :size="12" weight="fill" />
                 <PhImage v-else :size="12" weight="fill" />
-                {{ c.creativeFormat === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage') }}
+                {{ fmt(c) === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage') }}
               </span>
             </template>
           </div>
@@ -303,14 +338,14 @@ function startWizard() {
               <div class="flex items-center gap-1.5">
                 <!-- Format marker: video vs image at a glance. -->
                 <PhVideoCamera
-                  v-if="c.creativeFormat === 'video'"
+                  v-if="fmt(c) === 'video'"
                   :size="14"
                   weight="fill"
                   class="shrink-0 text-neutral-400"
                   :aria-label="$t('campaigns.formatVideo')"
                 />
                 <PhImage
-                  v-else-if="c.creativeFormat === 'image'"
+                  v-else-if="fmt(c) === 'image'"
                   :size="14"
                   weight="fill"
                   class="shrink-0 text-neutral-400"
