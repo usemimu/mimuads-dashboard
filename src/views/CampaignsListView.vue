@@ -191,6 +191,18 @@ function startWizard() {
                 alt=""
                 class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               />
+              <!-- No poster from the API (posterUrl null): fall back to the video
+                   itself, seeking ~1s in (#t=1) so we skip any black fade-in and
+                   show a real frame. preload=metadata keeps it from pulling the
+                   whole clip. -->
+              <video
+                v-else-if="c.previewUrl"
+                :src="`${c.previewUrl}#t=1`"
+                muted
+                playsinline
+                preload="metadata"
+                class="h-full w-full bg-black object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              />
               <div v-else class="flex h-full w-full items-center justify-center text-neutral-600">
                 <PhFilmSlate :size="32" />
               </div>
