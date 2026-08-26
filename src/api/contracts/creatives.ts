@@ -36,6 +36,17 @@ export const UploadIntentResponseSchema = z
     presignedFields: z.record(z.string(), z.string()).optional(),
     expiresAt: z.string(),
     uploadInstructions: z.unknown(),
+    // Companion presigned PUT for the video poster (still cover). Present only
+    // for video uploads. The console derives a JPEG from ~1s of the clip and
+    // uploads it here so the campaign gets a real cover — otherwise the backend
+    // clears posterS3Key at confirm and posterUrl comes back null.
+    posterUpload: z
+      .object({
+        presignedUrl: z.string(),
+        headers: z.record(z.string(), z.string()).optional(),
+        maxSizeBytes: z.number().optional(),
+      })
+      .optional(),
   })
   .passthrough()
 

@@ -24,6 +24,8 @@ import {
   listCreatives,
   uploadIntent,
   putToPresigned,
+  putBlobToPresigned,
+  capturePosterFrame,
   confirmUpload,
   sha256Hex,
   probeCreative,
@@ -200,6 +202,18 @@ async function onUpload(e: Event) {
       resolution: meta.resolution,
     })
     await putToPresigned(intent.presignedUrl, file)
+    // Give video creatives a real cover: derive a poster frame (~1s) and upload
+    // it to the companion slot BEFORE confirm — the backend clears posterS3Key
+    // if the poster object is missing at confirm time. Best-effort: a capture or
+    // upload failure just falls back to the null-poster placeholder.
+    if (isVideo && intent.posterUpload?.presignedUrl) {
+      try {
+        const poster = await capturePosterFrame(file, 1)
+        if (poster) await putBlobToPresigned(intent.posterUpload.presignedUrl, poster, 'image/jpeg')
+      } catch {
+        /* non-fatal — creative still uploads without a poster */
+      }
+    }
     await confirmUpload(intent.creativeId, await sha256Hex(file))
     await refetchCreatives()
     s.creativeId = intent.creativeId
