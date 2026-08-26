@@ -13549,6 +13549,18 @@
           "posterUrl": {
             "type": "string",
             "nullable": true
+          },
+          "previewUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "creativeFormat": {
+            "type": "string",
+            "enum": [
+              "video",
+              "image"
+            ],
+            "nullable": true
           }
         },
         "required": [

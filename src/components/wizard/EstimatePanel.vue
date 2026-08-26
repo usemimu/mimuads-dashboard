@@ -48,7 +48,7 @@ const range = computed(() =>
 <template>
   <div class="rounded-xl border border-line bg-surface p-4 shadow-card" data-testid="estimate">
     <div class="mb-3 flex items-center gap-2">
-      <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-clay-50 text-clay-500">
+      <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-clay-500/10 text-clay-500">
         <PhUsersThree :size="16" />
       </span>
       <p class="text-[13px] font-semibold text-neutral-900">{{ $t('wizard.estimate.title') }}</p>

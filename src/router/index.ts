@@ -53,7 +53,6 @@ const routes: RouteRecordRaw[] = [
       { path: 'dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { titleKey: 'nav.dashboard' } },
       { path: 'campaigns', name: 'campaigns', component: () => import('@/views/CampaignsListView.vue'), meta: { titleKey: 'nav.campaigns' } },
       { path: 'campaigns/new', name: 'campaign-new', component: () => import('@/views/CampaignWizardView.vue'), meta: { titleKey: 'campaigns.newCampaign' } },
-      { path: 'campaigns/ads', name: 'campaign-ads', component: () => import('@/views/CreativesListView.vue'), meta: { titleKey: 'creatives.title' } },
       { path: 'campaigns/:id', name: 'campaign-detail', component: () => import('@/views/CampaignDetailView.vue'), meta: { titleKey: 'nav.campaigns' } },
       { path: 'screens', name: 'screens', component: () => import('@/views/ScreensView.vue'), meta: { titleKey: 'nav.screens' } },
       { path: 'reports', name: 'reports', component: () => import('@/views/ReportsView.vue'), meta: { titleKey: 'nav.reports' } },

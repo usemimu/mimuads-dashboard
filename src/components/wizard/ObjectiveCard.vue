@@ -19,7 +19,7 @@ defineProps<{
   <button
     type="button"
     class="w-full rounded-xl border p-4 text-left transition-colors"
-    :class="selected ? 'border-clay-500 bg-clay-50/60 ring-1 ring-clay-500/40' : 'border-line-strong hover:bg-neutral-50'"
+    :class="selected ? 'border-clay-500 bg-clay-500/10 ring-1 ring-clay-500/40' : 'border-line-strong hover:bg-neutral-50'"
   >
     <div class="flex items-start gap-3">
       <span

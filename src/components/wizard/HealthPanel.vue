@@ -10,8 +10,8 @@ import type { HealthSuggestion } from '@/lib/campaignHealth'
 defineProps<{ suggestions: HealthSuggestion[] }>()
 
 const impactClass: Record<string, string> = {
-  high: 'bg-clay-50 text-clay-700 border-clay-200',
-  medium: 'bg-gold-50 text-gold-700 border-gold-200/70',
+  high: 'bg-clay-500/10 text-clay-600 border-clay-500/25',
+  medium: 'bg-gold-500/10 text-gold-600 border-gold-500/25',
   info: 'bg-neutral-100 text-neutral-600 border-line',
 }
 </script>

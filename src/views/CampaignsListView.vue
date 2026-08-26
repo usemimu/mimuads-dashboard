@@ -2,14 +2,13 @@
 import { computed, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate } from '@phosphor-icons/vue'
+import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate, PhPlay, PhArrowsOut, PhVideoCamera, PhImage } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
-import CampaignsTabs from '@/components/CampaignsTabs.vue'
 import { listCampaigns, pauseCampaign, resumeCampaign } from '@/api/campaigns'
 import type { Campaign } from '@/api/contracts/campaigns'
 import { useSession } from '@/stores/session'
@@ -34,6 +33,7 @@ const statusFilter = ref('')
 const search = ref('')
 const selected = ref<Set<string>>(new Set())
 const view = ref<'grid' | 'list'>('grid') // preview cards vs table
+const playing = ref<string | null>(null) // campaign id whose creative is playing inline
 
 const { data, isLoading } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'campaigns', statusFilter.value || 'all')),
@@ -100,8 +100,6 @@ function startWizard() {
     </Card>
 
     <template v-else>
-    <CampaignsTabs />
-
     <!-- Metric strip -->
     <div class="mb-5 grid grid-cols-3 gap-4">
       <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" />
@@ -154,27 +152,75 @@ function startWizard() {
         </EmptyState>
       </Card>
       <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <RouterLink
+        <div
           v-for="c in visible"
           :key="c.id"
-          :to="`/campaigns/${c.id}`"
           class="group overflow-hidden rounded-xl border border-line bg-surface shadow-card transition-all hover:border-line-strong hover:shadow-card-hover"
         >
           <div class="relative aspect-video overflow-hidden bg-black">
-            <img
-              v-if="c.posterUrl"
-              :src="c.posterUrl"
-              alt=""
-              class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            <!-- Inline playback once the user hits play; native controls, same
+                 approach as the creative review preview. -->
+            <video
+              v-if="playing === c.id && c.previewUrl"
+              :key="c.previewUrl"
+              :src="c.previewUrl"
+              :poster="c.posterUrl || undefined"
+              controls
+              autoplay
+              playsinline
+              class="h-full w-full bg-black object-contain"
             />
-            <div v-else class="flex h-full w-full items-center justify-center text-neutral-600">
-              <PhFilmSlate :size="32" />
-            </div>
-            <Badge :tone="statusTone(c.status)" class="absolute left-2 top-2 shadow-sm">{{ statusLabel(c.status) }}</Badge>
+            <template v-else>
+              <img
+                v-if="c.posterUrl"
+                :src="c.posterUrl"
+                alt=""
+                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              />
+              <div v-else class="flex h-full w-full items-center justify-center text-neutral-600">
+                <PhFilmSlate :size="32" />
+              </div>
+              <!-- Play button for video creatives — plays the preview in place. -->
+              <button
+                v-if="c.creativeFormat === 'video' && c.previewUrl"
+                type="button"
+                class="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                :title="$t('campaigns.play')"
+                :aria-label="$t('campaigns.play')"
+                @click="playing = c.id"
+              >
+                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-clay-600 shadow-lg transition-transform group-hover:scale-105">
+                  <PhPlay :size="26" weight="fill" />
+                </span>
+              </button>
+              <Badge :tone="statusTone(c.status)" class="absolute left-2 top-2 shadow-sm">{{ statusLabel(c.status) }}</Badge>
+              <!-- Format marker so video vs image campaigns are distinguishable at a glance. -->
+              <span
+                v-if="c.creativeFormat"
+                class="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm backdrop-blur-sm"
+                :title="c.creativeFormat === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage')"
+              >
+                <PhVideoCamera v-if="c.creativeFormat === 'video'" :size="12" weight="fill" />
+                <PhImage v-else :size="12" weight="fill" />
+                {{ c.creativeFormat === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage') }}
+              </span>
+            </template>
           </div>
           <div class="p-3">
-            <p class="truncate font-medium text-neutral-900 group-hover:text-clay-600">{{ c.name }}</p>
-            <p class="text-xs capitalize text-neutral-400">{{ c.objective }}</p>
+            <div class="flex items-start justify-between gap-2">
+              <RouterLink :to="`/campaigns/${c.id}`" class="min-w-0">
+                <p class="truncate font-medium text-neutral-900 hover:text-clay-600">{{ c.name }}</p>
+                <p class="text-xs capitalize text-neutral-400">{{ c.objective }}</p>
+              </RouterLink>
+              <!-- "Full" opens the campaign detail page. -->
+              <RouterLink
+                :to="`/campaigns/${c.id}`"
+                class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-line-strong px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50 hover:text-clay-600"
+                :title="$t('campaigns.full')"
+              >
+                <PhArrowsOut :size="13" /> {{ $t('campaigns.full') }}
+              </RouterLink>
+            </div>
             <div class="mt-2 flex items-center justify-between text-xs">
               <span class="font-mono text-neutral-500">{{ formatKobo(c.spentKobo, { showDecimals: false }) }} / {{ formatKobo(c.budgetKobo, { showDecimals: false }) }}</span>
               <span class="font-mono text-neutral-400">{{ pacing(c) }}%</span>
@@ -183,7 +229,7 @@ function startWizard() {
               <div class="h-full rounded-full bg-clay-500" :style="{ width: pacing(c) + '%' }" />
             </div>
           </div>
-        </RouterLink>
+        </div>
       </div>
     </div>
 
@@ -228,9 +274,26 @@ function startWizard() {
               />
             </td>
             <td class="px-5 py-3">
-              <RouterLink :to="`/campaigns/${c.id}`" class="font-medium text-neutral-900 hover:text-clay-600">
-                {{ c.name }}
-              </RouterLink>
+              <div class="flex items-center gap-1.5">
+                <!-- Format marker: video vs image at a glance. -->
+                <PhVideoCamera
+                  v-if="c.creativeFormat === 'video'"
+                  :size="14"
+                  weight="fill"
+                  class="shrink-0 text-neutral-400"
+                  :aria-label="$t('campaigns.formatVideo')"
+                />
+                <PhImage
+                  v-else-if="c.creativeFormat === 'image'"
+                  :size="14"
+                  weight="fill"
+                  class="shrink-0 text-neutral-400"
+                  :aria-label="$t('campaigns.formatImage')"
+                />
+                <RouterLink :to="`/campaigns/${c.id}`" class="font-medium text-neutral-900 hover:text-clay-600">
+                  {{ c.name }}
+                </RouterLink>
+              </div>
               <p class="text-xs capitalize text-neutral-400">{{ c.objective }}</p>
             </td>
             <td class="px-5 py-3">

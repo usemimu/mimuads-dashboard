@@ -291,7 +291,7 @@ async function finish(submit: boolean) {
             </div>
             <label
               class="flex cursor-pointer items-center gap-2 rounded-xl border p-3.5"
-              :class="s.isWildcard ? 'border-clay-500 bg-clay-50' : 'border-line-strong'"
+              :class="s.isWildcard ? 'border-clay-500 bg-clay-500/10' : 'border-line-strong'"
             >
               <input v-model="s.isWildcard" type="checkbox" class="rounded border-neutral-300 text-clay-500 focus:ring-clay-400" />
               <span>
@@ -351,13 +351,13 @@ async function finish(submit: boolean) {
               <p class="label">{{ $t('wizard.audience.pacing') }}</p>
               <div class="grid grid-cols-2 gap-2">
                 <button type="button" class="rounded-xl border p-3 text-left transition-colors"
-                  :class="!s.isEvenPacing ? 'border-clay-500 bg-clay-50' : 'border-line-strong hover:bg-neutral-50'"
+                  :class="!s.isEvenPacing ? 'border-clay-500 bg-clay-500/10' : 'border-line-strong hover:bg-neutral-50'"
                   @click="s.isEvenPacing = false">
                   <p class="text-sm font-semibold text-neutral-900">{{ $t('wizard.audience.pacingStandard') }}</p>
                   <p class="text-xs text-neutral-500">{{ $t('wizard.audience.pacingStandardHint') }}</p>
                 </button>
                 <button type="button" class="rounded-xl border p-3 text-left transition-colors"
-                  :class="s.isEvenPacing ? 'border-clay-500 bg-clay-50' : 'border-line-strong hover:bg-neutral-50'"
+                  :class="s.isEvenPacing ? 'border-clay-500 bg-clay-500/10' : 'border-line-strong hover:bg-neutral-50'"
                   @click="s.isEvenPacing = true">
                   <p class="text-sm font-semibold text-neutral-900">{{ $t('wizard.audience.pacingEven') }}</p>
                   <p class="text-xs text-neutral-500">{{ $t('wizard.audience.pacingEvenHint') }}</p>
@@ -379,7 +379,7 @@ async function finish(submit: boolean) {
                one already attached to this draft. The full library of everything
                you've uploaded lives under Campaigns → Ads, not in the wizard. -->
           <div v-if="selectedCreative"
-            class="flex items-center gap-3 rounded-lg border border-clay-500 bg-clay-50 p-3">
+            class="flex items-center gap-3 rounded-lg border border-clay-500 bg-clay-500/10 p-3">
             <span class="text-sm text-neutral-900">{{ selectedCreative.name || selectedCreative.filename }}</span>
             <span class="ml-auto text-xs capitalize text-neutral-500">{{ selectedCreative.status.replace(/_/g, ' ') }}</span>
           </div>

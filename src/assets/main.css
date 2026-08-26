@@ -90,6 +90,10 @@
     --sidebar-bg: #fdfcfa;
     --topbar-bg: rgba(247, 245, 242, 0.88);
 
+    /* Soft brand wash behind the auth screens (AuthCard). Light = a warm clay
+       glow; dark overrides below so it doesn't read as a white patch. */
+    --auth-wash: rgba(244, 227, 215, 0.5);
+
     --ease: cubic-bezier(0.2, 0, 0.1, 1);
     --dur-med: 160ms;
   }
@@ -133,6 +137,9 @@
     --shadow-lg: 0 16px 50px rgba(0, 0, 0, 0.75);
     --sidebar-bg: #120f0a;
     --topbar-bg: rgba(14, 13, 11, 0.85);
+
+    /* Dark: a subtle warm clay glow instead of the pale light-mode wash. */
+    --auth-wash: rgba(181, 84, 48, 0.12);
   }
 
   html,

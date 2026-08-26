@@ -68,6 +68,11 @@ export const CampaignSchema = z
     // Signed poster (cover image) for the campaign's creative — populated by the
     // list endpoint so the console can render a preview grid.
     posterUrl: z.string().nullable().optional(),
+    // Short-lived presigned URL to play the creative inline in the preview grid,
+    // plus its format (video creatives get a play button). Populated by the list
+    // endpoint alongside posterUrl.
+    previewUrl: z.string().nullable().optional(),
+    creativeFormat: z.enum(['video', 'image']).nullable().optional(),
     pausedReason: z.string().nullable().optional(),
     suspensionReason: z.string().nullable().optional(),
     apconRejectionReason: z.string().nullable().optional(),

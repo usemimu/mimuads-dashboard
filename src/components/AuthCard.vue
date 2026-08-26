@@ -15,7 +15,7 @@ const steps = ['steps.account', 'steps.organization', 'steps.verify'] as const
   >
     <!-- Soft brand wash so the auth screens don't read as a bare form. -->
     <div
-      class="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-clay-100/50 blur-3xl"
+      class="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-[var(--auth-wash)] blur-3xl"
     />
     <div class="relative w-full max-w-md animate-fade-in">
       <div class="mb-6 text-center">
