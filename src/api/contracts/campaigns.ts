@@ -14,6 +14,8 @@ export const CampaignStatusSchema = z.enum([
   'draft',
   'pending_payment',
   'pending_vetting',
+  'pending_approval',
+  'approved',
   'active',
   'paused',
   'completed',
@@ -47,7 +49,12 @@ export const CampaignSchema = z
     id: z.string(),
     name: z.string(),
     objective: z.string(),
-    status: CampaignStatusSchema,
+    // Tolerant on purpose: the known statuses are enumerated above for
+    // reference, but we accept ANY string so a newly-added backend status can
+    // never fail the parse and blank the whole list/dashboard (the display
+    // layer maps unknowns to a neutral pill). This bit prod when the API
+    // started returning `approved`.
+    status: CampaignStatusSchema.or(z.string()),
     // The list endpoint returns these; the detail (GET :id) + update responses
     // omit them despite CampaignResponseDto declaring them — backend divergence
     // flagged in IMPLEMENTATION-NOTES, so keep them optional here.

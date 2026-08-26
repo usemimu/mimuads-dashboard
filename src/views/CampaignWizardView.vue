@@ -2,7 +2,7 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
 import CreativePreview from '@/components/CreativePreview.vue'
 import ScreenPicker from '@/components/screens/ScreenPicker.vue'
@@ -37,6 +37,7 @@ const router = useRouter()
 const wizard = useWizard()
 const basket = useBasket()
 const session = useSession()
+const qc = useQueryClient()
 const toast = useToastStore()
 const { t } = useI18n()
 const s = wizard.state
@@ -217,6 +218,9 @@ async function finish(submit: boolean) {
     const campaign = await createCampaign(buildCreatePayload(s))
     if (submit) await submitCampaign(campaign.id)
     wizard.reset()
+    // Refresh the campaigns list/dashboard so the new campaign (and the updated
+    // KPI strip) appear immediately instead of waiting out the staleTime.
+    qc.invalidateQueries({ queryKey: ctxKey(session.context, 'campaigns') })
     router.push(`/campaigns/${campaign.id}`)
   } catch (e) {
     toast.error(isApiError(e) ? e.message : 'Something went wrong')

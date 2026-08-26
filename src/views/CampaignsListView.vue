@@ -35,19 +35,32 @@ const selected = ref<Set<string>>(new Set())
 const view = ref<'grid' | 'list'>('grid') // preview cards vs table
 const playing = ref<string | null>(null) // campaign id whose creative is playing inline
 
+// Always load the full set (no status param). The metric strip is computed over
+// ALL campaigns, and the status dropdown + search filter the table client-side —
+// so the KPIs stay accurate regardless of which filter the user has selected.
 const { data, isLoading } = useQuery({
-  queryKey: computed(() => ctxKey(session.context, 'campaigns', statusFilter.value || 'all')),
-  queryFn: () => listCampaigns(statusFilter.value ? { status: statusFilter.value } : {}),
+  queryKey: computed(() => ctxKey(session.context, 'campaigns')),
+  queryFn: () => listCampaigns({}),
+  // Spend/status accrue server-side as ads play, so keep the list (and its KPI
+  // strip) live: poll while the page is open and refetch when the tab regains
+  // focus, rather than letting the numbers freeze for the whole staleTime.
+  refetchInterval: 30_000,
+  refetchOnWindowFocus: true,
 })
 const campaigns = computed<Campaign[]>(() => data.value?.campaigns ?? [])
 
 const visible = computed(() => {
   const q = search.value.trim().toLowerCase()
-  return q ? campaigns.value.filter((c) => c.name.toLowerCase().includes(q)) : campaigns.value
+  return campaigns.value.filter((c) => {
+    if (statusFilter.value && c.status !== statusFilter.value) return false
+    if (q && !c.name.toLowerCase().includes(q)) return false
+    return true
+  })
 })
 
-// Metric strip (X's KPI row) over the loaded set.
+// Metric strip (X's KPI row) — always over the full set, never the filtered view.
 const activeCount = computed(() => campaigns.value.filter((c) => c.status === 'active').length)
+const totalCount = computed(() => data.value?.pagination?.total ?? campaigns.value.length)
 const totalSpendKobo = computed(() => campaigns.value.reduce((s, c) => s + Number(c.spentKobo || 0), 0))
 
 function pacing(c: Campaign): number {
@@ -103,7 +116,7 @@ function startWizard() {
     <!-- Metric strip -->
     <div class="mb-5 grid grid-cols-3 gap-4">
       <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" />
-      <MetricTile :label="$t('campaigns.title')" :value="campaigns.length" />
+      <MetricTile :label="$t('campaigns.title')" :value="totalCount" />
       <MetricTile :label="$t('dashboard.mSpend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" />
     </div>
 
@@ -121,6 +134,7 @@ function startWizard() {
         <option value="">{{ $t('dashboard.scopeAll') }}</option>
         <option value="draft">Draft</option>
         <option value="pending_vetting">In review</option>
+        <option value="approved">Scheduled</option>
         <option value="active">Live</option>
         <option value="paused">Paused</option>
         <option value="completed">Ended</option>
