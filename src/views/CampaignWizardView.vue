@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
 import CreativePreview from '@/components/CreativePreview.vue'
+import CarouselSequencePreview from '@/components/CarouselSequencePreview.vue'
 import ScreenPicker from '@/components/screens/ScreenPicker.vue'
 import WizardShell from '@/components/wizard/WizardShell.vue'
 import PhaseRail from '@/components/wizard/PhaseRail.vue'
@@ -30,6 +31,8 @@ import {
   sha256Hex,
   probeCreative,
 } from '@/api/creatives'
+import { createCarousel, uploadCarouselFrame, deleteCarouselItem, reorderCarousel, confirmCarousel } from '@/api/carousel'
+import { CAROUSEL_MAX_ITEMS, CAROUSEL_MAX_TOTAL_SECONDS, carouselTotalSeconds } from '@/lib/wizard'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo, nairaToKobo } from '@/lib/money'
 import { isApiError } from '@/api/errors'
@@ -225,6 +228,113 @@ async function onUpload(e: Event) {
   }
 }
 
+// ── Carousel authoring ────────────────────────────────────────────────
+const DEFAULT_FRAME_SECONDS = 6
+const carouselTotal = computed(() => carouselTotalSeconds(s.carouselItems))
+const carouselRemaining = computed(() => CAROUSEL_MAX_TOTAL_SECONDS - carouselTotal.value)
+
+function switchCreativeMode(mode: 'single' | 'carousel') {
+  if (s.creativeMode === mode) return
+  s.creativeMode = mode
+  // Switching modes invalidates the other mode's confirmed selection.
+  if (mode === 'carousel') s.creativeId = ''
+  else s.carouselConfirmed = false
+}
+
+/** Lazily create the backend carousel the first time a frame is added. */
+async function ensureCarousel(): Promise<string> {
+  if (s.carouselId) return s.carouselId
+  const { carouselId } = await createCarousel(s.name || undefined)
+  s.carouselId = carouselId
+  return carouselId
+}
+
+async function onAddCarouselFrames(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  input.value = ''
+  if (files.length === 0) return
+  uploading.value = true
+  try {
+    const carouselId = await ensureCarousel()
+    for (const file of files) {
+      if (s.carouselItems.length >= CAROUSEL_MAX_ITEMS) {
+        toast.error(`A carousel can hold at most ${CAROUSEL_MAX_ITEMS} frames.`)
+        break
+      }
+      // Default each new frame to DEFAULT_FRAME_SECONDS, but never overshoot 30s.
+      const dwell = Math.min(DEFAULT_FRAME_SECONDS, Math.max(3, carouselRemaining.value))
+      if (dwell < 3) {
+        toast.error('Carousel is full (30s). Trim a frame to add more.')
+        break
+      }
+      const frame = await uploadCarouselFrame(carouselId, file, dwell)
+      s.carouselItems.push({
+        itemId: frame.itemId,
+        format: frame.format,
+        filename: frame.filename,
+        dwellSeconds: dwell,
+        // Local object-URL for thumbnail + sequence preview (session only).
+        previewUrl: URL.createObjectURL(file),
+      })
+      // Editing frames invalidates a prior finalize.
+      s.carouselConfirmed = false
+    }
+  } catch (err) {
+    toast.error(isApiError(err) ? err.message : 'Frame upload failed')
+  } finally {
+    uploading.value = false
+  }
+}
+
+async function removeCarouselFrame(itemId: string) {
+  if (!s.carouselId) return
+  try {
+    await deleteCarouselItem(s.carouselId, itemId)
+    s.carouselItems = s.carouselItems.filter((i) => i.itemId !== itemId)
+    s.carouselConfirmed = false
+  } catch (err) {
+    toast.error(isApiError(err) ? err.message : 'Could not remove frame')
+  }
+}
+
+async function moveCarouselFrame(index: number, dir: -1 | 1) {
+  const to = index + dir
+  if (!s.carouselId || to < 0 || to >= s.carouselItems.length) return
+  const items = [...s.carouselItems]
+  const moved = items.splice(index, 1)[0]
+  if (!moved) return
+  items.splice(to, 0, moved)
+  s.carouselItems = items
+  s.carouselConfirmed = false
+  try {
+    await reorderCarousel(s.carouselId, items.map((i) => i.itemId))
+  } catch (err) {
+    toast.error(isApiError(err) ? err.message : 'Reorder failed')
+  }
+}
+
+function setFrameDwell(itemId: string, seconds: number) {
+  const item = s.carouselItems.find((i) => i.itemId === itemId)
+  if (!item) return
+  item.dwellSeconds = Math.max(3, Math.min(30, Math.round(seconds) || 3))
+  s.carouselConfirmed = false
+}
+
+async function finalizeCarousel() {
+  if (!s.carouselId) return
+  uploading.value = true
+  try {
+    await confirmCarousel(s.carouselId)
+    s.carouselConfirmed = true
+    toast.success('Carousel saved.')
+  } catch (err) {
+    toast.error(isApiError(err) ? err.message : 'Could not finalize carousel')
+  } finally {
+    uploading.value = false
+  }
+}
+
 const submitting = ref(false)
 async function finish(submit: boolean) {
   submitting.value = true
@@ -391,33 +501,99 @@ async function finish(submit: boolean) {
             <p class="font-display text-base font-semibold text-neutral-900">{{ $t('wizard.creative.title') }}</p>
             <p class="text-sm text-neutral-500">{{ $t('wizard.creative.body') }}</p>
           </div>
-          <p class="rounded-lg bg-gold-50 px-3 py-2 text-sm text-gold-800">{{ $t('campaigns.creativePending') }}</p>
 
-          <!-- Only the creative for THIS campaign — the one just uploaded, or the
-               one already attached to this draft. The full library of everything
-               you've uploaded lives under Campaigns → Ads, not in the wizard. -->
-          <div v-if="selectedCreative"
-            class="flex items-center gap-3 rounded-lg border border-clay-500 bg-clay-500/10 p-3">
-            <span class="text-sm text-neutral-900">{{ selectedCreative.name || selectedCreative.filename }}</span>
-            <span class="ml-auto text-xs capitalize text-neutral-500">{{ selectedCreative.status.replace(/_/g, ' ') }}</span>
+          <!-- Single ad vs carousel toggle -->
+          <div class="inline-flex rounded-lg border border-neutral-200 p-0.5 text-sm">
+            <button type="button"
+              class="rounded-md px-3 py-1.5"
+              :class="s.creativeMode === 'single' ? 'bg-clay-500 text-white' : 'text-neutral-600'"
+              @click="switchCreativeMode('single')">Single ad</button>
+            <button type="button"
+              class="rounded-md px-3 py-1.5"
+              :class="s.creativeMode === 'carousel' ? 'bg-clay-500 text-white' : 'text-neutral-600'"
+              @click="switchCreativeMode('carousel')">Carousel</button>
           </div>
-          <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-clay-600">
-            <input type="file" accept="image/*,video/mp4" class="hidden" @change="onUpload" />
-            <span class="hover:underline">{{ uploading ? $t('common.loading') : (selectedCreative ? $t('campaigns.replaceCreative') : $t('campaigns.uploadCreative')) }}</span>
-          </label>
 
-          <!-- Preview the selected creative — native video/image, same as the
-               admin review console (no player library). -->
-          <div v-if="selectedCreative" class="pt-1">
-            <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
-              {{ $t('campaigns.creativePreview') }}
-            </p>
-            <CreativePreview
-              :format="selectedCreative.format"
-              :src="selectedCreative.previewUrl ?? selectedCreative.cdnUrl"
-              :poster="selectedCreative.posterUrl"
-            />
-          </div>
+          <!-- SINGLE -->
+          <template v-if="s.creativeMode === 'single'">
+            <p class="rounded-lg bg-gold-50 px-3 py-2 text-sm text-gold-800">{{ $t('campaigns.creativePending') }}</p>
+            <div v-if="selectedCreative"
+              class="flex items-center gap-3 rounded-lg border border-clay-500 bg-clay-500/10 p-3">
+              <span class="text-sm text-neutral-900">{{ selectedCreative.name || selectedCreative.filename }}</span>
+              <span class="ml-auto text-xs capitalize text-neutral-500">{{ selectedCreative.status.replace(/_/g, ' ') }}</span>
+            </div>
+            <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-clay-600">
+              <input type="file" accept="image/*,video/mp4" class="hidden" @change="onUpload" />
+              <span class="hover:underline">{{ uploading ? $t('common.loading') : (selectedCreative ? $t('campaigns.replaceCreative') : $t('campaigns.uploadCreative')) }}</span>
+            </label>
+            <div v-if="selectedCreative" class="pt-1">
+              <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">{{ $t('campaigns.creativePreview') }}</p>
+              <CreativePreview :format="selectedCreative.format" :src="selectedCreative.previewUrl ?? selectedCreative.cdnUrl" :poster="selectedCreative.posterUrl" />
+            </div>
+          </template>
+
+          <!-- CAROUSEL -->
+          <template v-else>
+            <p class="text-sm text-neutral-500">A group of graphics/short clips shown in sequence in one slot (max 30s). Portrait graphics fill the screen with a blurred background — no black bars.</p>
+
+            <!-- Live sequence preview (cycles frames at their set seconds). -->
+            <div v-if="s.carouselItems.length" class="space-y-1.5">
+              <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Preview — as it plays on screen</p>
+              <CarouselSequencePreview :items="s.carouselItems" />
+            </div>
+
+            <!-- Frame cards -->
+            <ul v-if="s.carouselItems.length" class="space-y-2">
+              <li v-for="(item, i) in s.carouselItems" :key="item.itemId"
+                class="flex items-center gap-3 rounded-lg border border-neutral-200 p-2">
+                <div class="relative h-12 w-[72px] shrink-0 overflow-hidden rounded bg-black">
+                  <video v-if="item.format === 'video' && item.previewUrl" :src="item.previewUrl" muted
+                    class="h-full w-full object-contain" />
+                  <img v-else-if="item.previewUrl" :src="item.previewUrl" alt=""
+                    class="h-full w-full object-contain" />
+                  <span class="absolute left-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white">{{ i + 1 }}</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm text-neutral-900">{{ item.filename }}</p>
+                  <span class="text-xs capitalize text-neutral-400">{{ item.format }}</span>
+                </div>
+                <label class="flex items-center gap-1 text-xs text-neutral-500">
+                  <input type="number" min="3" max="30" :value="item.dwellSeconds"
+                    class="w-14 rounded border border-neutral-200 px-1.5 py-1 text-right text-sm"
+                    @change="setFrameDwell(item.itemId, ($event.target as HTMLInputElement).valueAsNumber)" />
+                  s
+                </label>
+                <div class="flex flex-col">
+                  <button type="button" class="px-1 text-neutral-400 hover:text-neutral-700 disabled:opacity-30" :disabled="i === 0" @click="moveCarouselFrame(i, -1)">▲</button>
+                  <button type="button" class="px-1 text-neutral-400 hover:text-neutral-700 disabled:opacity-30" :disabled="i === s.carouselItems.length - 1" @click="moveCarouselFrame(i, 1)">▼</button>
+                </div>
+                <button type="button" class="px-1 text-neutral-400 hover:text-red-600" @click="removeCarouselFrame(item.itemId)">✕</button>
+              </li>
+            </ul>
+
+            <!-- Total meter -->
+            <div class="flex items-center gap-3 text-sm"
+              :class="carouselTotal > CAROUSEL_MAX_TOTAL_SECONDS ? 'text-red-600' : 'text-neutral-500'">
+              <span>{{ carouselTotal }}s of {{ CAROUSEL_MAX_TOTAL_SECONDS }}s</span>
+              <span class="text-neutral-300">·</span>
+              <span>{{ s.carouselItems.length }} / {{ CAROUSEL_MAX_ITEMS }} frames</span>
+            </div>
+
+            <label v-if="s.carouselItems.length < CAROUSEL_MAX_ITEMS"
+              class="inline-flex cursor-pointer items-center gap-2 text-sm text-clay-600">
+              <input type="file" accept="image/*,video/mp4" multiple class="hidden" @change="onAddCarouselFrames" />
+              <span class="hover:underline">{{ uploading ? $t('common.loading') : (s.carouselItems.length ? 'Add another frame' : 'Add frames') }}</span>
+            </label>
+
+            <div class="pt-1">
+              <button type="button"
+                class="rounded-lg bg-clay-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+                :disabled="uploading || s.carouselConfirmed || s.carouselItems.length < 2 || carouselTotal > CAROUSEL_MAX_TOTAL_SECONDS"
+                @click="finalizeCarousel">
+                {{ s.carouselConfirmed ? 'Carousel saved ✓' : 'Save carousel' }}
+              </button>
+            </div>
+          </template>
         </div>
 
         <!-- Phase 4 · Launch (review) -->

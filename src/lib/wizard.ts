@@ -19,6 +19,30 @@ export interface WizardState {
   dailyCapNaira: number | null
   isEvenPacing: boolean // delivery: false = standard, true = even
   creativeId: string | ''
+  // Creative can be a single asset OR a carousel (ordered image/video frames
+  // shown in one <=30s slot). A carousel IS a creative, so the payload still
+  // sends one `creativeId` (= the carousel's id) either way.
+  creativeMode: 'single' | 'carousel'
+  carouselId: string | ''
+  carouselItems: CarouselDraftItem[]
+  carouselConfirmed: boolean // finalized (backend confirmCarousel) → ready to submit
+}
+
+export interface CarouselDraftItem {
+  itemId: string
+  format: 'image' | 'video'
+  filename: string
+  dwellSeconds: number
+  /** Local object-URL of the picked file, for thumbnails + sequence preview. */
+  previewUrl?: string
+}
+
+export const CAROUSEL_MIN_ITEMS = 2
+export const CAROUSEL_MAX_ITEMS = 6
+export const CAROUSEL_MAX_TOTAL_SECONDS = 30
+
+export function carouselTotalSeconds(items: CarouselDraftItem[]): number {
+  return items.reduce((s, i) => s + i.dwellSeconds, 0)
 }
 
 export function emptyWizard(): WizardState {
@@ -35,6 +59,10 @@ export function emptyWizard(): WizardState {
     dailyCapNaira: null,
     isEvenPacing: false,
     creativeId: '',
+    creativeMode: 'single',
+    carouselId: '',
+    carouselItems: [],
+    carouselConfirmed: false,
   }
 }
 
@@ -72,6 +100,15 @@ export function stepValid(s: WizardState, step: WizardStep): boolean {
     case 'budget':
       return s.budgetNaira != null && s.budgetNaira > 0
     case 'creative':
+      if (s.creativeMode === 'carousel') {
+        return (
+          s.carouselId !== '' &&
+          s.carouselConfirmed &&
+          s.carouselItems.length >= CAROUSEL_MIN_ITEMS &&
+          s.carouselItems.length <= CAROUSEL_MAX_ITEMS &&
+          carouselTotalSeconds(s.carouselItems) <= CAROUSEL_MAX_TOTAL_SECONDS
+        )
+      }
       return s.creativeId !== ''
     case 'review':
       return WIZARD_STEPS.slice(0, 5).every((st) => stepValid(s, st))
@@ -89,7 +126,8 @@ export function buildCreatePayload(s: WizardState): CreateCampaignRequest {
   return {
     name: s.name.trim(),
     objective: s.objective as Objective,
-    creativeId: s.creativeId,
+    // A carousel is a creative: the campaign references its id like any other.
+    creativeId: s.creativeMode === 'carousel' ? s.carouselId : s.creativeId,
     isWildcard: s.isWildcard,
     screenIds: s.isWildcard ? undefined : s.screenIds,
     targetDaysOfWeek: s.daysOfWeek.length ? s.daysOfWeek : undefined,
