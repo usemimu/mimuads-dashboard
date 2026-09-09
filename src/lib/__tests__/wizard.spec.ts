@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { emptyWizard, stepValid, buildCreatePayload, type WizardState } from '../wizard'
 
 function complete(): WizardState {
+  // Spread emptyWizard() so new fields (carousel, etc.) don't break this fixture.
   return {
+    ...emptyWizard(),
     name: 'Launch',
     objective: 'awareness',
     isWildcard: false,
