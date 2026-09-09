@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
 import CreativePreview from '@/components/CreativePreview.vue'
+import CarouselSequencePreview from '@/components/CarouselSequencePreview.vue'
 import ScreenPicker from '@/components/screens/ScreenPicker.vue'
 import WizardShell from '@/components/wizard/WizardShell.vue'
 import PhaseRail from '@/components/wizard/PhaseRail.vue'
@@ -273,6 +274,8 @@ async function onAddCarouselFrames(e: Event) {
         format: frame.format,
         filename: frame.filename,
         dwellSeconds: dwell,
+        // Local object-URL for thumbnail + sequence preview (session only).
+        previewUrl: URL.createObjectURL(file),
       })
       // Editing frames invalidates a prior finalize.
       s.carouselConfirmed = false
@@ -531,13 +534,25 @@ async function finish(submit: boolean) {
 
           <!-- CAROUSEL -->
           <template v-else>
-            <p class="text-sm text-neutral-500">A group of graphics/short clips shown in sequence in one slot (max 30s). Portrait graphics are shown full-screen with a blurred background — no black bars.</p>
+            <p class="text-sm text-neutral-500">A group of graphics/short clips shown in sequence in one slot (max 30s). Portrait graphics fill the screen with a blurred background — no black bars.</p>
 
-            <!-- Frame list -->
+            <!-- Live sequence preview (cycles frames at their set seconds). -->
+            <div v-if="s.carouselItems.length" class="space-y-1.5">
+              <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Preview — as it plays on screen</p>
+              <CarouselSequencePreview :items="s.carouselItems" />
+            </div>
+
+            <!-- Frame cards -->
             <ul v-if="s.carouselItems.length" class="space-y-2">
               <li v-for="(item, i) in s.carouselItems" :key="item.itemId"
-                class="flex items-center gap-3 rounded-lg border border-neutral-200 p-2.5">
-                <span class="grid h-6 w-6 place-items-center rounded bg-neutral-100 text-xs font-semibold text-neutral-600">{{ i + 1 }}</span>
+                class="flex items-center gap-3 rounded-lg border border-neutral-200 p-2">
+                <div class="relative h-12 w-[72px] shrink-0 overflow-hidden rounded bg-black">
+                  <video v-if="item.format === 'video' && item.previewUrl" :src="item.previewUrl" muted
+                    class="h-full w-full object-contain" />
+                  <img v-else-if="item.previewUrl" :src="item.previewUrl" alt=""
+                    class="h-full w-full object-contain" />
+                  <span class="absolute left-1 top-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white">{{ i + 1 }}</span>
+                </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm text-neutral-900">{{ item.filename }}</p>
                   <span class="text-xs capitalize text-neutral-400">{{ item.format }}</span>

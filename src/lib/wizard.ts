@@ -33,6 +33,8 @@ export interface CarouselDraftItem {
   format: 'image' | 'video'
   filename: string
   dwellSeconds: number
+  /** Local object-URL of the picked file, for thumbnails + sequence preview. */
+  previewUrl?: string
 }
 
 export const CAROUSEL_MIN_ITEMS = 2
