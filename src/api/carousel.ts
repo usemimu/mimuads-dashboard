@@ -3,6 +3,7 @@ import {
   CreateCarouselResponseSchema,
   CarouselItemUploadIntentResponseSchema,
   ConfirmCarouselResponseSchema,
+  GetCarouselResponseSchema,
 } from './contracts/carousel'
 import { probeCreative, sha256Hex, putToPresigned, putBlobToPresigned, capturePosterFrame } from './creatives'
 
@@ -28,6 +29,12 @@ export function reorderCarousel(carouselId: string, itemIds: string[]) {
 }
 export function confirmCarousel(carouselId: string) {
   return api.post(`/advertiser/creatives/carousel/${carouselId}/confirm`, {}, ConfirmCarouselResponseSchema)
+}
+/** Carousel + ordered frames, for read-only viewing on the campaigns list.
+ *  Frame `cdnUrl` is populated once the carousel is approved/promoted (null
+ *  while pending — the UI shows a placeholder tile then). */
+export function getCarousel(carouselId: string) {
+  return api.get(`/advertiser/creatives/carousel/${carouselId}`, GetCarouselResponseSchema)
 }
 
 // ── blurred-fill compose ─────────────────────────────────────────────────────
