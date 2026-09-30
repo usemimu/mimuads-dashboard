@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate, PhPlay, PhArrowsOut, PhVideoCamera, PhImage } from '@phosphor-icons/vue'
+import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate, PhPlay, PhArrowsOut, PhVideoCamera, PhImage, PhStack, PhX } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -10,6 +10,7 @@ import Badge from '@/components/ui/Badge.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
 import { listCampaigns, pauseCampaign, resumeCampaign } from '@/api/campaigns'
+import { getCarousel } from '@/api/carousel'
 import type { Campaign } from '@/api/contracts/campaigns'
 import { useSession } from '@/stores/session'
 import { useWizard } from '@/stores/wizard'
@@ -34,6 +35,36 @@ const search = ref('')
 const selected = ref<Set<string>>(new Set())
 const view = ref<'grid' | 'list'>('grid') // preview cards vs table
 const playing = ref<string | null>(null) // campaign id whose creative is playing inline
+
+// Carousel frames viewer. A carousel's parent has no single previewUrl, so we
+// fetch its ordered frames on demand and show them in a modal (mirrors the
+// admin review view). cdnUrl is populated post-approval; pending frames render
+// a placeholder tile.
+type CarouselFrame = { id: string; sequence: number; format: string; dwellSeconds: number; filename: string; cdnUrl?: string | null }
+const framesFor = ref<Campaign | null>(null)
+const frames = ref<CarouselFrame[]>([])
+const framesLoading = ref(false)
+const framesTotal = computed(() => frames.value.reduce((s, f) => s + (f.dwellSeconds || 0), 0))
+
+async function openFrames(c: Campaign) {
+  const carouselId = (c.creative as { id?: string } | undefined)?.id
+  if (!carouselId) return
+  framesFor.value = c
+  frames.value = []
+  framesLoading.value = true
+  try {
+    const res = await getCarousel(carouselId)
+    frames.value = (res.items ?? []) as CarouselFrame[]
+  } catch {
+    frames.value = []
+  } finally {
+    framesLoading.value = false
+  }
+}
+function closeFrames() {
+  framesFor.value = null
+  frames.value = []
+}
 
 // Always load the full set (no status param). The metric strip is computed over
 // ALL campaigns, and the status dropdown + search filter the table client-side —
@@ -72,9 +103,9 @@ function pacing(c: Campaign): number {
 // `creativeFormat` (added to the list endpoint) but fall back to the nested
 // `creative.format` the API already returns today, so this works before the
 // backend change ships.
-function fmt(c: Campaign): 'video' | 'image' | null {
+function fmt(c: Campaign): 'video' | 'image' | 'carousel' | null {
   const f = c.creativeFormat ?? (c.creative as { format?: string } | undefined)?.format
-  return f === 'video' || f === 'image' ? f : null
+  return f === 'video' || f === 'image' || f === 'carousel' ? f : null
 }
 
 // The backend mints a NEW presigned previewUrl on every list fetch (rotating
@@ -254,6 +285,19 @@ function startWizard() {
                   <PhPlay :size="26" weight="fill" />
                 </span>
               </button>
+              <!-- Carousels have no single preview — open the ordered frames. -->
+              <button
+                v-else-if="fmt(c) === 'carousel'"
+                type="button"
+                class="absolute inset-0 flex items-center justify-center bg-black/10 transition-colors group-hover:bg-black/30"
+                title="View frames"
+                aria-label="View frames"
+                @click="openFrames(c)"
+              >
+                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-clay-600 shadow-lg transition-transform group-hover:scale-105">
+                  <PhStack :size="26" weight="fill" />
+                </span>
+              </button>
               <Badge :tone="statusTone(c.status)" class="absolute left-2 top-2 shadow-sm">{{ statusLabel(c.status) }}</Badge>
               <!-- Format marker so video vs image campaigns are distinguishable at a glance. -->
               <span
@@ -261,9 +305,10 @@ function startWizard() {
                 class="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm backdrop-blur-sm"
                 :title="fmt(c) === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage')"
               >
-                <PhVideoCamera v-if="fmt(c) === 'video'" :size="12" weight="fill" />
+                <PhStack v-if="fmt(c) === 'carousel'" :size="12" weight="fill" />
+                <PhVideoCamera v-else-if="fmt(c) === 'video'" :size="12" weight="fill" />
                 <PhImage v-else :size="12" weight="fill" />
-                {{ fmt(c) === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage') }}
+                {{ fmt(c) === 'carousel' ? 'Carousel' : (fmt(c) === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage')) }}
               </span>
             </template>
           </div>
@@ -375,5 +420,47 @@ function startWizard() {
       </table>
     </Card>
     </template>
+
+    <!-- Carousel frames viewer -->
+    <div
+      v-if="framesFor"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      @click.self="closeFrames"
+    >
+      <div class="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-surface shadow-card-hover">
+        <div class="flex items-center gap-2 border-b border-line px-5 py-3">
+          <PhStack :size="18" class="text-clay-600" />
+          <div class="min-w-0 flex-1">
+            <p class="truncate font-medium text-neutral-900">{{ framesFor.name }}</p>
+            <p class="text-xs text-neutral-400">{{ frames.length }} frames · {{ framesTotal }}s</p>
+          </div>
+          <button type="button" class="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100" @click="closeFrames">
+            <PhX :size="18" />
+          </button>
+        </div>
+        <div class="overflow-y-auto p-5">
+          <div v-if="framesLoading" class="py-10 text-center text-sm text-neutral-400">Loading frames…</div>
+          <div v-else-if="frames.length === 0" class="py-10 text-center text-sm text-neutral-400">No frames found for this carousel.</div>
+          <div v-else class="grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));">
+            <div v-for="(f, i) in frames" :key="f.id" class="overflow-hidden rounded-lg border border-line">
+              <div class="relative aspect-video bg-black">
+                <img
+                  v-if="f.cdnUrl && f.format === 'image'"
+                  :src="f.cdnUrl"
+                  alt=""
+                  class="h-full w-full object-contain"
+                />
+                <div v-else class="flex h-full w-full items-center justify-center text-neutral-500">
+                  <PhVideoCamera v-if="f.format === 'video'" :size="26" />
+                  <PhImage v-else :size="26" />
+                </div>
+                <span class="absolute left-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">{{ i + 1 }}</span>
+                <span class="absolute bottom-1.5 right-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">{{ f.dwellSeconds }}s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

@@ -229,7 +229,10 @@ async function onUpload(e: Event) {
 }
 
 // ── Carousel authoring ────────────────────────────────────────────────
-const DEFAULT_FRAME_SECONDS = 6
+// 5s per frame × the 6-frame cap = exactly the 30s slot, so a full carousel
+// auto-fills to 30s. Advertisers can then redistribute (give one frame more)
+// as long as the total stays ≤ 30s.
+const DEFAULT_FRAME_SECONDS = 5
 const carouselTotal = computed(() => carouselTotalSeconds(s.carouselItems))
 const carouselRemaining = computed(() => CAROUSEL_MAX_TOTAL_SECONDS - carouselTotal.value)
 
@@ -254,14 +257,23 @@ async function onAddCarouselFrames(e: Event) {
   const files = Array.from(input.files ?? [])
   input.value = ''
   if (files.length === 0) return
+  // Only ever take up to the 6-frame cap — if the advertiser picks more,
+  // silently keep the first N that fit and tell them, rather than erroring.
+  const slotsLeft = CAROUSEL_MAX_ITEMS - s.carouselItems.length
+  if (slotsLeft <= 0) {
+    toast.error(`A carousel holds at most ${CAROUSEL_MAX_ITEMS} frames.`)
+    return
+  }
+  const toAdd = files.slice(0, slotsLeft)
+  if (files.length > slotsLeft) {
+    toast.info(
+      `Added the first ${slotsLeft} — a carousel holds at most ${CAROUSEL_MAX_ITEMS} frames.`,
+    )
+  }
   uploading.value = true
   try {
     const carouselId = await ensureCarousel()
-    for (const file of files) {
-      if (s.carouselItems.length >= CAROUSEL_MAX_ITEMS) {
-        toast.error(`A carousel can hold at most ${CAROUSEL_MAX_ITEMS} frames.`)
-        break
-      }
+    for (const file of toAdd) {
       // Default each new frame to DEFAULT_FRAME_SECONDS, but never overshoot 30s.
       const dwell = Math.min(DEFAULT_FRAME_SECONDS, Math.max(3, carouselRemaining.value))
       if (dwell < 3) {
@@ -317,7 +329,13 @@ async function moveCarouselFrame(index: number, dir: -1 | 1) {
 function setFrameDwell(itemId: string, seconds: number) {
   const item = s.carouselItems.find((i) => i.itemId === itemId)
   if (!item) return
-  item.dwellSeconds = Math.max(3, Math.min(30, Math.round(seconds) || 3))
+  // A frame can grow only into the seconds not already claimed by the others,
+  // so the total stays within the 30s slot — this is how the advertiser gives
+  // one frame more time without ever overshooting.
+  const claimedByOthers = carouselTotal.value - item.dwellSeconds
+  const maxForThis = CAROUSEL_MAX_TOTAL_SECONDS - claimedByOthers
+  const requested = Math.round(seconds) || 3
+  item.dwellSeconds = Math.max(3, Math.min(maxForThis, requested))
   s.carouselConfirmed = false
 }
 
