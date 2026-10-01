@@ -80,8 +80,8 @@ export type CampaignSummary = {
   totalReached: number
   totalPlays: number
   estimatedReach: number
-  week: { reached: number; plays: number; spendKobo: string }
-  month: { reached: number; plays: number; spendKobo: string }
+  week: { reached: number; plays: number; spendKobo: string; estReach: number }
+  month: { reached: number; plays: number; spendKobo: string; estReach: number }
   milestone: number | null
 }
 export function getCampaignSummaries() {

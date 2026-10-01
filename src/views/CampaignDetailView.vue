@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
@@ -9,7 +9,8 @@ import Badge from '@/components/ui/Badge.vue'
 import Tabs from '@/components/ui/Tabs.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
 import OfferCard from '@/components/OfferCard.vue'
-import { PhPlay, PhCurrencyNgn, PhChartLineUp, PhUsersThree } from '@phosphor-icons/vue'
+import { PhPlay, PhCurrencyNgn, PhChartLineUp, PhUsersThree, PhFilmSlate, PhVideoCamera, PhImage, PhStack, PhArrowLeft } from '@phosphor-icons/vue'
+import { getCarousel } from '@/api/carousel'
 import { statusTone, statusLabel } from '@/lib/status'
 import { useSession } from '@/stores/session'
 import {
@@ -49,9 +50,17 @@ const perfTabs = computed<ReadonlyArray<{ value: PerfTab; label: string }>>(() =
   { value: 'by-hour', label: t('campaigns.tabByHour') },
   { value: 'by-day', label: t('campaigns.tabByDay') },
 ])
+// Overall perf is always fetched (drives the Overall tab tiles AND the sidebar
+// details/pacing, which must stay populated regardless of the active tab).
+const { data: perfOverall } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'perf', id.value, 'overall')),
+  queryFn: () => getPerformance(id.value),
+})
+// Breakdown perf only loads when a breakdown tab is active.
 const { data: perf } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'perf', id.value, tab.value)),
-  queryFn: () => (tab.value === 'overall' ? getPerformance(id.value) : getPerformanceBreakdown(id.value, tab.value)),
+  queryFn: () => getPerformanceBreakdown(id.value, tab.value as 'by-screen' | 'by-hour' | 'by-day'),
+  enabled: computed(() => tab.value !== 'overall'),
 })
 const { data: factors } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'factors', id.value)),
@@ -73,7 +82,7 @@ interface BreakdownRow {
   plays: number
   formattedCost?: string
 }
-const overall = computed<Overall | null>(() => (tab.value === 'overall' ? ((perf.value as Overall) ?? null) : null))
+const overall = computed<Overall | null>(() => (perfOverall.value as Overall) ?? null)
 
 // Plays-first metrics (CV impressions/attention deferred until screens have cameras).
 const overallPlays = computed(() => overall.value?.metrics?.totalPlays ?? 0)
@@ -88,6 +97,40 @@ const { data: campaignSummaries } = useQuery({
 })
 const estReach = computed(
   () => campaignSummaries.value?.campaigns.find((x) => x.campaignId === id.value)?.estimatedReach ?? 0,
+)
+
+// Creative preview for the sidebar. Carousels have no poster — lazily fetch the
+// first image frame as a cover (same approach as the campaigns grid).
+const creativeFmt = computed(
+  () => (c.value?.creativeFormat ?? (c.value?.creative as { format?: string } | undefined)?.format) as
+    | 'video'
+    | 'image'
+    | 'carousel'
+    | undefined,
+)
+const carouselCover = ref<string | null>(null)
+watch(
+  c,
+  (cam) => {
+    carouselCover.value = null
+    if (!cam || cam.posterUrl) return
+    const f = cam.creativeFormat ?? (cam.creative as { format?: string } | undefined)?.format
+    if (f !== 'carousel') return
+    const cid = (cam.creative as { id?: string } | undefined)?.id
+    if (!cid) return
+    getCarousel(cid)
+      .then((res) => {
+        const items = (res.items ?? []) as Array<{ cdnUrl?: string | null; format: string }>
+        const first = items.find((i) => i.cdnUrl && i.format === 'image') ?? items.find((i) => i.cdnUrl)
+        carouselCover.value = first?.cdnUrl ?? null
+      })
+      .catch(() => {})
+  },
+  { immediate: true },
+)
+const coverUrl = computed(() => c.value?.posterUrl || carouselCover.value || null)
+const daysLeft = computed(() =>
+  c.value?.endDate ? Math.max(0, Math.ceil((Date.parse(c.value.endDate) - Date.now()) / 86_400_000)) : null,
 )
 
 function formatHour(iso: string): string {
@@ -149,128 +192,162 @@ async function onClone() {
 </script>
 
 <template>
-  <div v-if="c" class="max-w-4xl">
-    <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
-      <div class="min-w-0">
-        <h1 class="font-display text-3xl font-semibold leading-none text-neutral-900 sm:text-4xl">
-          {{ c.name }}
-        </h1>
-        <div class="mt-2.5 flex items-center gap-2">
-          <Badge :tone="statusTone(c.status)">{{ statusLabel(c.status) }}</Badge>
-          <span class="text-sm capitalize text-neutral-500">{{ c.objective }}</span>
-        </div>
-      </div>
-      <div v-if="session.canMutate" class="flex flex-wrap gap-2">
-        <Button v-if="c.status === 'active'" size="sm" variant="secondary" @click="run(() => pauseCampaign(id))">{{ $t('campaigns.pause') }}</Button>
-        <Button v-if="c.status === 'paused'" size="sm" variant="secondary" @click="run(() => resumeCampaign(id))">{{ $t('campaigns.resume') }}</Button>
-        <Button size="sm" variant="secondary" @click="onTopup">{{ $t('campaigns.topup') }}</Button>
-        <Button size="sm" variant="secondary" @click="onExtend">{{ $t('campaigns.extend') }}</Button>
-        <Button size="sm" variant="outline" @click="onClone">{{ $t('campaigns.clone') }}</Button>
+  <div v-if="c">
+    <!-- Header -->
+    <div class="mb-6 min-w-0">
+      <RouterLink to="/campaigns" class="mb-2 inline-flex items-center gap-1 text-xs font-medium text-neutral-400 hover:text-clay-600">
+        <PhArrowLeft :size="13" /> {{ $t('nav.campaigns') }}
+      </RouterLink>
+      <h1 class="font-display text-3xl font-bold leading-none tracking-tight text-neutral-900 sm:text-4xl">
+        {{ c.name }}
+      </h1>
+      <div class="mt-2.5 flex flex-wrap items-center gap-2">
+        <Badge :tone="statusTone(c.status)" dot>{{ statusLabel(c.status) }}</Badge>
+        <span class="text-sm capitalize text-neutral-500">{{ c.objective }}</span>
       </div>
     </div>
 
-    <!-- Pacing -->
-    <Card class="mb-5">
-      <div class="mb-2.5 flex items-center justify-between text-sm">
-        <span class="font-medium text-neutral-700">{{ $t('campaigns.pacing') }}</span>
-        <span class="font-mono text-neutral-600">{{ formatKobo(c.spentKobo) }} / {{ formatKobo(c.budgetKobo) }}</span>
-      </div>
-      <div class="h-2.5 overflow-hidden rounded-full bg-neutral-100">
-        <div class="h-full rounded-full bg-clay-500 transition-all" :style="{ width: pacing + '%' }" />
-      </div>
-      <div class="mt-2 flex items-center justify-between text-xs">
-        <!-- Committed CPM locked at submit — the rate billing meters against.
-             Hidden on legacy rows that predate the locked rate. -->
-        <span v-if="c.formattedBidCpm" class="text-neutral-400">
-          {{ $t('campaigns.cpmRate') }} <span class="font-mono text-neutral-600">{{ c.formattedBidCpm }}</span>
-        </span>
-        <span v-else />
-        <span class="font-medium text-neutral-400">{{ pacing }}%</span>
-      </div>
-    </Card>
-
-    <!-- Offer -->
-    <OfferCard :campaign-id="id" />
-
-    <!-- Performance tabs -->
-    <Card padding="none" class="mb-5 overflow-hidden">
-      <div class="px-5 pt-1">
-        <Tabs v-model="tab" :tabs="perfTabs" />
-      </div>
-      <div class="p-5">
-        <!-- Overall: metric tiles + pacing + timeline -->
-        <template v-if="tab === 'overall'">
-          <div v-if="overall" class="space-y-5">
-            <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <MetricTile :label="$t('campaigns.perf.plays')" :value="overallPlays.toLocaleString('en-NG')" :icon="PhPlay" />
-              <MetricTile :label="$t('campaigns.perf.estReach')" :value="estReach ? estReach.toLocaleString('en-NG') : '—'" :sub="$t('campaigns.perf.estReachHint')" :icon="PhUsersThree" />
-              <MetricTile :label="$t('campaigns.perf.spend')" :value="formatKobo(c?.spentKobo ?? '0', { showDecimals: false })" :icon="PhCurrencyNgn" />
-              <MetricTile :label="$t('campaigns.perf.cpmPlays')" :value="cpmPerKPlays ? formatKobo(String(cpmPerKPlays)) : '—'" :icon="PhChartLineUp" />
-            </div>
-
-            <div class="grid gap-4 sm:grid-cols-2">
-              <div class="rounded-xl border border-line p-4">
-                <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">{{ $t('campaigns.perf.pacingStatus') }}</p>
-                <Badge :tone="pacingTone" class="capitalize">{{ (overall.pacing?.status ?? '—').replace(/_/g, ' ') }}</Badge>
-                <dl class="mt-3 space-y-1.5 text-sm">
-                  <div class="flex justify-between"><dt class="text-neutral-500">{{ $t('campaigns.perf.daysElapsed') }}</dt><dd class="font-mono text-neutral-700">{{ overall.pacing?.daysElapsed ?? 0 }}</dd></div>
-                  <div class="flex justify-between"><dt class="text-neutral-500">{{ $t('campaigns.perf.daysRemaining') }}</dt><dd class="font-mono text-neutral-700">{{ overall.pacing?.daysRemaining ?? 0 }}</dd></div>
-                  <div class="flex justify-between"><dt class="text-neutral-500">{{ $t('campaigns.perf.expectedSpend') }}</dt><dd class="font-mono text-neutral-700">{{ overall.pacing?.formattedExpectedSpend ?? '—' }}</dd></div>
-                </dl>
+    <div class="grid gap-5 lg:grid-cols-3">
+      <!-- ── MAIN ─────────────────────────────────────────────── -->
+      <div class="space-y-5 lg:col-span-2">
+        <!-- Performance tabs -->
+        <Card padding="none" class="overflow-hidden">
+          <div class="px-5 pt-1">
+            <Tabs v-model="tab" :tabs="perfTabs" />
+          </div>
+          <div class="p-5">
+            <!-- Overall: headline tiles -->
+            <template v-if="tab === 'overall'">
+              <div v-if="overall" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <MetricTile :label="$t('campaigns.perf.plays')" :value="overallPlays.toLocaleString('en-NG')" :icon="PhPlay" />
+                <MetricTile :label="$t('campaigns.perf.estReach')" :value="estReach ? estReach.toLocaleString('en-NG') : '—'" :sub="$t('campaigns.perf.estReachHint')" :icon="PhUsersThree" />
+                <MetricTile :label="$t('campaigns.perf.spend')" :value="formatKobo(c?.spentKobo ?? '0', { showDecimals: false })" :icon="PhCurrencyNgn" />
+                <MetricTile :label="$t('campaigns.perf.cpmPlays')" :value="cpmPerKPlays ? formatKobo(String(cpmPerKPlays)) : '—'" :icon="PhChartLineUp" />
               </div>
-              <div class="rounded-xl border border-line p-4">
-                <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">{{ $t('campaigns.perf.timeline') }}</p>
-                <dl class="space-y-1.5 text-sm">
-                  <div class="flex justify-between"><dt class="text-neutral-500">{{ $t('campaigns.perf.starts') }}</dt><dd class="text-neutral-700">{{ overall.timeline?.startDate ? shortDate(overall.timeline.startDate) : '—' }}</dd></div>
-                  <div class="flex justify-between"><dt class="text-neutral-500">{{ $t('campaigns.perf.ends') }}</dt><dd class="text-neutral-700">{{ overall.timeline?.endDate ? shortDate(overall.timeline.endDate) : '—' }}</dd></div>
-                  <div class="flex justify-between"><dt class="text-neutral-500">{{ $t('campaigns.perf.lastPlay') }}</dt><dd class="text-neutral-700">{{ overall.timeline?.lastPlayAt ? shortDate(overall.timeline.lastPlayAt) : $t('campaigns.perf.never') }}</dd></div>
-                </dl>
+              <p v-else class="py-6 text-center text-sm text-neutral-400">{{ $t('common.loading') }}</p>
+            </template>
+
+            <!-- Breakdown table (screen / hour / day) -->
+            <template v-else>
+              <div v-if="rows.length" class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-neutral-400">
+                    <tr>
+                      <th class="py-2 pr-3 font-semibold">{{ breakdownColLabel }}</th>
+                      <th class="px-3 py-2 text-right font-semibold">{{ $t('campaigns.perf.colPlays') }}</th>
+                      <th class="py-2 pl-3 text-right font-semibold">{{ $t('campaigns.perf.colCost') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(r, i) in rows" :key="i" class="border-b border-neutral-100 last:border-0">
+                      <td class="py-2 pr-3 text-neutral-900">{{ r.label }}</td>
+                      <td class="px-3 py-2 text-right font-mono text-neutral-700">{{ r.plays.toLocaleString('en-NG') }}</td>
+                      <td class="py-2 pl-3 text-right font-mono text-neutral-700">{{ r.formattedCost ?? '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p v-else class="py-8 text-center text-sm text-neutral-400">{{ $t('campaigns.perf.empty') }}</p>
+            </template>
+          </div>
+        </Card>
+
+        <!-- Offer -->
+        <OfferCard :campaign-id="id" />
+
+        <!-- Decision factors -->
+        <Card>
+          <h2 class="mb-4 font-display text-lg font-semibold text-neutral-900">{{ $t('campaigns.decisionFactors') }}</h2>
+          <div v-if="factorList.length" class="space-y-3">
+            <div v-for="(f, i) in factorList" :key="i">
+              <div class="mb-1 flex justify-between text-xs">
+                <span class="font-medium text-neutral-600">{{ f.label ?? f.name }}</span>
+                <span class="font-mono text-neutral-400">{{ Math.round((f.weight ?? f.value ?? 0) * 100) }}%</span>
+              </div>
+              <div class="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                <div class="h-full rounded-full bg-moss-400" :style="{ width: Math.round((f.weight ?? f.value ?? 0) * 100) + '%' }" />
               </div>
             </div>
           </div>
-          <p v-else class="py-6 text-center text-sm text-neutral-400">{{ $t('common.loading') }}</p>
-        </template>
-
-        <!-- Breakdown table (screen / hour / day) -->
-        <template v-else>
-          <div v-if="rows.length" class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-neutral-400">
-                <tr>
-                  <th class="py-2 pr-3 font-semibold">{{ breakdownColLabel }}</th>
-                  <th class="px-3 py-2 text-right font-semibold">{{ $t('campaigns.perf.colPlays') }}</th>
-                  <th class="py-2 pl-3 text-right font-semibold">{{ $t('campaigns.perf.colCost') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(r, i) in rows" :key="i" class="border-b border-neutral-100 last:border-0">
-                  <td class="py-2 pr-3 text-neutral-900">{{ r.label }}</td>
-                  <td class="px-3 py-2 text-right font-mono text-neutral-700">{{ r.plays.toLocaleString('en-NG') }}</td>
-                  <td class="py-2 pl-3 text-right font-mono text-neutral-700">{{ r.formattedCost ?? '—' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p v-else class="py-8 text-center text-sm text-neutral-400">{{ $t('campaigns.perf.empty') }}</p>
-        </template>
+          <p v-else class="text-sm text-neutral-400">{{ $t('common.comingSoon') }}</p>
+        </Card>
       </div>
-    </Card>
 
-    <!-- Decision factors -->
-    <Card>
-      <h2 class="mb-4 font-display text-lg font-semibold text-neutral-900">{{ $t('campaigns.decisionFactors') }}</h2>
-      <div v-if="factorList.length" class="space-y-3">
-        <div v-for="(f, i) in factorList" :key="i">
-          <div class="mb-1 flex justify-between text-xs">
-            <span class="font-medium text-neutral-600">{{ f.label ?? f.name }}</span>
-            <span class="font-mono text-neutral-400">{{ Math.round((f.weight ?? f.value ?? 0) * 100) }}%</span>
+      <!-- ── SIDEBAR ──────────────────────────────────────────── -->
+      <aside class="space-y-5 lg:sticky lg:top-20 lg:self-start">
+        <!-- Creative preview -->
+        <Card padding="none" class="overflow-hidden">
+          <div class="relative aspect-video bg-black">
+            <img v-if="coverUrl" :src="coverUrl" alt="" class="h-full w-full object-cover" />
+            <video
+              v-else-if="c.previewUrl && creativeFmt === 'video'"
+              :src="`${c.previewUrl}#t=1`"
+              muted
+              playsinline
+              preload="metadata"
+              class="h-full w-full object-cover"
+            />
+            <div v-else class="flex h-full w-full items-center justify-center text-neutral-600"><PhFilmSlate :size="30" /></div>
+            <span
+              v-if="creativeFmt"
+              class="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white backdrop-blur-sm"
+            >
+              <PhStack v-if="creativeFmt === 'carousel'" :size="12" weight="fill" />
+              <PhVideoCamera v-else-if="creativeFmt === 'video'" :size="12" weight="fill" />
+              <PhImage v-else :size="12" weight="fill" />
+              {{ creativeFmt }}
+            </span>
           </div>
-          <div class="h-1.5 overflow-hidden rounded-full bg-neutral-100">
-            <div class="h-full rounded-full bg-moss-400" :style="{ width: Math.round((f.weight ?? f.value ?? 0) * 100) + '%' }" />
+          <div v-if="c.creativeLabel" class="truncate px-3 py-2 text-xs text-neutral-500">{{ c.creativeLabel }}</div>
+        </Card>
+
+        <!-- Actions -->
+        <Card v-if="session.canMutate">
+          <div class="grid grid-cols-2 gap-2">
+            <Button v-if="c.status === 'active'" size="sm" variant="secondary" class="col-span-2" @click="run(() => pauseCampaign(id))">{{ $t('campaigns.pause') }}</Button>
+            <Button v-if="c.status === 'paused'" size="sm" variant="secondary" class="col-span-2" @click="run(() => resumeCampaign(id))">{{ $t('campaigns.resume') }}</Button>
+            <Button size="sm" variant="secondary" @click="onTopup">{{ $t('campaigns.topup') }}</Button>
+            <Button size="sm" variant="secondary" @click="onExtend">{{ $t('campaigns.extend') }}</Button>
+            <Button size="sm" variant="outline" class="col-span-2" @click="onClone">{{ $t('campaigns.clone') }}</Button>
           </div>
-        </div>
-      </div>
-      <p v-else class="text-sm text-neutral-400">{{ $t('common.comingSoon') }}</p>
-    </Card>
+        </Card>
+
+        <!-- Pacing -->
+        <Card>
+          <div class="mb-2 flex items-center justify-between text-sm">
+            <span class="font-medium text-neutral-700">{{ $t('campaigns.pacing') }}</span>
+            <span class="font-mono text-xs text-neutral-500">{{ pacing }}%</span>
+          </div>
+          <div class="h-2.5 overflow-hidden rounded-full bg-neutral-100">
+            <div class="h-full rounded-full bg-clay-500 transition-all" :style="{ width: pacing + '%' }" />
+          </div>
+          <div class="mt-2.5 flex items-center justify-between gap-2 text-xs">
+            <span class="font-mono text-neutral-500">{{ formatKobo(c.spentKobo) }} / {{ formatKobo(c.budgetKobo) }}</span>
+            <Badge :tone="pacingTone" size="sm" class="capitalize">{{ (overall?.pacing?.status ?? 'on track').replace(/_/g, ' ') }}</Badge>
+          </div>
+          <div v-if="overall?.pacing?.formattedExpectedSpend" class="mt-2 flex justify-between text-xs">
+            <span class="text-neutral-500">{{ $t('campaigns.perf.expectedSpend') }}</span>
+            <span class="font-mono text-neutral-700">{{ overall.pacing.formattedExpectedSpend }}</span>
+          </div>
+        </Card>
+
+        <!-- Details -->
+        <Card>
+          <p class="mb-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('campaigns.detailsTitle') }}</p>
+          <dl class="space-y-2.5 text-sm">
+            <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.status') }}</dt><dd><Badge :tone="statusTone(c.status)" size="sm">{{ statusLabel(c.status) }}</Badge></dd></div>
+            <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.objective') }}</dt><dd class="capitalize text-neutral-900">{{ c.objective }}</dd></div>
+            <div v-if="creativeFmt" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.format') }}</dt><dd class="capitalize text-neutral-900">{{ creativeFmt }}</dd></div>
+            <div v-if="c.screenCount != null" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('nav.screens') }}</dt><dd class="font-mono text-neutral-900">{{ c.screenCount.toLocaleString('en-NG') }}</dd></div>
+            <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.starts') }}</dt><dd class="text-neutral-900">{{ shortDate(c.startDate) }}</dd></div>
+            <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.ends') }}</dt><dd class="text-neutral-900">{{ shortDate(c.endDate) }}</dd></div>
+            <div v-if="daysLeft != null" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.daysRemaining') }}</dt><dd class="font-mono text-neutral-900">{{ daysLeft }}</dd></div>
+            <div v-if="c.formattedBidCpm" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.cpmRate') }}</dt><dd class="font-mono text-neutral-900">{{ c.formattedBidCpm }}</dd></div>
+            <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.created') }}</dt><dd class="text-neutral-900">{{ shortDate(c.createdAt) }}</dd></div>
+            <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.lastPlay') }}</dt><dd class="text-neutral-900">{{ overall?.timeline?.lastPlayAt ? shortDate(overall.timeline.lastPlayAt) : $t('campaigns.perf.never') }}</dd></div>
+          </dl>
+        </Card>
+      </aside>
+    </div>
   </div>
 </template>

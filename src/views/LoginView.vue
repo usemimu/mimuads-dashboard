@@ -14,14 +14,14 @@ const route = useRoute()
 const toast = useToastStore()
 const { t } = useI18n()
 
-const phoneOrEmail = ref('')
+const email = ref('')
 const password = ref('')
 const submitting = ref(false)
 
 async function onSubmit() {
   submitting.value = true
   try {
-    await session.loginWithPassword(phoneOrEmail.value, password.value)
+    await session.loginWithPassword(email.value, password.value)
     const redirect = (route.query.redirect as string) || '/dashboard'
     router.replace(redirect)
   } catch (e) {
@@ -41,11 +41,11 @@ async function onSubmit() {
       </div>
 
       <label class="block">
-        <span class="label">{{ $t('auth.phoneOrEmail') }}</span>
+        <span class="label">{{ $t('auth.email') }}</span>
         <input
-          v-model="phoneOrEmail"
-          type="text"
-          autocomplete="username"
+          v-model="email"
+          type="email"
+          autocomplete="email"
           required
           class="input"
         />

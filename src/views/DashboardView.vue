@@ -15,7 +15,6 @@ import { getWallet } from '@/api/billing'
 import { listCampaigns, getCampaignSummaries } from '@/api/campaigns'
 import { getOrgSummary } from '@/api/org'
 import { getScreensMap } from '@/api/screens'
-import { isOnline } from '@/api/contracts/screens'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
 import type { Campaign } from '@/api/contracts/campaigns'
@@ -98,8 +97,9 @@ const estimatedReach = computed(() => pluck(totals.value, ['estimatedReach']))
 const spendKobo = computed(() => list.value.reduce((sum, c) => sum + Number(c.spentKobo || 0), 0))
 // Active campaigns, straight from the campaign list.
 const activeCount = computed(() => list.value.filter((c) => c.status === 'active').length)
-// Screens live = online screens in the inventory (status === 'active').
-const screensLive = computed(() => (screens.value ?? []).filter((s) => isOnline(s.status)).length)
+// Screens = full bookable inventory, matching the Screens page count (which
+// lists all statuses, incl. pending_install). We're not yet gating on 'active'.
+const screensCount = computed(() => (screens.value ?? []).length)
 // Cost per 1,000 plays — a sensor-free efficiency metric.
 const cpmKobo = computed(() => (plays.value > 0 ? Math.round((spendKobo.value / plays.value) * 1000) : 0))
 
@@ -164,7 +164,7 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
         <MetricTile bare :label="$t('dashboard.mSpend')" :value="formatKobo(String(spendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
         <MetricTile bare :label="$t('dashboard.mCpm')" :value="cpmKobo ? formatKobo(String(cpmKobo)) : '—'" :icon="PhChartLineUp" />
         <MetricTile bare :label="$t('dashboard.mActive')" :value="activeCount" :icon="PhMegaphone" />
-        <MetricTile bare :label="$t('dashboard.mScreens')" :value="screensLive" :icon="PhMapPin" />
+        <MetricTile bare :label="$t('dashboard.mScreens')" :value="screensCount" :icon="PhMapPin" />
       </div>
 
       <!-- Trend chart, sharing the same frame. -->
