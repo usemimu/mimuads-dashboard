@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate, PhPlay, PhArrowsOut, PhVideoCamera, PhImage, PhStack, PhX } from '@phosphor-icons/vue'
+import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate, PhPlay, PhArrowsOut, PhVideoCamera, PhImage, PhStack, PhX, PhBroadcast, PhCurrencyNgn } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -66,6 +66,31 @@ function closeFrames() {
   frames.value = []
 }
 
+// Carousel cover: a carousel has no single previewUrl/poster, so lazily fetch
+// its frames once and use the first image frame as the card cover. Keyed by
+// campaign id; fetch guarded by carousel id so the 30s poll never refetches.
+const carouselCoverById = ref<Record<string, string>>({})
+const carouselFetched = new Set<string>()
+function loadCarouselCovers(list: Campaign[]) {
+  for (const c of list) {
+    if (fmt(c) !== 'carousel' || c.posterUrl) continue
+    const cid = (c.creative as { id?: string } | undefined)?.id
+    if (!cid || carouselFetched.has(cid)) continue
+    carouselFetched.add(cid)
+    getCarousel(cid)
+      .then((res) => {
+        const items = (res.items ?? []) as CarouselFrame[]
+        const first = items.find((f) => f.cdnUrl && f.format === 'image') ?? items.find((f) => f.cdnUrl)
+        if (first?.cdnUrl) carouselCoverById.value = { ...carouselCoverById.value, [c.id]: first.cdnUrl }
+      })
+      .catch(() => {})
+  }
+}
+// Cover image for a card: creative poster, else a cached carousel first-frame.
+function cover(c: Campaign): string | null {
+  return c.posterUrl || carouselCoverById.value[c.id] || null
+}
+
 // Always load the full set (no status param). The metric strip is computed over
 // ALL campaigns, and the status dropdown + search filter the table client-side —
 // so the KPIs stay accurate regardless of which filter the user has selected.
@@ -125,6 +150,7 @@ watch(
       if (!existing || existing.split('?')[0] !== path) next[c.id] = c.previewUrl
     }
     mediaUrlById.value = next
+    loadCarouselCovers(list)
   },
   { immediate: true },
 )
@@ -179,9 +205,9 @@ function startWizard() {
     <template v-else>
     <!-- Metric strip -->
     <div class="mb-5 grid grid-cols-3 gap-4">
-      <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" />
-      <MetricTile :label="$t('campaigns.title')" :value="totalCount" />
-      <MetricTile :label="$t('dashboard.mSpend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" />
+      <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" :icon="PhBroadcast" />
+      <MetricTile :label="$t('campaigns.title')" :value="totalCount" :icon="PhMegaphone" />
+      <MetricTile :label="$t('dashboard.mSpend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
     </div>
 
     <!-- Controls -->
@@ -229,7 +255,7 @@ function startWizard() {
           </template>
         </EmptyState>
       </Card>
-      <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div
           v-for="c in visible"
           :key="c.id"
@@ -250,8 +276,8 @@ function startWizard() {
             />
             <template v-else>
               <img
-                v-if="c.posterUrl"
-                :src="c.posterUrl"
+                v-if="cover(c)"
+                :src="cover(c)!"
                 alt=""
                 class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               />
@@ -428,7 +454,10 @@ function startWizard() {
     </Card>
     </template>
 
-    <!-- Carousel frames viewer -->
+    <!-- Carousel frames viewer. Teleported to <body> so `position: fixed`
+         centres against the viewport, not the shell's animated (transformed)
+         page container — otherwise the modal lands mid-page and needs scrolling. -->
+    <Teleport to="body">
     <div
       v-if="framesFor"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -469,5 +498,6 @@ function startWizard() {
         </div>
       </div>
     </div>
+    </Teleport>
   </div>
 </template>
