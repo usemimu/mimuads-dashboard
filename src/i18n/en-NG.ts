@@ -569,7 +569,7 @@ export default {
   reports: {
     title: 'Reports',
     subtitle: 'Spend, delivery, and exports across campaigns.',
-    trendTitle: 'Verified impressions by day',
+    trendTitle: 'Ad plays by day',
     period: 'Period',
     days30: 'Last 30 days',
     days7: 'Last 7 days',
