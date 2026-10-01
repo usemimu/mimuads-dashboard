@@ -1,8 +1,11 @@
 <script setup lang="ts">
 /**
- * Shared sidebar body — rendered by AppShell in both the static desktop
- * sidebar and the mobile off-canvas drawer. Clay-themed (no indigo/gray).
- * Emits `navigate` on any link/action so the mobile drawer can close itself.
+ * Shared sidebar body — rendered by AppShell in both the static desktop sidebar
+ * and the mobile off-canvas drawer. Tailwind Plus "Sidebar Layout" structure,
+ * re-themed to the clay palette (no indigo/gray). Collapses to an icon-only rail
+ * on desktop (`collapsed`); labels/section headings hide and icons center, with
+ * native tooltips so every destination stays reachable. Emits `navigate` on any
+ * link/action so the mobile drawer can close itself.
  */
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
@@ -15,15 +18,17 @@ import {
   PhBuildings,
   PhGearSix,
   PhCaretUpDown,
-  PhPlus,
 } from '@phosphor-icons/vue'
 import { useSession } from '@/stores/session'
 
+const props = withDefaults(defineProps<{ collapsed?: boolean }>(), { collapsed: false })
 const emit = defineEmits<{ (e: 'navigate'): void }>()
 
 const session = useSession()
 const router = useRouter()
 
+// Primary nav (sectioned, mirrors the TW Plus pattern). Settings is split out so
+// it can pin to the bottom of the rail.
 const navGroups = [
   {
     label: 'nav.groupOverview',
@@ -42,7 +47,6 @@ const navGroups = [
     items: [
       { to: '/billing', key: 'nav.billing', icon: PhWallet },
       { to: '/organization', key: 'nav.organization', icon: PhBuildings },
-      { to: '/settings', key: 'nav.settings', icon: PhGearSix },
     ],
   },
 ] as const
@@ -55,9 +59,20 @@ const userInitials = computed(() => {
   return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || 'M'
 })
 
+// Shared link styling so the active state (bg + text + icon all go clay) is one
+// source of truth. `is-active` is the RouterLink active marker the icon reads via
+// the group-[.is-active] variant.
+const linkBase =
+  'group relative flex items-center gap-x-3 rounded-lg px-2.5 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-900/[0.04] hover:text-neutral-900'
+const linkActive = 'is-active bg-clay-500/10 font-semibold !text-neutral-900'
+
 function goSettings() {
   emit('navigate')
   router.push('/settings')
+}
+function goDashboard() {
+  emit('navigate')
+  router.push('/dashboard')
 }
 </script>
 
@@ -66,40 +81,64 @@ function goSettings() {
     <!-- Brand -->
     <button
       class="flex h-14 shrink-0 items-center gap-2.5 px-4 text-left"
-      @click="emit('navigate'); router.push('/dashboard')"
+      :class="props.collapsed ? 'justify-center px-0' : ''"
+      :title="props.collapsed ? $t('app.name') : undefined"
+      @click="goDashboard"
     >
-      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-clay-500 text-sm font-bold text-white">M</span>
-      <span class="font-display text-[19px] font-semibold leading-none tracking-[-0.02em] text-neutral-900">{{ $t('app.name') }}</span>
+      <img src="/bimi-logo.svg" alt="" class="h-8 w-8 shrink-0 rounded-lg object-cover" />
+      <span
+        v-if="!props.collapsed"
+        class="font-display text-[19px] font-semibold leading-none tracking-[-0.02em] text-neutral-900"
+      >
+        {{ $t('app.name') }}
+      </span>
     </button>
 
-    <!-- Create CTA -->
-    <div v-if="session.canSubmitCampaign" class="px-3 pb-1 pt-2">
-      <RouterLink
-        to="/campaigns/new"
-        class="flex items-center justify-center gap-2 rounded-lg bg-clay-500 px-3 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-clay-600"
-        @click="emit('navigate')"
-      >
-        <PhPlus :size="16" weight="bold" />
-        <span>{{ $t('dashboard.quickStart') }}</span>
-      </RouterLink>
-    </div>
-
     <!-- Nav -->
-    <nav class="flex-1 overflow-y-auto px-3 py-3">
-      <div v-for="group in navGroups" :key="group.label" class="mb-1 py-1.5">
-        <p class="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-neutral-400">
+    <nav class="flex flex-1 flex-col gap-y-6 overflow-y-auto px-3 py-4">
+      <div v-for="group in navGroups" :key="group.label">
+        <p
+          v-if="!props.collapsed"
+          class="px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-neutral-400"
+        >
           {{ $t(group.label) }}
         </p>
+        <div class="space-y-0.5">
+          <RouterLink
+            v-for="item in group.items"
+            :key="item.to"
+            :to="item.to"
+            :class="[linkBase, props.collapsed ? 'justify-center px-0' : '']"
+            :active-class="linkActive"
+            :title="props.collapsed ? $t(item.key) : undefined"
+            @click="emit('navigate')"
+          >
+            <component
+              :is="item.icon"
+              :size="20"
+              weight="regular"
+              class="shrink-0 text-neutral-400 transition-colors group-hover:text-neutral-600 group-[.is-active]:text-clay-600"
+            />
+            <span v-if="!props.collapsed" class="flex-1 truncate">{{ $t(item.key) }}</span>
+          </RouterLink>
+        </div>
+      </div>
+
+      <!-- Settings pinned to the bottom of the scroll region. -->
+      <div class="mt-auto">
         <RouterLink
-          v-for="item in group.items"
-          :key="item.to"
-          :to="item.to"
-          class="my-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-neutral-600 transition-colors hover:bg-neutral-900/[0.04] hover:text-neutral-900"
-          active-class="!bg-clay-500/[0.1] !font-semibold !text-neutral-900"
+          to="/settings"
+          :class="[linkBase, props.collapsed ? 'justify-center px-0' : '']"
+          :active-class="linkActive"
+          :title="props.collapsed ? $t('nav.settings') : undefined"
           @click="emit('navigate')"
         >
-          <component :is="item.icon" :size="18" weight="regular" class="shrink-0" />
-          <span class="flex-1">{{ $t(item.key) }}</span>
+          <PhGearSix
+            :size="20"
+            weight="regular"
+            class="shrink-0 text-neutral-400 transition-colors group-hover:text-neutral-600 group-[.is-active]:text-clay-600"
+          />
+          <span v-if="!props.collapsed" class="flex-1 truncate">{{ $t('nav.settings') }}</span>
         </RouterLink>
       </div>
     </nav>
@@ -107,6 +146,8 @@ function goSettings() {
     <!-- User footer -->
     <button
       class="flex items-center gap-2.5 border-t border-line px-3 py-2.5 text-left transition-colors hover:bg-neutral-900/[0.03]"
+      :class="props.collapsed ? 'justify-center px-0' : ''"
+      :title="props.collapsed ? userName : undefined"
       @click="goSettings"
     >
       <img
@@ -121,11 +162,13 @@ function goSettings() {
       >
         {{ userInitials }}
       </div>
-      <div class="min-w-0 flex-1">
-        <div class="truncate text-xs font-semibold text-neutral-900">{{ userName }}</div>
-        <div class="truncate text-[11px] capitalize text-neutral-400">{{ roleLabel }}</div>
-      </div>
-      <PhCaretUpDown :size="14" class="shrink-0 text-neutral-400" />
+      <template v-if="!props.collapsed">
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-xs font-semibold text-neutral-900">{{ userName }}</div>
+          <div class="truncate text-[11px] capitalize text-neutral-400">{{ roleLabel }}</div>
+        </div>
+        <PhCaretUpDown :size="14" class="shrink-0 text-neutral-400" />
+      </template>
     </button>
   </div>
 </template>

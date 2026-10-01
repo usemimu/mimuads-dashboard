@@ -5,7 +5,7 @@
  * (Headless UI Dialog) on mobile. Topbar carries the mobile hamburger, theme
  * toggle, notifications and the user menu. Content hosts the banners + RouterView.
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import {
   Dialog,
@@ -27,6 +27,7 @@ import {
   PhSignOut,
   PhSun,
   PhMoon,
+  PhSidebarSimple,
 } from '@phosphor-icons/vue'
 import AppSidebar from '@/layouts/AppSidebar.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
@@ -39,6 +40,11 @@ const router = useRouter()
 const sidebarOpen = ref(false)
 const palette = ref<InstanceType<typeof CommandPalette> | null>(null)
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+
+// Desktop rail collapse — persisted so it survives reloads. Mobile uses the
+// off-canvas drawer instead, so this only drives the md+ static sidebar.
+const collapsed = ref(localStorage.getItem('mimu-platform-sidebar') === 'collapsed')
+watch(collapsed, (v) => localStorage.setItem('mimu-platform-sidebar', v ? 'collapsed' : 'expanded'))
 
 // Light / dark theme — flip `data-theme` on <html>, persist. Initial attribute
 // is set in main.ts before mount to avoid a flash.
@@ -124,18 +130,25 @@ async function onSignOut() {
     </TransitionRoot>
 
     <!-- Static desktop sidebar -->
-    <div class="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
+    <div
+      class="hidden transition-[width] duration-200 ease-in-out md:fixed md:inset-y-0 md:flex md:flex-col"
+      :class="collapsed ? 'md:w-16' : 'md:w-64'"
+    >
       <div class="flex min-h-0 flex-1 flex-col border-r border-line">
-        <AppSidebar />
+        <AppSidebar :collapsed="collapsed" />
       </div>
     </div>
 
     <!-- Main column -->
-    <div class="flex min-h-screen flex-col md:pl-64">
+    <div
+      class="flex min-h-screen flex-col transition-[padding] duration-200 ease-in-out"
+      :class="collapsed ? 'md:pl-16' : 'md:pl-64'"
+    >
       <!-- Topbar -->
       <header
         class="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-3 sm:px-4"
       >
+        <!-- Mobile: open drawer -->
         <button
           type="button"
           class="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:hidden"
@@ -143,6 +156,17 @@ async function onSignOut() {
         >
           <span class="sr-only">Open sidebar</span>
           <PhList :size="20" />
+        </button>
+
+        <!-- Desktop: collapse / expand rail -->
+        <button
+          type="button"
+          class="hidden h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:flex"
+          :title="$t('nav.toggleSidebar')"
+          @click="collapsed = !collapsed"
+        >
+          <span class="sr-only">{{ $t('nav.toggleSidebar') }}</span>
+          <PhSidebarSimple :size="20" />
         </button>
 
         <button

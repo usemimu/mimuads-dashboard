@@ -71,3 +71,22 @@ export function getPerformanceBreakdown(id: string, dim: 'by-screen' | 'by-hour'
 export function getDecisionFactors(id: string) {
   return api.get(`/advertiser/reports/campaigns/${id}/decision-factors`)
 }
+
+// Per-campaign plays / reached / spend (week, month, lifetime) in one call.
+export type CampaignSummary = {
+  campaignId: string
+  name: string
+  status: string
+  totalReached: number
+  totalPlays: number
+  estimatedReach: number
+  week: { reached: number; plays: number; spendKobo: string }
+  month: { reached: number; plays: number; spendKobo: string }
+  milestone: number | null
+}
+export function getCampaignSummaries() {
+  return api.get(`/advertiser/reports/campaigns/summary`) as Promise<{
+    generatedAt: string
+    campaigns: CampaignSummary[]
+  }>
+}

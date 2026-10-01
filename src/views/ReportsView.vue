@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { PhDownloadSimple, PhCurrencyNgn, PhEye, PhMegaphone } from '@phosphor-icons/vue'
+import { PhDownloadSimple, PhCurrencyNgn, PhPlay, PhUsersThree, PhMegaphone } from '@phosphor-icons/vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -9,7 +9,7 @@ import MetricTile from '@/components/dashboard/MetricTile.vue'
 import TimeSeriesChart from '@/components/charts/TimeSeriesChart.vue'
 import { useSession } from '@/stores/session'
 import { getOrgSummary, campaignExportUrl } from '@/api/org'
-import { listCampaigns } from '@/api/campaigns'
+import { listCampaigns, getCampaignSummaries } from '@/api/campaigns'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
 import { statusTone, statusLabel } from '@/lib/status'
@@ -34,6 +34,20 @@ const { data: campaigns } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'report-campaigns')),
   queryFn: () => listCampaigns({}),
 })
+const { data: campaignSummaries } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'report-campaign-summaries')),
+  queryFn: getCampaignSummaries,
+})
+const playsByCampaign = computed(() => {
+  const m: Record<string, number> = {}
+  for (const c of campaignSummaries.value?.campaigns ?? []) m[c.campaignId] = c.totalPlays
+  return m
+})
+const reachByCampaign = computed(() => {
+  const m: Record<string, number> = {}
+  for (const c of campaignSummaries.value?.campaigns ?? []) m[c.campaignId] = c.estimatedReach
+  return m
+})
 
 const byWorkspace = computed(() => summary.value?.byWorkspace ?? [])
 const kobo = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? formatKobo(String(v)) : '—')
@@ -55,17 +69,20 @@ const totalSpendKobo = computed(
     pluck(summary.value?.totals, ['attributedSpendKobo', 'spendKobo']) ||
     campaignList.value.reduce((s, c) => s + Number(c.spentKobo || 0), 0),
 )
-const verifiedViews = computed(() => pluck(summary.value?.totals, ['verifiedImpressions', 'plays']))
+// Plays-first (CV impressions deferred until screens have cameras). Reach is the
+// sensor-free modeled estimate from the summary totals.
+const totalPlays = computed(() => pluck(summary.value?.totals, ['plays']))
+const estReachTotal = computed(() => pluck(summary.value?.totals, ['estimatedReach']))
 
-// Daily trend (verified impressions) from the plays pipeline — same series the
-// dashboard chart uses, scoped to the selected period.
+// Daily trend = ad plays per day from the plays pipeline (same series + filter
+// as the dashboard chart), scoped to the selected period.
 function shortDate(d: string): string {
   const t = Date.parse(d)
   if (Number.isNaN(t)) return d
   return new Date(t).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
 }
 const byDay = computed<DayPoint[]>(() => summary.value?.byDay ?? [])
-const chartPoints = computed(() => byDay.value.map((d) => d.verifiedImpressions))
+const chartPoints = computed(() => byDay.value.map((d) => d.plays))
 const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
 </script>
 
@@ -82,9 +99,10 @@ const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
     </PageHeader>
 
     <!-- Metric strip -->
-    <div class="mb-6 grid grid-cols-3 gap-4">
+    <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <MetricTile :label="$t('dashboard.mPlays')" :value="totalPlays.toLocaleString('en-NG')" :icon="PhPlay" />
+      <MetricTile :label="$t('dashboard.mReach')" :value="estReachTotal ? estReachTotal.toLocaleString('en-NG') : '—'" :sub="$t('dashboard.mReachHint')" :icon="PhUsersThree" />
       <MetricTile :label="$t('reports.spend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
-      <MetricTile :label="$t('reports.verifiedViews')" :value="verifiedViews.toLocaleString('en-NG')" :icon="PhEye" />
       <MetricTile :label="$t('reports.campaigns')" :value="campaignList.length" :icon="PhMegaphone" />
     </div>
 
@@ -102,14 +120,14 @@ const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
           <tr class="border-b border-neutral-100">
             <th class="px-5 py-3 font-semibold">{{ $t('reports.workspace') }}</th>
             <th class="px-5 py-3 text-right font-semibold">{{ $t('reports.spend') }}</th>
-            <th class="px-5 py-3 text-right font-semibold">{{ $t('reports.verifiedViews') }}</th>
+            <th class="px-5 py-3 text-right font-semibold">{{ $t('dashboard.colPlays') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(w, i) in byWorkspace" :key="i" class="border-t border-neutral-100">
             <td class="px-5 py-3 text-neutral-900">{{ w.workspaceName ?? w.name ?? w.workspaceId ?? '—' }}</td>
             <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ kobo(w.spendKobo ?? w.spend) }}</td>
-            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ w.verifiedImpressions ?? w.plays ?? '—' }}</td>
+            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ w.plays ?? '—' }}</td>
           </tr>
         </tbody>
       </table>
@@ -123,6 +141,8 @@ const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
           <tr class="border-b border-neutral-100">
             <th class="px-5 py-3 font-semibold">{{ $t('campaigns.name') }}</th>
             <th class="px-5 py-3 font-semibold">{{ $t('campaigns.status') }}</th>
+            <th class="px-5 py-3 text-right font-semibold">{{ $t('dashboard.colPlays') }}</th>
+            <th class="px-5 py-3 text-right font-semibold">{{ $t('dashboard.mReach') }}</th>
             <th class="px-5 py-3 text-right font-semibold">{{ $t('reports.spend') }}</th>
             <th class="px-5 py-3 text-right font-semibold">{{ $t('reports.exportCsv') }}</th>
           </tr>
@@ -131,6 +151,8 @@ const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
           <tr v-for="c in campaigns?.campaigns ?? []" :key="c.id" class="border-t border-neutral-100 hover:bg-neutral-50/70">
             <td class="px-5 py-3 text-neutral-900">{{ c.name }}</td>
             <td class="px-5 py-3"><Badge :tone="statusTone(c.status)">{{ statusLabel(c.status) }}</Badge></td>
+            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ (playsByCampaign[c.id] ?? 0).toLocaleString('en-NG') }}</td>
+            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ (reachByCampaign[c.id] ?? 0) > 0 ? (reachByCampaign[c.id] ?? 0).toLocaleString('en-NG') : '—' }}</td>
             <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ formatKobo(c.spentKobo) }}</td>
             <td class="px-5 py-3 text-right">
               <a :href="campaignExportUrl(c.id, 'csv')" target="_blank" rel="noopener" class="font-medium text-clay-600 hover:underline"><PhDownloadSimple :size="14" class="inline" /> CSV</a>

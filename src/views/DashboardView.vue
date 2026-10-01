@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import { PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhWarningCircle, PhEye, PhCurrencyNgn, PhMapPin, PhChartLineUp, PhWallet } from '@phosphor-icons/vue'
+import { PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhWarningCircle, PhPlay, PhUsersThree, PhCurrencyNgn, PhMapPin, PhChartLineUp } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
@@ -12,8 +12,10 @@ import InsightsPanel from '@/components/dashboard/InsightsPanel.vue'
 import { useSession } from '@/stores/session'
 import { useKyc } from '@/composables/useKyc'
 import { getWallet } from '@/api/billing'
-import { listCampaigns } from '@/api/campaigns'
+import { listCampaigns, getCampaignSummaries } from '@/api/campaigns'
 import { getOrgSummary } from '@/api/org'
+import { getScreensMap } from '@/api/screens'
+import { isOnline } from '@/api/contracts/screens'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
 import type { Campaign } from '@/api/contracts/campaigns'
@@ -21,10 +23,13 @@ import type { Campaign } from '@/api/contracts/campaigns'
 const session = useSession()
 const { kycComplete } = useKyc()
 
-// ── Controls ─────────────────────────────────────────────────────────
+// ── Controls (table only) ────────────────────────────────────────────
 const search = ref('')
 const scope = ref<'all' | 'current' | 'archived'>('current')
-const period = ref(30) // days
+
+// Lifetime window for the rollup — no user-facing period filter; headline
+// numbers are totals-to-date, the trend shows the recent tail.
+const LOOKBACK_DAYS = 3650
 
 const CURRENT = new Set(['draft', 'pending_payment', 'pending_vetting', 'active', 'paused'])
 const ARCHIVED = new Set(['completed', 'rejected', 'suspended'])
@@ -38,21 +43,33 @@ const { data: campaigns } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'campaigns', 'all')),
   queryFn: () => listCampaigns({}),
 })
+const { data: screens } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'screens', 'dash')),
+  queryFn: () => getScreensMap({}),
+})
 const { data: summary } = useQuery({
-  queryKey: computed(() => ctxKey(session.context, 'reports', 'summary', String(period.value))),
-  queryFn: () => getOrgSummary(period.value),
+  queryKey: computed(() => ctxKey(session.context, 'reports', 'summary', 'lifetime')),
+  queryFn: () => getOrgSummary(LOOKBACK_DAYS),
+})
+// Per-campaign plays (lifetime) for the dashboard table.
+const { data: campaignSummaries } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'reports', 'campaign-summaries')),
+  queryFn: getCampaignSummaries,
+})
+const playsByCampaign = computed(() => {
+  const m: Record<string, number> = {}
+  for (const c of campaignSummaries.value?.campaigns ?? []) m[c.campaignId] = c.totalPlays
+  return m
 })
 
 const list = computed<Campaign[]>(() => campaigns.value?.campaigns ?? [])
 
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
-  const cutoff = Date.now() - period.value * 86_400_000
   return list.value.filter((c) => {
     if (q && !c.name.toLowerCase().includes(q)) return false
     if (scope.value === 'current' && !CURRENT.has(c.status)) return false
     if (scope.value === 'archived' && !ARCHIVED.has(c.status)) return false
-    if (c.createdAt && Date.parse(c.createdAt) < cutoff) return false
     return true
   })
 })
@@ -68,46 +85,33 @@ function pluck(obj: unknown, keys: string[]): number {
   }
   return 0
 }
-// Real numbers from the CV plays pipeline (org/reports/summary): verified
-// impressions, plays, and attributed spend over the selected period.
-type DayPoint = { day: string; plays: number; verifiedImpressions: number; spendKobo: string }
+type DayPoint = { day: string; plays: number; verifiedImpressions: number; deviceReach: number; spendKobo: string }
 const totals = computed(() => (summary.value as { totals?: unknown } | undefined)?.totals ?? null)
 const byDay = computed<DayPoint[]>(() => (summary.value as { byDay?: DayPoint[] } | undefined)?.byDay ?? [])
 
-const impressions = computed(() => pluck(totals.value, ['verifiedImpressions', 'plays']))
-const spendKobo = computed(
-  () => pluck(totals.value, ['attributedSpendKobo']) || filtered.value.reduce((sum, c) => sum + Number(c.spentKobo || 0), 0),
-)
-const activeCount = computed(() => filtered.value.filter((c) => c.status === 'active').length)
-const screensLive = computed(() =>
-  filtered.value.filter((c) => c.status === 'active').reduce((sum, c) => sum + (c.screenCount ?? 0), 0),
-)
-const cpmKobo = computed(() => (impressions.value > 0 ? Math.round((spendKobo.value / impressions.value) * 1000) : 0))
+// Plays = ad playbacks (delivery truth, independent of any camera/sensor).
+const plays = computed(() => pluck(totals.value, ['plays']))
+// Estimated reach = modeled from venue footfall (effective daily reach of each
+// screen-day the ad ran). Sensor-free; CV is deferred until screens get cameras.
+const estimatedReach = computed(() => pluck(totals.value, ['estimatedReach']))
+// Spend is campaign-sourced: the sum every campaign has actually spent to date.
+const spendKobo = computed(() => list.value.reduce((sum, c) => sum + Number(c.spentKobo || 0), 0))
+// Active campaigns, straight from the campaign list.
+const activeCount = computed(() => list.value.filter((c) => c.status === 'active').length)
+// Screens live = online screens in the inventory (status === 'active').
+const screensLive = computed(() => (screens.value ?? []).filter((s) => isOnline(s.status)).length)
+// Cost per 1,000 plays — a sensor-free efficiency metric.
+const cpmKobo = computed(() => (plays.value > 0 ? Math.round((spendKobo.value / plays.value) * 1000) : 0))
 
-// ── Period-over-period deltas (vs the preceding equal-length window) ──────
-// Null when there's no prior baseline, so the stat card shows no (misleading) arrow.
-const prevTotals = computed(() => (summary.value as { previousTotals?: unknown } | undefined)?.previousTotals ?? null)
-function pctDelta(cur: number, prev: number): number | undefined {
-  if (!prev || prev <= 0) return undefined
-  return Math.round(((cur - prev) / prev) * 100)
-}
-const prevImpressions = computed(() => pluck(prevTotals.value, ['verifiedImpressions', 'plays']))
-const prevSpendKobo = computed(() => pluck(prevTotals.value, ['attributedSpendKobo']))
-const prevCpmKobo = computed(() =>
-  prevImpressions.value > 0 ? Math.round((prevSpendKobo.value / prevImpressions.value) * 1000) : 0,
-)
-const impressionsDelta = computed(() => pctDelta(impressions.value, prevImpressions.value))
-const spendDelta = computed(() => pctDelta(pluck(totals.value, ['attributedSpendKobo']), prevSpendKobo.value))
-const cpmDelta = computed(() => pctDelta(cpmKobo.value, prevCpmKobo.value))
-
-// ── Chart: verified impressions by day (real time series from the plays data) ──
+// ── Chart: ad plays by day (recent tail of the real series) ──
 function shortDate(d: string): string {
   const t = Date.parse(d)
   if (Number.isNaN(t)) return d
   return new Date(t).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
 }
-const chartPoints = computed(() => byDay.value.map((d) => d.verifiedImpressions))
-const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
+const recentDays = computed(() => byDay.value.slice(-90))
+const chartPoints = computed(() => recentDays.value.map((d) => d.plays))
+const chartLabels = computed(() => recentDays.value.map((d) => shortDate(d.day)))
 
 const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKobo) < 500_000_00 : false))
 </script>
@@ -117,8 +121,8 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
     <!-- Header -->
     <div class="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
       <div>
-        <h1 class="page-title">{{ $t('nav.dashboard') }}</h1>
-        <p class="page-subtitle mt-0.5">{{ $t('dashboard.overviewSub') }}</p>
+        <h1 class="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-neutral-900">{{ $t('nav.dashboard') }}</h1>
+        <p class="page-subtitle mt-1">{{ $t('dashboard.overviewSub') }}</p>
       </div>
       <template v-if="session.canSubmitCampaign">
         <RouterLink v-if="kycComplete" to="/campaigns/new">
@@ -144,25 +148,23 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
          period control, the headline metrics, and the trend chart. ── -->
     <section class="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
-        <div class="flex items-center gap-2">
-          <PhChartLineUp :size="18" class="text-clay-500" />
-          <h2 class="text-sm font-semibold text-neutral-900">{{ $t('dashboard.performance') }}</h2>
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
+            <PhChartLineUp :size="18" weight="bold" />
+          </span>
+          <h2 class="text-[15px] font-bold tracking-tight text-neutral-900">{{ $t('dashboard.performance') }}</h2>
         </div>
-        <select v-model.number="period" :aria-label="$t('reports.period')" class="select w-auto py-1.5 text-sm">
-          <option :value="7">{{ $t('reports.days7') }}</option>
-          <option :value="30">{{ $t('reports.days30') }}</option>
-          <option :value="90">{{ $t('reports.days90') }}</option>
-        </select>
+        <span class="text-xs font-medium text-neutral-400">{{ $t('dashboard.toDate') }}</span>
       </div>
 
       <!-- Headline metrics: a flush row of divided cells so the baseline aligns. -->
       <div class="grid grid-cols-2 divide-x divide-y divide-line sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-        <MetricTile bare :label="$t('dashboard.mImpressions')" :value="impressions.toLocaleString('en-NG')" :icon="PhEye" :delta="impressionsDelta" />
-        <MetricTile bare :label="$t('dashboard.mSpend')" :value="formatKobo(String(spendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" :delta="spendDelta" />
-        <MetricTile bare :label="$t('dashboard.mCpm')" :value="cpmKobo ? formatKobo(String(cpmKobo)) : '—'" :icon="PhChartLineUp" :delta="cpmDelta" />
+        <MetricTile bare :label="$t('dashboard.mPlays')" :value="plays.toLocaleString('en-NG')" :icon="PhPlay" />
+        <MetricTile bare :label="$t('dashboard.mReach')" :value="estimatedReach ? estimatedReach.toLocaleString('en-NG') : '—'" :sub="$t('dashboard.mReachHint')" :icon="PhUsersThree" />
+        <MetricTile bare :label="$t('dashboard.mSpend')" :value="formatKobo(String(spendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
+        <MetricTile bare :label="$t('dashboard.mCpm')" :value="cpmKobo ? formatKobo(String(cpmKobo)) : '—'" :icon="PhChartLineUp" />
         <MetricTile bare :label="$t('dashboard.mActive')" :value="activeCount" :icon="PhMegaphone" />
         <MetricTile bare :label="$t('dashboard.mScreens')" :value="screensLive" :icon="PhMapPin" />
-        <MetricTile bare :label="$t('dashboard.mBalance')" :value="wallet ? formatKobo(wallet.balanceKobo, { showDecimals: false }) : '—'" :icon="PhWallet" />
       </div>
 
       <!-- Trend chart, sharing the same frame. -->
@@ -194,7 +196,7 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
 
     <div class="mt-3 grid gap-5 lg:grid-cols-5">
       <Card class="lg:col-span-3" padding="sm">
-        <CampaignsTable :campaigns="filtered" :empty-text="$t('dashboard.noMatch')" />
+        <CampaignsTable :campaigns="filtered" :plays-by-campaign="playsByCampaign" :empty-text="$t('dashboard.noMatch')" />
       </Card>
       <Card class="lg:col-span-2">
         <InsightsPanel :campaigns="filtered" :empty-text="$t('dashboard.insightsEmpty')" />

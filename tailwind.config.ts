@@ -80,7 +80,7 @@ export default {
       fontFamily: {
         display: ['Aeonik', 'Georgia', 'serif'],
         body: ['Aeonik', 'system-ui', 'sans-serif'],
-        mono: ['Aeonik', '"Courier New"', 'monospace'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       // Restrained, warm-tinted elevation — an "editorial console" surface
       // language: cards lean on a hairline border with only a whisper of
