@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
+import PasswordField from '@/components/ui/PasswordField.vue'
 import { useSession } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import { isApiError } from '@/api/errors'
@@ -53,13 +54,7 @@ async function onSubmit() {
 
       <label class="block">
         <span class="label">{{ $t('auth.password') }}</span>
-        <input
-          v-model="password"
-          type="password"
-          autocomplete="current-password"
-          required
-          class="input"
-        />
+        <PasswordField v-model="password" autocomplete="current-password" required :aria-label="$t('auth.password')" />
       </label>
 
       <Button type="submit" size="lg" class="w-full" :disabled="submitting">

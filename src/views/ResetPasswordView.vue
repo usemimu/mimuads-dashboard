@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
+import PasswordField from '@/components/ui/PasswordField.vue'
 import { resetPassword } from '@/api/onboarding'
 import { isApiError } from '@/api/errors'
 import { useToastStore } from '@/stores/toast'
@@ -38,7 +39,7 @@ async function onSubmit() {
       </label>
       <label class="block">
         <span class="label">{{ $t('reset.newPassword') }}</span>
-        <input v-model="newPassword" type="password" minlength="8" required autocomplete="new-password" class="input" />
+        <PasswordField v-model="newPassword" :minlength="8" required autocomplete="new-password" :aria-label="$t('reset.newPassword')" />
       </label>
       <p v-if="done" class="text-sm text-moss-600">{{ $t('reset.done') }}</p>
       <Button type="submit" size="lg" class="w-full" :disabled="submitting || token.length !== 6">{{ $t('reset.submit') }}</Button>

@@ -15,6 +15,12 @@ const TxnSchema = z
     amountNaira: z.number().optional(),
     createdAt: z.string().optional(),
     description: z.string().nullable().optional(),
+    // Authoritative money-in/out from the ledger entry (preferred over the
+    // amount-sign heuristic). Extra detail fields for the transaction rows.
+    direction: z.enum(['credit', 'debit']).optional(),
+    formattedAmount: z.string().optional(),
+    balanceAfterKobo: z.string().nullable().optional(),
+    externalRef: z.string().nullable().optional(),
   })
   .passthrough()
 

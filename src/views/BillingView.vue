@@ -3,7 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhDownloadSimple, PhArrowDownLeft, PhArrowUpRight, PhPlus, PhReceipt, PhWarningCircle, PhFileText } from '@phosphor-icons/vue'
+import { PhDownloadSimple, PhArrowDownLeft, PhArrowUpRight, PhPlus, PhReceipt, PhWarningCircle, PhFileText, PhCaretDown, PhArrowsLeftRight, PhArrowCounterClockwise, PhMegaphone, PhWallet, PhArrowsDownUp } from '@phosphor-icons/vue'
+import type { Component } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -118,18 +119,56 @@ function tabLabel(name: string): string {
   return t('billing.tab' + name.charAt(0).toUpperCase() + name.slice(1))
 }
 
-// Credits (top-ups, inbound transfers) vs debits (spend, outbound). Fall back
-// to the amount's sign when the type vocabulary doesn't make it obvious.
-function isCredit(tx: { type: string; amountKobo: string }): boolean {
+// Which transaction row is expanded to show its full detail.
+const expandedTx = ref<string | null>(null)
+
+type Txn = {
+  id: string
+  type: string
+  amountKobo: string
+  direction?: 'credit' | 'debit'
+  description?: string | null
+  createdAt?: string
+  balanceAfterKobo?: string | null
+  externalRef?: string | null
+}
+
+// Prefer the ledger's authoritative direction; fall back to the amount sign /
+// type vocabulary for older payloads.
+function isCredit(tx: Txn): boolean {
+  if (tx.direction) return tx.direction === 'credit'
   const n = Number(tx.amountKobo)
   if (Number.isFinite(n) && n !== 0) return n > 0
   return /topup|credit|refund|transfer_in|deposit|fund/i.test(tx.type)
+}
+// A representative icon per transaction type.
+function txIcon(tx: Txn): Component {
+  const t = tx.type.toLowerCase()
+  if (/topup|deposit|fund/.test(t)) return PhPlus
+  if (/refund/.test(t)) return PhArrowCounterClockwise
+  if (/transfer/.test(t)) return PhArrowsLeftRight
+  if (/charge|spend|play|debit/.test(t)) return PhMegaphone
+  return isCredit(tx) ? PhArrowDownLeft : PhArrowUpRight
+}
+function txTitle(tx: Txn): string {
+  return tx.type.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase())
+}
+function absKobo(tx: Txn): string {
+  return String(Math.abs(Number(tx.amountKobo) || 0))
 }
 function fmtDate(d?: string): string {
   if (!d) return ''
   const t = Date.parse(d)
   if (Number.isNaN(t)) return ''
   return new Date(t).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+function fmtDateTime(d?: string): string {
+  if (!d) return ''
+  const t = Date.parse(d)
+  if (Number.isNaN(t)) return ''
+  return new Date(t).toLocaleString('en-NG', {
+    day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit',
+  })
 }
 
 // ── Transfers (finance/admin) ──
@@ -173,19 +212,24 @@ async function doTransfer() {
     <!-- Wallet summary card -->
     <Card class="mb-6 overflow-hidden" padding="none">
       <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <div>
-          <p class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-            {{ $t('billing.balance') }}
-          </p>
-          <p class="mt-1.5 font-mono text-[clamp(2rem,8cqi,2.75rem)] font-semibold leading-none text-neutral-900" data-testid="wallet-balance">
-            {{ wallet ? formatKobo(wallet.balanceKobo) : '—' }}
-          </p>
-          <p
-            v-if="lowBalance"
-            class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-gold-50 px-2.5 py-1 text-xs font-medium text-gold-800"
-          >
-            <PhWarningCircle :size="14" weight="fill" class="text-gold-500" /> {{ $t('dashboard.lowBalance') }}
-          </p>
+        <div class="flex items-start gap-4">
+          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-clay-500/10 text-clay-600">
+            <PhWallet :size="24" weight="fill" />
+          </span>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+              {{ $t('billing.balance') }}
+            </p>
+            <p class="mt-1 font-mono text-[clamp(2rem,8cqi,2.75rem)] font-bold leading-none tracking-tight text-neutral-900" data-testid="wallet-balance">
+              {{ wallet ? formatKobo(wallet.balanceKobo) : '—' }}
+            </p>
+            <p
+              v-if="lowBalance"
+              class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-gold-50 px-2.5 py-1 text-xs font-medium text-gold-800"
+            >
+              <PhWarningCircle :size="14" weight="fill" class="text-gold-500" /> {{ $t('dashboard.lowBalance') }}
+            </p>
+          </div>
         </div>
         <div v-if="canBill" class="flex shrink-0 gap-2">
           <Button @click="tab = 'topup'"><PhPlus :size="16" weight="bold" /> {{ $t('billing.topupTitle') }}</Button>
@@ -205,23 +249,68 @@ async function doTransfer() {
     <div v-if="tab === 'transactions'">
       <Card v-if="txns?.transactions.length" padding="none" class="overflow-hidden">
         <ul role="list" class="divide-y divide-line">
-          <li v-for="tx in txns.transactions" :key="tx.id" class="flex items-center gap-4 px-4 py-3.5">
-            <span
-              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-              :class="isCredit(tx) ? 'bg-moss-50 text-moss-600' : 'bg-neutral-100 text-neutral-500'"
+          <li v-for="tx in (txns.transactions as Txn[])" :key="tx.id">
+            <button
+              type="button"
+              class="flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-neutral-50/70"
+              @click="expandedTx = expandedTx === tx.id ? null : tx.id"
             >
-              <PhArrowDownLeft v-if="isCredit(tx)" :size="16" weight="bold" />
-              <PhArrowUpRight v-else :size="16" weight="bold" />
-            </span>
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium capitalize text-neutral-900">{{ tx.type.replace(/_/g, ' ') }}</p>
-              <p class="truncate text-xs text-neutral-500">{{ tx.description || fmtDate(tx.createdAt) }}</p>
-            </div>
-            <div class="shrink-0 text-right">
-              <p class="font-mono text-sm font-semibold" :class="isCredit(tx) ? 'text-moss-600' : 'text-neutral-900'">
-                {{ isCredit(tx) ? '+' : '−' }}{{ formatKobo(String(Math.abs(Number(tx.amountKobo) || 0))) }}
-              </p>
-              <p class="text-[11px] text-neutral-400">{{ fmtDate(tx.createdAt) }}</p>
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                :class="isCredit(tx) ? 'bg-moss-50 text-moss-600' : 'bg-clay-50 text-clay-600'"
+              >
+                <component :is="txIcon(tx)" :size="18" weight="bold" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-semibold text-neutral-900">{{ txTitle(tx) }}</p>
+                <p class="truncate text-xs text-neutral-500">{{ tx.description || fmtDateTime(tx.createdAt) }}</p>
+              </div>
+              <div class="shrink-0 text-right">
+                <p class="font-mono text-sm font-bold" :class="isCredit(tx) ? 'text-moss-600' : 'text-neutral-900'">
+                  {{ isCredit(tx) ? '+' : '−' }}{{ formatKobo(absKobo(tx)) }}
+                </p>
+                <p v-if="tx.balanceAfterKobo" class="font-mono text-[11px] text-neutral-400">
+                  {{ $t('billing.balAfter') }} {{ formatKobo(tx.balanceAfterKobo) }}
+                </p>
+                <p v-else class="text-[11px] text-neutral-400">{{ fmtDate(tx.createdAt) }}</p>
+              </div>
+              <PhCaretDown
+                :size="14"
+                class="shrink-0 text-neutral-300 transition-transform"
+                :class="expandedTx === tx.id ? 'rotate-180' : ''"
+              />
+            </button>
+
+            <!-- Expanded detail (bank-statement style) -->
+            <div v-if="expandedTx === tx.id" class="border-t border-line bg-neutral-50/60 px-4 py-3.5">
+              <dl class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+                <div>
+                  <dt class="text-neutral-400">{{ $t('billing.txDate') }}</dt>
+                  <dd class="mt-0.5 text-neutral-800">{{ fmtDateTime(tx.createdAt) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-neutral-400">{{ $t('billing.txType') }}</dt>
+                  <dd class="mt-0.5">
+                    <Badge :tone="isCredit(tx) ? 'success' : 'neutral'" size="sm">{{ isCredit(tx) ? $t('billing.moneyIn') : $t('billing.moneyOut') }}</Badge>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-neutral-400">{{ $t('billing.amount') }}</dt>
+                  <dd class="mt-0.5 font-mono text-neutral-800">{{ isCredit(tx) ? '+' : '−' }}{{ formatKobo(absKobo(tx)) }}</dd>
+                </div>
+                <div v-if="tx.balanceAfterKobo">
+                  <dt class="text-neutral-400">{{ $t('billing.balanceAfter') }}</dt>
+                  <dd class="mt-0.5 font-mono text-neutral-800">{{ formatKobo(tx.balanceAfterKobo) }}</dd>
+                </div>
+                <div v-if="tx.externalRef" class="col-span-2">
+                  <dt class="text-neutral-400">{{ $t('billing.txReference') }}</dt>
+                  <dd class="mt-0.5 break-all font-mono text-neutral-800">{{ tx.externalRef }}</dd>
+                </div>
+                <div class="col-span-2">
+                  <dt class="text-neutral-400">{{ $t('billing.txId') }}</dt>
+                  <dd class="mt-0.5 break-all font-mono text-[11px] text-neutral-500">{{ tx.id }}</dd>
+                </div>
+              </dl>
             </div>
           </li>
         </ul>
@@ -234,29 +323,35 @@ async function doTransfer() {
     </div>
 
     <!-- Top up -->
-    <div v-else-if="tab === 'topup'" class="max-w-md">
+    <div v-else-if="tab === 'topup'" class="max-w-md space-y-4">
       <p v-if="topupState === 'pending'" class="rounded-lg bg-neutral-100 px-4 py-3 text-sm text-neutral-600">{{ $t('billing.topupPending') }}</p>
       <p v-else-if="topupState === 'success'" class="rounded-lg bg-moss-50 px-4 py-3 text-sm text-moss-700">{{ $t('billing.topupSuccess') }}</p>
       <p v-else-if="topupState === 'failed'" class="rounded-lg bg-clay-50 px-4 py-3 text-sm text-clay-700">{{ $t('billing.topupFailed') }}</p>
-      <div v-if="canBill" class="card mt-4 space-y-3 p-5">
-        <h2 class="font-medium text-neutral-900">{{ $t('billing.topupTitle') }}</h2>
+      <Card v-if="canBill" class="space-y-3.5">
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600"><PhPlus :size="18" weight="bold" /></span>
+          <h2 class="font-display text-base font-semibold text-neutral-900">{{ $t('billing.topupTitle') }}</h2>
+        </div>
         <label class="block"><span class="label">{{ $t('billing.amount') }}</span>
           <input v-model.number="topupNaira" type="number" min="1" class="input" /></label>
         <p class="text-xs text-neutral-400">{{ $t('billing.topupHint') }}</p>
         <Button class="w-full" :disabled="topupBusy" @click="startTopup">{{ $t('billing.continue') }}</Button>
-      </div>
+      </Card>
     </div>
 
     <!-- Invoices -->
     <div v-else-if="tab === 'invoices'" class="space-y-6">
-      <div v-if="canBill" class="card max-w-md space-y-3 p-5">
-        <h2 class="font-medium text-neutral-900">{{ $t('billing.invoiceRequest') }}</h2>
+      <Card v-if="canBill" class="max-w-md space-y-3.5">
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600"><PhFileText :size="18" weight="bold" /></span>
+          <h2 class="font-display text-base font-semibold text-neutral-900">{{ $t('billing.invoiceRequest') }}</h2>
+        </div>
         <label class="block"><span class="label">{{ $t('billing.amount') }}</span>
           <input v-model.number="invNaira" type="number" min="1" class="input" /></label>
         <label class="block"><span class="label">{{ $t('billing.purpose') }}</span>
           <input v-model="invPurpose" class="input" /></label>
         <Button :disabled="invBusy" @click="requestInvoice">{{ $t('billing.requestInvoice') }}</Button>
-      </div>
+      </Card>
       <Card v-if="invoices?.invoices.length" padding="none" class="overflow-hidden">
         <table class="w-full text-sm">
           <thead class="text-left text-[11px] uppercase tracking-wider text-neutral-400">
@@ -280,8 +375,11 @@ async function doTransfer() {
     </div>
 
     <!-- Transfers -->
-    <div v-else class="card max-w-md space-y-3 p-5">
-      <h2 class="font-medium text-neutral-900">{{ $t('billing.transfersTitle') }}</h2>
+    <Card v-else class="max-w-md space-y-3.5">
+      <div class="flex items-center gap-2.5">
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600"><PhArrowsDownUp :size="18" weight="bold" /></span>
+        <h2 class="font-display text-base font-semibold text-neutral-900">{{ $t('billing.transfersTitle') }}</h2>
+      </div>
       <p v-if="!canBill" class="text-sm text-neutral-400">{{ $t('billing.transferReadonly') }}</p>
       <template v-else>
         <div class="grid grid-cols-2 gap-3">
@@ -301,6 +399,6 @@ async function doTransfer() {
         <p v-if="tDone" class="text-sm text-moss-600">{{ $t('billing.transferDone') }}</p>
         <Button :disabled="tBusy || tFrom === tTo" @click="doTransfer">{{ $t('billing.doTransfer') }}</Button>
       </template>
-    </div>
+    </Card>
   </div>
 </template>
