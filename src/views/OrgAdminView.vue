@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useI18n } from 'vue-i18n'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
-import { PhDotsThreeVertical, PhUsersThree, PhKey, PhStack, PhProhibit, PhUserSwitch } from '@phosphor-icons/vue'
+import { PhDotsThreeVertical, PhUsersThree, PhKey, PhStack, PhProhibit, PhUserSwitch, PhSealCheck, PhArrowRight } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Card from '@/components/ui/Card.vue'
@@ -215,10 +215,27 @@ async function makeKey() {
     </div>
 
     <!-- Verification -->
-    <div v-else-if="tab === 'verification'" class="card p-6">
-      <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('orgAdmin.verificationLevel') }}</p>
-      <p class="mt-1.5 text-lg font-semibold capitalize text-neutral-900">{{ session.context.tier }}</p>
-      <RouterLink to="/verify" class="mt-3 inline-block text-sm text-clay-600 hover:underline">{{ $t('orgAdmin.openVerification') }}</RouterLink>
+    <div v-else-if="tab === 'verification'">
+      <Card>
+        <div class="flex items-start gap-4">
+          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-clay-500/10 text-clay-600">
+            <PhSealCheck :size="24" weight="fill" />
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('orgAdmin.verificationLevel') }}</p>
+            <div class="mt-1 flex flex-wrap items-center gap-2">
+              <p class="text-lg font-bold capitalize text-neutral-900">{{ session.context.tier }}</p>
+              <Badge :tone="session.context.tier === 'agency' ? 'accent' : 'success'" size="sm">{{ session.context.tier }}</Badge>
+            </div>
+            <p class="mt-2 max-w-md text-sm text-neutral-500">{{ $t('orgAdmin.verificationBody') }}</p>
+            <RouterLink to="/verify">
+              <Button variant="outline" size="sm" class="mt-4">
+                <PhSealCheck :size="16" /> {{ $t('orgAdmin.openVerification') }} <PhArrowRight :size="14" />
+              </Button>
+            </RouterLink>
+          </div>
+        </div>
+      </Card>
     </div>
 
     <!-- API keys -->

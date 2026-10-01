@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
+import PasswordField from '@/components/ui/PasswordField.vue'
+import SelectMenu from '@/components/ui/SelectMenu.vue'
 import { requestOtp } from '@/api/onboarding'
 import { isApiError } from '@/api/errors'
 import { useSignup } from '@/stores/signup'
@@ -94,20 +96,17 @@ async function onSubmit() {
           {{ $t('signup.positionLabel') }}
           <span class="font-normal text-neutral-400">· {{ $t('signup.positionOptional') }}</span>
         </span>
-        <select v-model="position" class="input">
-          <option value="">—</option>
-          <option v-for="p in positions" :key="p" :value="p">{{ p }}</option>
-        </select>
+        <SelectMenu v-model="position" :options="positions" :placeholder="$t('signup.positionOptional')" :aria-label="$t('signup.positionLabel')" />
       </label>
 
       <div class="grid grid-cols-2 gap-3">
         <label class="block">
           <span class="label">{{ $t('signup.password') }}</span>
-          <input v-model="password" type="password" required minlength="8" autocomplete="new-password" class="input" />
+          <PasswordField v-model="password" required :minlength="8" autocomplete="new-password" :aria-label="$t('signup.password')" />
         </label>
         <label class="block">
           <span class="label">{{ $t('signup.confirmPassword') }}</span>
-          <input v-model="confirm" type="password" required autocomplete="new-password" class="input" />
+          <PasswordField v-model="confirm" required autocomplete="new-password" :aria-label="$t('signup.confirmPassword')" />
         </label>
       </div>
       <p v-if="!passwordsMatch" class="text-sm text-clay-700">{{ $t('signup.passwordsMustMatch') }}</p>

@@ -60,7 +60,7 @@ async function onResend() {
 </script>
 
 <template>
-  <AuthCard :step="0">
+  <AuthCard :step="1">
     <form class="space-y-4" @submit.prevent="onSubmit">
       <div>
         <h2 class="font-display text-2xl font-semibold text-neutral-900">{{ $t('verify.title') }}</h2>

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
+import SelectMenu from '@/components/ui/SelectMenu.vue'
 import { createBusinessProfile, getStates } from '@/api/onboarding'
 import { BusinessCategorySchema, BusinessTypeSchema, type NigerianState } from '@/api/contracts/onboarding'
 import { useSession } from '@/stores/session'
@@ -47,6 +48,11 @@ const advertiserTypes = BusinessTypeSchema.options.filter((t) => t !== 'agency')
 const lgasForState = computed(() => states.value.find((s) => s.name === stateName.value)?.lgas ?? [])
 const prettify = (v: string) => v.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
+// Dropdown options for the styled SelectMenu (value + prettified label).
+const categoryOptions = categories.map((c) => ({ value: c as string, label: prettify(c) }))
+const typeOptions = advertiserTypes.map((t) => ({ value: t as string, label: prettify(t) }))
+const stateOptions = computed(() => states.value.map((s) => ({ value: s.name, label: s.name })))
+
 function selectKind(k: Kind) {
   kind.value = k
   businessType.value = k === 'agency' ? 'agency' : ''
@@ -77,7 +83,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AuthCard :step="1">
+  <AuthCard :step="2">
     <h2 class="mb-4 font-display text-2xl font-semibold text-neutral-900">{{ $t('org.title') }}</h2>
 
     <!-- The fork: two selectable cards -->
@@ -123,34 +129,22 @@ async function onSubmit() {
 
       <label class="block">
         <span class="label">{{ $t('org.category') }}</span>
-        <select v-model="category" required :aria-label="$t('org.category')" class="input">
-          <option value="" disabled>—</option>
-          <option v-for="c in categories" :key="c" :value="c">{{ prettify(c) }}</option>
-        </select>
+        <SelectMenu v-model="category" :options="categoryOptions" :placeholder="$t('org.category')" :aria-label="$t('org.category')" />
       </label>
 
       <label v-if="kind === 'advertiser'" class="block">
         <span class="label">{{ $t('org.businessType') }}</span>
-        <select v-model="businessType" required :aria-label="$t('org.businessType')" class="input">
-          <option value="" disabled>—</option>
-          <option v-for="t in advertiserTypes" :key="t" :value="t">{{ prettify(t) }}</option>
-        </select>
+        <SelectMenu v-model="businessType" :options="typeOptions" :placeholder="$t('org.businessType')" :aria-label="$t('org.businessType')" />
       </label>
 
       <div class="grid grid-cols-2 gap-3">
         <label class="block">
           <span class="label">{{ $t('org.state') }}</span>
-          <select v-model="stateName" required :aria-label="$t('org.state')" class="input">
-            <option value="" disabled>—</option>
-            <option v-for="s in states" :key="s.code" :value="s.name">{{ s.name }}</option>
-          </select>
+          <SelectMenu v-model="stateName" :options="stateOptions" :placeholder="$t('org.state')" :aria-label="$t('org.state')" />
         </label>
         <label class="block">
           <span class="label">{{ $t('org.lga') }}</span>
-          <select v-model="lga" required :disabled="!stateName" :aria-label="$t('org.lga')" class="select disabled:bg-neutral-100">
-            <option value="" disabled>—</option>
-            <option v-for="l in lgasForState" :key="l" :value="l">{{ l }}</option>
-          </select>
+          <SelectMenu v-model="lga" :options="lgasForState" :placeholder="$t('org.lga')" :aria-label="$t('org.lga')" :disabled="!stateName" />
         </label>
       </div>
 
