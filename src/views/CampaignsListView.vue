@@ -303,7 +303,7 @@ function startWizard() {
               <span
                 v-if="fmt(c)"
                 class="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white shadow-sm backdrop-blur-sm"
-                :title="fmt(c) === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage')"
+                :title="fmt(c) === 'carousel' ? 'Carousel' : (fmt(c) === 'video' ? $t('campaigns.formatVideo') : $t('campaigns.formatImage'))"
               >
                 <PhStack v-if="fmt(c) === 'carousel'" :size="12" weight="fill" />
                 <PhVideoCamera v-else-if="fmt(c) === 'video'" :size="12" weight="fill" />
@@ -381,9 +381,16 @@ function startWizard() {
             </td>
             <td class="px-5 py-3">
               <div class="flex items-center gap-1.5">
-                <!-- Format marker: video vs image at a glance. -->
+                <!-- Format marker: video vs image vs carousel at a glance. -->
+                <PhStack
+                  v-if="fmt(c) === 'carousel'"
+                  :size="14"
+                  weight="fill"
+                  class="shrink-0 text-neutral-400"
+                  aria-label="Carousel"
+                />
                 <PhVideoCamera
-                  v-if="fmt(c) === 'video'"
+                  v-else-if="fmt(c) === 'video'"
                   :size="14"
                   weight="fill"
                   class="shrink-0 text-neutral-400"

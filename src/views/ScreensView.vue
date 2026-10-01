@@ -11,6 +11,7 @@ import {
   PhArrowRight,
 } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import ScreensMap from '@/components/screens/ScreensMap.vue'
 import ScreenDetailDrawer from '@/components/screens/ScreenDetailDrawer.vue'
 import { getScreensMap, listScreens } from '@/api/screens'
@@ -181,6 +182,16 @@ function saveSet() {
           </tr>
         </thead>
         <tbody>
+          <tr v-if="!isLoading && !filteredList.length">
+            <td colspan="5" class="px-4 py-14">
+              <EmptyState :title="$t('screens.noResults')" :message="$t('screens.noResultsHint')">
+                <template #icon><PhMapTrifold :size="24" /></template>
+                <template #actions>
+                  <Button variant="outline" size="sm" @click="clearFilters">{{ $t('screens.clearFilters') }}</Button>
+                </template>
+              </EmptyState>
+            </td>
+          </tr>
           <tr v-for="s in filteredList" :key="s.id" class="border-t border-neutral-100 hover:bg-neutral-50">
             <td class="px-4 py-2">
               <button class="font-medium text-neutral-900 hover:text-clay-600" @click="drawerId = s.id">{{ s.name }}</button>

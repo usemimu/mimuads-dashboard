@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { PhDownloadSimple } from '@phosphor-icons/vue'
+import { PhDownloadSimple, PhCurrencyNgn, PhEye, PhMegaphone } from '@phosphor-icons/vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -83,9 +83,9 @@ const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
 
     <!-- Metric strip -->
     <div class="mb-6 grid grid-cols-3 gap-4">
-      <MetricTile :label="$t('reports.spend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" />
-      <MetricTile :label="$t('reports.verifiedViews')" :value="verifiedViews.toLocaleString('en-NG')" />
-      <MetricTile :label="$t('reports.campaigns')" :value="campaignList.length" />
+      <MetricTile :label="$t('reports.spend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
+      <MetricTile :label="$t('reports.verifiedViews')" :value="verifiedViews.toLocaleString('en-NG')" :icon="PhEye" />
+      <MetricTile :label="$t('reports.campaigns')" :value="campaignList.length" :icon="PhMegaphone" />
     </div>
 
     <!-- Trend -->

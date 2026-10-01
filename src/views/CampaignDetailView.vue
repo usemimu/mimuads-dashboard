@@ -6,8 +6,10 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Badge from '@/components/ui/Badge.vue'
+import Tabs from '@/components/ui/Tabs.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
 import OfferCard from '@/components/OfferCard.vue'
+import { PhPlay, PhEye, PhClock, PhTimer } from '@phosphor-icons/vue'
 import { statusTone, statusLabel } from '@/lib/status'
 import { useSession } from '@/stores/session'
 import {
@@ -38,7 +40,14 @@ const pacing = computed(() => {
   return b > 0 ? Math.min(100, Math.round((sp / b) * 100)) : 0
 })
 
-const tab = ref<'overall' | 'by-screen' | 'by-hour' | 'by-day'>('overall')
+type PerfTab = 'overall' | 'by-screen' | 'by-hour' | 'by-day'
+const tab = ref<PerfTab>('overall')
+const perfTabs = computed<ReadonlyArray<{ value: PerfTab; label: string }>>(() => [
+  { value: 'overall', label: t('campaigns.tabOverall') },
+  { value: 'by-screen', label: t('campaigns.tabByScreen') },
+  { value: 'by-hour', label: t('campaigns.tabByHour') },
+  { value: 'by-day', label: t('campaigns.tabByDay') },
+])
 const { data: perf } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'perf', id.value, tab.value)),
   queryFn: () => (tab.value === 'overall' ? getPerformance(id.value) : getPerformanceBreakdown(id.value, tab.value)),
@@ -179,26 +188,18 @@ async function onClone() {
 
     <!-- Performance tabs -->
     <Card padding="none" class="mb-5 overflow-hidden">
-      <div class="flex gap-1 border-b border-neutral-100 p-2">
-        <button
-          v-for="t in (['overall','by-screen','by-hour','by-day'] as const)"
-          :key="t"
-          class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
-          :class="tab === t ? 'bg-clay-50 text-clay-700' : 'text-neutral-500 hover:bg-neutral-100'"
-          @click="tab = t"
-        >
-          {{ $t('campaigns.tab' + t.replace(/(^|-)(\w)/g, (_, __, ch) => ch.toUpperCase())) }}
-        </button>
+      <div class="px-5 pt-1">
+        <Tabs v-model="tab" :tabs="perfTabs" />
       </div>
       <div class="p-5">
         <!-- Overall: metric tiles + pacing + timeline -->
         <template v-if="tab === 'overall'">
           <div v-if="overall" class="space-y-5">
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <MetricTile :label="$t('campaigns.perf.plays')" :value="(overall.metrics?.totalPlays ?? 0).toLocaleString('en-NG')" />
-              <MetricTile :label="$t('campaigns.perf.impressions')" :value="(overall.metrics?.totalImpressions ?? 0).toLocaleString('en-NG')" />
-              <MetricTile :label="$t('campaigns.perf.attention')" :value="formatDuration(overall.metrics?.totalAttentionSeconds ?? 0)" />
-              <MetricTile :label="$t('campaigns.perf.avgAttention')" :value="formatDuration(Math.round(overall.metrics?.averageAttentionSeconds ?? 0))" />
+              <MetricTile :label="$t('campaigns.perf.plays')" :value="(overall.metrics?.totalPlays ?? 0).toLocaleString('en-NG')" :icon="PhPlay" />
+              <MetricTile :label="$t('campaigns.perf.impressions')" :value="(overall.metrics?.totalImpressions ?? 0).toLocaleString('en-NG')" :icon="PhEye" />
+              <MetricTile :label="$t('campaigns.perf.attention')" :value="formatDuration(overall.metrics?.totalAttentionSeconds ?? 0)" :icon="PhClock" />
+              <MetricTile :label="$t('campaigns.perf.avgAttention')" :value="formatDuration(Math.round(overall.metrics?.averageAttentionSeconds ?? 0))" :icon="PhTimer" />
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
