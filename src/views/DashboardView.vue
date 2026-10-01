@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import { PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhWarningCircle } from '@phosphor-icons/vue'
+import { PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhWarningCircle, PhEye, PhCurrencyNgn, PhMapPin, PhChartLineUp, PhWallet } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
@@ -84,6 +84,22 @@ const screensLive = computed(() =>
 )
 const cpmKobo = computed(() => (impressions.value > 0 ? Math.round((spendKobo.value / impressions.value) * 1000) : 0))
 
+// ── Period-over-period deltas (vs the preceding equal-length window) ──────
+// Null when there's no prior baseline, so the stat card shows no (misleading) arrow.
+const prevTotals = computed(() => (summary.value as { previousTotals?: unknown } | undefined)?.previousTotals ?? null)
+function pctDelta(cur: number, prev: number): number | undefined {
+  if (!prev || prev <= 0) return undefined
+  return Math.round(((cur - prev) / prev) * 100)
+}
+const prevImpressions = computed(() => pluck(prevTotals.value, ['verifiedImpressions', 'plays']))
+const prevSpendKobo = computed(() => pluck(prevTotals.value, ['attributedSpendKobo']))
+const prevCpmKobo = computed(() =>
+  prevImpressions.value > 0 ? Math.round((prevSpendKobo.value / prevImpressions.value) * 1000) : 0,
+)
+const impressionsDelta = computed(() => pctDelta(impressions.value, prevImpressions.value))
+const spendDelta = computed(() => pctDelta(pluck(totals.value, ['attributedSpendKobo']), prevSpendKobo.value))
+const cpmDelta = computed(() => pctDelta(cpmKobo.value, prevCpmKobo.value))
+
 // ── Chart: verified impressions by day (real time series from the plays data) ──
 function shortDate(d: string): string {
   const t = Date.parse(d)
@@ -124,9 +140,42 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
       {{ $t('dashboard.lowBalance') }}
     </RouterLink>
 
-    <!-- Controls -->
-    <div class="mb-5 flex flex-wrap items-center gap-2">
-      <div class="relative min-w-[12rem] flex-1">
+    <!-- ── Performance region (X-Ads style): a single framed block that owns the
+         period control, the headline metrics, and the trend chart. ── -->
+    <section class="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+        <div class="flex items-center gap-2">
+          <PhChartLineUp :size="18" class="text-clay-500" />
+          <h2 class="text-sm font-semibold text-neutral-900">{{ $t('dashboard.performance') }}</h2>
+        </div>
+        <select v-model.number="period" :aria-label="$t('reports.period')" class="select w-auto py-1.5 text-sm">
+          <option :value="7">{{ $t('reports.days7') }}</option>
+          <option :value="30">{{ $t('reports.days30') }}</option>
+          <option :value="90">{{ $t('reports.days90') }}</option>
+        </select>
+      </div>
+
+      <!-- Headline metrics: a flush row of divided cells so the baseline aligns. -->
+      <div class="grid grid-cols-2 divide-x divide-y divide-line sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
+        <MetricTile bare :label="$t('dashboard.mImpressions')" :value="impressions.toLocaleString('en-NG')" :icon="PhEye" :delta="impressionsDelta" />
+        <MetricTile bare :label="$t('dashboard.mSpend')" :value="formatKobo(String(spendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" :delta="spendDelta" />
+        <MetricTile bare :label="$t('dashboard.mCpm')" :value="cpmKobo ? formatKobo(String(cpmKobo)) : '—'" :icon="PhChartLineUp" :delta="cpmDelta" />
+        <MetricTile bare :label="$t('dashboard.mActive')" :value="activeCount" :icon="PhMegaphone" />
+        <MetricTile bare :label="$t('dashboard.mScreens')" :value="screensLive" :icon="PhMapPin" />
+        <MetricTile bare :label="$t('dashboard.mBalance')" :value="wallet ? formatKobo(wallet.balanceKobo, { showDecimals: false }) : '—'" :icon="PhWallet" />
+      </div>
+
+      <!-- Trend chart, sharing the same frame. -->
+      <div class="border-t border-line p-5">
+        <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ $t('dashboard.chartTitle') }}</p>
+        <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" />
+      </div>
+    </section>
+
+    <!-- ── Campaigns + insights ── -->
+    <div class="mt-6 flex flex-wrap items-center gap-2">
+      <h2 class="mr-auto text-sm font-semibold text-neutral-900">{{ $t('nav.campaigns') }}</h2>
+      <div class="relative min-w-[12rem]">
         <PhMagnifyingGlass :size="15" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
         <input v-model="search" :placeholder="$t('dashboard.searchPlaceholder')" class="input py-1.5 pl-8 text-sm" />
       </div>
@@ -141,30 +190,9 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
           {{ $t('dashboard.scope' + opt.charAt(0).toUpperCase() + opt.slice(1)) }}
         </button>
       </div>
-      <select v-model.number="period" :aria-label="$t('reports.period')" class="select w-auto py-1.5 text-sm">
-        <option :value="7">{{ $t('reports.days7') }}</option>
-        <option :value="30">{{ $t('reports.days30') }}</option>
-        <option :value="90">{{ $t('reports.days90') }}</option>
-      </select>
     </div>
 
-    <!-- Metrics row -->
-    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-      <MetricTile :label="$t('dashboard.mImpressions')" :value="impressions.toLocaleString('en-NG')" />
-      <MetricTile :label="$t('dashboard.mSpend')" :value="formatKobo(String(spendKobo), { showDecimals: false })" />
-      <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" />
-      <MetricTile :label="$t('dashboard.mScreens')" :value="screensLive" />
-      <MetricTile :label="$t('dashboard.mCpm')" :value="cpmKobo ? formatKobo(String(cpmKobo)) : '—'" />
-    </div>
-
-    <!-- Chart -->
-    <Card class="mt-5">
-      <p class="mb-4 text-sm font-semibold text-neutral-900">{{ $t('dashboard.chartTitle') }}</p>
-      <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" />
-    </Card>
-
-    <!-- Table + insights -->
-    <div class="mt-5 grid gap-5 lg:grid-cols-5">
+    <div class="mt-3 grid gap-5 lg:grid-cols-5">
       <Card class="lg:col-span-3" padding="sm">
         <CampaignsTable :campaigns="filtered" :empty-text="$t('dashboard.noMatch')" />
       </Card>

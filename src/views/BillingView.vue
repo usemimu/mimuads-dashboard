@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhDownloadSimple } from '@phosphor-icons/vue'
+import { PhDownloadSimple, PhArrowDownLeft, PhArrowUpRight, PhPlus, PhReceipt, PhWarningCircle, PhFileText } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Tabs from '@/components/ui/Tabs.vue'
 import { useSession } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import { ctxKey } from '@/lib/ctx-key'
@@ -23,6 +26,7 @@ const route = useRoute()
 const router = useRouter()
 const qc = useQueryClient()
 const toast = useToastStore()
+const { t } = useI18n()
 const tab = ref<'transactions' | 'topup' | 'transfers' | 'invoices'>('transactions')
 
 const { data: wallet } = useQuery({
@@ -102,6 +106,32 @@ async function requestInvoice() {
 
 const canBill = computed(() => session.canManageBilling)
 
+// Low balance threshold mirrors the dashboard nudge (₦5,000.00).
+const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKobo) < 500_000_00 : false))
+
+const billingTabs = computed(() =>
+  (['transactions', 'topup', 'invoices', 'transfers'] as const)
+    .filter((name) => name !== 'transfers' || session.context.tier === 'agency')
+    .map((name) => ({ value: name, label: tabLabel(name) })),
+)
+function tabLabel(name: string): string {
+  return t('billing.tab' + name.charAt(0).toUpperCase() + name.slice(1))
+}
+
+// Credits (top-ups, inbound transfers) vs debits (spend, outbound). Fall back
+// to the amount's sign when the type vocabulary doesn't make it obvious.
+function isCredit(tx: { type: string; amountKobo: string }): boolean {
+  const n = Number(tx.amountKobo)
+  if (Number.isFinite(n) && n !== 0) return n > 0
+  return /topup|credit|refund|transfer_in|deposit|fund/i.test(tx.type)
+}
+function fmtDate(d?: string): string {
+  if (!d) return ''
+  const t = Date.parse(d)
+  if (Number.isNaN(t)) return ''
+  return new Date(t).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 // ── Transfers (finance/admin) ──
 const { data: workspaces } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'ws-list')),
@@ -140,41 +170,67 @@ async function doTransfer() {
   <div>
     <PageHeader :title="$t('billing.title')" :subtitle="$t('billing.subtitle')" />
 
-    <!-- Wallet card -->
-    <Card class="mb-6">
-      <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('billing.balance') }}</p>
-      <p class="mt-1.5 font-mono text-4xl font-semibold text-neutral-900" data-testid="wallet-balance">
-        {{ wallet ? formatKobo(wallet.balanceKobo) : '—' }}
-      </p>
+    <!-- Wallet summary card -->
+    <Card class="mb-6 overflow-hidden" padding="none">
+      <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+          <p class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+            {{ $t('billing.balance') }}
+          </p>
+          <p class="mt-1.5 font-mono text-[clamp(2rem,8cqi,2.75rem)] font-semibold leading-none text-neutral-900" data-testid="wallet-balance">
+            {{ wallet ? formatKobo(wallet.balanceKobo) : '—' }}
+          </p>
+          <p
+            v-if="lowBalance"
+            class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-gold-50 px-2.5 py-1 text-xs font-medium text-gold-800"
+          >
+            <PhWarningCircle :size="14" weight="fill" class="text-gold-500" /> {{ $t('dashboard.lowBalance') }}
+          </p>
+        </div>
+        <div v-if="canBill" class="flex shrink-0 gap-2">
+          <Button @click="tab = 'topup'"><PhPlus :size="16" weight="bold" /> {{ $t('billing.topupTitle') }}</Button>
+          <a :href="transactionsCsvUrl()" target="_blank" rel="noopener">
+            <Button variant="outline"><PhDownloadSimple :size="16" /> {{ $t('billing.exportCsv') }}</Button>
+          </a>
+        </div>
+      </div>
     </Card>
 
     <!-- Tabs -->
-    <div class="mb-5 flex gap-1 border-b border-neutral-200">
-      <button v-for="t in (['transactions','topup','invoices','transfers'] as const)" :key="t"
-        class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors"
-        :class="tab === t ? 'border-clay-500 text-clay-700' : 'border-transparent text-neutral-500 hover:text-neutral-800'"
-        @click="tab = t">{{ $t('billing.tab' + t.charAt(0).toUpperCase() + t.slice(1)) }}</button>
+    <div class="mb-5">
+      <Tabs v-model="tab" :tabs="billingTabs" />
     </div>
 
     <!-- Transactions -->
     <div v-if="tab === 'transactions'">
-      <div class="mb-3 flex justify-end">
-        <a :href="transactionsCsvUrl()" target="_blank" rel="noopener">
-          <Button variant="outline" size="sm"><PhDownloadSimple :size="16" /> {{ $t('billing.exportCsv') }}</Button>
-        </a>
-      </div>
-      <div class="card overflow-hidden">
-        <table class="w-full text-sm">
-          <tbody>
-            <tr v-if="!txns?.transactions.length"><td class="px-4 py-6 text-center text-neutral-400">{{ $t('billing.noTransactions') }}</td></tr>
-            <tr v-for="tx in txns?.transactions ?? []" :key="tx.id" class="border-t border-neutral-100">
-              <td class="px-4 py-2 capitalize text-neutral-700">{{ tx.type.replace(/_/g, ' ') }}</td>
-              <td class="px-4 py-2 text-neutral-500">{{ tx.description ?? '' }}</td>
-              <td class="px-4 py-2 text-right font-mono">{{ formatKobo(tx.amountKobo) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <Card v-if="txns?.transactions.length" padding="none" class="overflow-hidden">
+        <ul role="list" class="divide-y divide-line">
+          <li v-for="tx in txns.transactions" :key="tx.id" class="flex items-center gap-4 px-4 py-3.5">
+            <span
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+              :class="isCredit(tx) ? 'bg-moss-50 text-moss-600' : 'bg-neutral-100 text-neutral-500'"
+            >
+              <PhArrowDownLeft v-if="isCredit(tx)" :size="16" weight="bold" />
+              <PhArrowUpRight v-else :size="16" weight="bold" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium capitalize text-neutral-900">{{ tx.type.replace(/_/g, ' ') }}</p>
+              <p class="truncate text-xs text-neutral-500">{{ tx.description || fmtDate(tx.createdAt) }}</p>
+            </div>
+            <div class="shrink-0 text-right">
+              <p class="font-mono text-sm font-semibold" :class="isCredit(tx) ? 'text-moss-600' : 'text-neutral-900'">
+                {{ isCredit(tx) ? '+' : '−' }}{{ formatKobo(String(Math.abs(Number(tx.amountKobo) || 0))) }}
+              </p>
+              <p class="text-[11px] text-neutral-400">{{ fmtDate(tx.createdAt) }}</p>
+            </div>
+          </li>
+        </ul>
+      </Card>
+      <Card v-else padding="none">
+        <EmptyState :title="$t('billing.noTransactions')">
+          <template #icon><PhReceipt :size="24" /></template>
+        </EmptyState>
+      </Card>
     </div>
 
     <!-- Top up -->
@@ -201,22 +257,26 @@ async function doTransfer() {
           <input v-model="invPurpose" class="input" /></label>
         <Button :disabled="invBusy" @click="requestInvoice">{{ $t('billing.requestInvoice') }}</Button>
       </div>
-      <div class="card overflow-hidden">
+      <Card v-if="invoices?.invoices.length" padding="none" class="overflow-hidden">
         <table class="w-full text-sm">
-          <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-400">
-            <tr><th class="px-4 py-2">{{ $t('billing.invoiceNumber') }}</th><th class="px-4 py-2">{{ $t('billing.grandTotal') }}</th><th class="px-4 py-2">{{ $t('billing.status') }}</th><th class="px-4 py-2"></th></tr>
+          <thead class="text-left text-[11px] uppercase tracking-wider text-neutral-400">
+            <tr class="border-b border-line"><th class="px-5 py-3 font-semibold">{{ $t('billing.invoiceNumber') }}</th><th class="px-5 py-3 font-semibold">{{ $t('billing.grandTotal') }}</th><th class="px-5 py-3 font-semibold">{{ $t('billing.status') }}</th><th class="px-5 py-3"></th></tr>
           </thead>
           <tbody>
-            <tr v-if="!invoices?.invoices.length"><td colspan="4" class="px-4 py-6 text-center text-neutral-400">{{ $t('billing.noInvoices') }}</td></tr>
-            <tr v-for="inv in invoices?.invoices ?? []" :key="inv.id" class="border-t border-neutral-100" data-testid="invoice-row">
-              <td class="px-4 py-2 font-mono">{{ inv.invoiceNumber }}</td>
-              <td class="px-4 py-2 font-mono">{{ formatKobo(inv.totalKobo) }}</td>
-              <td class="px-4 py-2"><Badge tone="pending">{{ inv.status.replace(/_/g, ' ') }}</Badge></td>
-              <td class="px-4 py-2 text-right"><a :href="invoicePdfUrl(inv.id)" target="_blank" rel="noopener" class="text-sm text-clay-600 hover:underline">{{ $t('billing.downloadPdf') }}</a></td>
+            <tr v-for="inv in invoices.invoices" :key="inv.id" class="border-t border-line hover:bg-neutral-50/70" data-testid="invoice-row">
+              <td class="px-5 py-3 font-mono text-neutral-900">{{ inv.invoiceNumber }}</td>
+              <td class="px-5 py-3 font-mono text-neutral-700">{{ formatKobo(inv.totalKobo) }}</td>
+              <td class="px-5 py-3"><Badge tone="pending">{{ inv.status.replace(/_/g, ' ') }}</Badge></td>
+              <td class="px-5 py-3 text-right"><a :href="invoicePdfUrl(inv.id)" target="_blank" rel="noopener" class="text-sm font-medium text-clay-600 hover:underline">{{ $t('billing.downloadPdf') }}</a></td>
             </tr>
           </tbody>
         </table>
-      </div>
+      </Card>
+      <Card v-else padding="none">
+        <EmptyState :title="$t('billing.noInvoices')">
+          <template #icon><PhFileText :size="24" /></template>
+        </EmptyState>
+      </Card>
     </div>
 
     <!-- Transfers -->

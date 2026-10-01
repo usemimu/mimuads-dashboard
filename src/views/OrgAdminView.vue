@@ -2,8 +2,16 @@
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useI18n } from 'vue-i18n'
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
+import { PhDotsThreeVertical, PhUsersThree, PhKey, PhStack, PhProhibit, PhUserSwitch } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+import Avatar from '@/components/ui/Avatar.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import Tabs from '@/components/ui/Tabs.vue'
 import { useSession } from '@/stores/session'
 import { MembershipRoleSchema } from '@/api/contracts/common'
 import {
@@ -17,6 +25,7 @@ import { useToastStore } from '@/stores/toast'
 const session = useSession()
 const qc = useQueryClient()
 const toast = useToastStore()
+const { t } = useI18n()
 const tab = ref<'members' | 'workspaces' | 'verification' | 'apikeys'>('members')
 const roles = MembershipRoleSchema.options
 const isAgency = computed(() => session.context.tier === 'agency')
@@ -25,6 +34,29 @@ const isOwner = computed(() => session.role === 'owner')
 const { data: members } = useQuery({ queryKey: ['members'], queryFn: listMembers })
 const { data: workspaces } = useQuery({ queryKey: ['ws-admin'], queryFn: listWorkspaces })
 const { data: keys } = useQuery({ queryKey: ['apikeys'], queryFn: listApiKeys })
+
+const memberList = computed(() => members.value?.members ?? [])
+const orgTabs = computed(
+  () =>
+    (['members', 'workspaces', 'verification', 'apikeys'] as const)
+      .filter((tab) => tab !== 'workspaces' || isAgency.value)
+      .map((tab) => ({
+        value: tab,
+        label: i18nTab(tab),
+        count: tab === 'members' ? memberList.value.length || undefined : undefined,
+      })),
+)
+function i18nTab(tab: string): string {
+  return t('orgAdmin.tab' + tab.charAt(0).toUpperCase() + tab.slice(1))
+}
+function roleTone(role: string): 'accent' | 'neutral' {
+  return role === 'owner' ? 'accent' : 'neutral'
+}
+function statusTone(status: string): 'success' | 'danger' | 'neutral' {
+  if (status === 'active') return 'success'
+  if (status === 'suspended') return 'danger'
+  return 'neutral'
+}
 
 async function run(fn: () => Promise<unknown>, key: string) {
   try { await fn(); qc.invalidateQueries({ queryKey: [key] }) }
@@ -61,68 +93,124 @@ async function makeKey() {
 <template>
   <div>
     <PageHeader :title="$t('orgAdmin.title')" :subtitle="$t('orgAdmin.subtitle')" />
-    <div class="mb-5 flex gap-1 border-b border-neutral-200">
-      <button v-for="t in (['members','workspaces','verification','apikeys'] as const)" :key="t"
-        class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors"
-        :class="tab === t ? 'border-clay-500 text-clay-700' : 'border-transparent text-neutral-500 hover:text-neutral-800'"
-        @click="tab = t">{{ $t('orgAdmin.tab' + t.charAt(0).toUpperCase() + t.slice(1)) }}</button>
+    <div class="mb-5">
+      <Tabs v-model="tab" :tabs="orgTabs" />
     </div>
 
     <!-- Members -->
     <div v-if="tab === 'members'" class="space-y-4">
-      <div v-if="session.canMutate" class="flex gap-2">
-        <input v-model="inviteEmail" type="email" :placeholder="$t('orgAdmin.email')" :aria-label="$t('orgAdmin.email')" class="input text-sm" />
-        <select v-model="inviteRole" :aria-label="$t('orgAdmin.role')" class="input text-sm">
-          <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
+      <div v-if="session.canMutate" class="flex flex-wrap gap-2">
+        <input v-model="inviteEmail" type="email" :placeholder="$t('orgAdmin.email')" :aria-label="$t('orgAdmin.email')" class="input max-w-xs text-sm" />
+        <select v-model="inviteRole" :aria-label="$t('orgAdmin.role')" class="select w-auto text-sm">
+          <option v-for="r in roles" :key="r" :value="r">{{ r.replace(/_/g, ' ') }}</option>
         </select>
         <Button size="sm" @click="sendInvite">{{ $t('orgAdmin.invite') }}</Button>
       </div>
-      <div class="card overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-400">
-            <tr><th class="px-4 py-2">{{ $t('orgAdmin.member') }}</th><th class="px-4 py-2">{{ $t('orgAdmin.role') }}</th><th class="px-4 py-2">{{ $t('orgAdmin.status') }}</th><th class="px-4 py-2"></th></tr>
-          </thead>
-          <tbody>
-            <tr v-for="m in members?.members ?? []" :key="m.userId" class="border-t border-neutral-100" data-testid="member-row">
-              <td class="px-4 py-2"><p class="text-neutral-900">{{ m.name ?? '—' }}</p><p class="text-xs text-neutral-500">{{ m.email }}</p></td>
-              <td class="px-4 py-2">
-                <select v-if="session.canMutate && m.role !== 'owner'" :value="m.role" class="select w-auto text-xs" @change="run(() => changeRole(m.userId, ($event.target as HTMLSelectElement).value as never), 'members')">
-                  <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
-                </select>
-                <span v-else class="capitalize">{{ m.role }}</span>
-              </td>
-              <td class="px-4 py-2 capitalize">{{ m.status }}</td>
-              <td class="px-4 py-2 text-right">
-                <button v-if="isOwner && m.role !== 'owner' && m.status !== 'suspended'" class="text-xs text-clay-600 hover:underline" @click="run(() => suspendMember(m.userId), 'members')">{{ $t('orgAdmin.suspend') }}</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+
+      <Card v-if="memberList.length" padding="none" class="overflow-hidden">
+        <ul role="list" class="divide-y divide-line">
+          <li
+            v-for="m in memberList"
+            :key="m.userId"
+            class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-neutral-50/70"
+            data-testid="member-row"
+          >
+            <Avatar :name="m.name" :email="m.email" size="md" />
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold text-neutral-900">{{ m.name ?? m.email }}</p>
+              <p class="truncate text-xs text-neutral-500">{{ m.email }}</p>
+            </div>
+            <Badge :tone="roleTone(m.role)" size="sm" class="hidden sm:inline-flex">{{ m.role.replace(/_/g, ' ') }}</Badge>
+            <Badge :tone="statusTone(m.status)" size="sm" dot class="hidden sm:inline-flex">{{ m.status }}</Badge>
+
+            <!-- Row actions -->
+            <Menu v-if="session.canMutate && m.role !== 'owner'" as="div" class="relative shrink-0">
+              <MenuButton
+                class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+                :aria-label="$t('orgAdmin.role')"
+              >
+                <PhDotsThreeVertical :size="18" weight="bold" />
+              </MenuButton>
+              <transition
+                enter-active-class="transition ease-out duration-100"
+                enter-from-class="transform opacity-0 scale-95"
+                enter-to-class="transform opacity-100 scale-100"
+                leave-active-class="transition ease-in duration-75"
+                leave-from-class="transform opacity-100 scale-100"
+                leave-to-class="transform opacity-0 scale-95"
+              >
+                <MenuItems
+                  class="absolute right-0 z-20 mt-1.5 w-52 origin-top-right overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-pop focus:outline-none"
+                >
+                  <p class="px-3 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-neutral-400">
+                    {{ $t('orgAdmin.role') }}
+                  </p>
+                  <MenuItem v-for="r in roles.filter((x) => x !== m.role && x !== 'owner')" :key="r" v-slot="{ active }">
+                    <button
+                      :class="[active ? 'bg-neutral-100' : '', 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm capitalize text-neutral-700']"
+                      @click="run(() => changeRole(m.userId, r as never), 'members')"
+                    >
+                      <PhUserSwitch :size="16" class="text-neutral-400" /> {{ r.replace(/_/g, ' ') }}
+                    </button>
+                  </MenuItem>
+                  <template v-if="isOwner && m.status !== 'suspended'">
+                    <div class="my-1 border-t border-line" />
+                    <MenuItem v-slot="{ active }">
+                      <button
+                        :class="[active ? 'bg-clay-50' : '', 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-clay-700']"
+                        @click="run(() => suspendMember(m.userId), 'members')"
+                      >
+                        <PhProhibit :size="16" /> {{ $t('orgAdmin.suspend') }}
+                      </button>
+                    </MenuItem>
+                  </template>
+                </MenuItems>
+              </transition>
+            </Menu>
+          </li>
+        </ul>
+      </Card>
+      <Card v-else padding="none">
+        <EmptyState :title="$t('orgAdmin.member')" :message="$t('orgAdmin.subtitle')">
+          <template #icon><PhUsersThree :size="24" /></template>
+        </EmptyState>
+      </Card>
     </div>
 
     <!-- Workspaces -->
     <div v-else-if="tab === 'workspaces'" class="space-y-4">
       <p v-if="!isAgency" class="text-sm text-neutral-400">{{ $t('orgAdmin.agencyOnly') }}</p>
       <template v-else>
-        <div v-if="session.canMutate" class="flex gap-2">
-          <input v-model="wsName" :placeholder="$t('orgAdmin.workspaceName')" :aria-label="$t('orgAdmin.workspaceName')" class="input text-sm" />
+        <div v-if="session.canMutate" class="flex flex-wrap gap-2">
+          <input v-model="wsName" :placeholder="$t('orgAdmin.workspaceName')" :aria-label="$t('orgAdmin.workspaceName')" class="input max-w-xs text-sm" />
           <Button size="sm" @click="makeWorkspace">{{ $t('orgAdmin.create') }}</Button>
         </div>
-        <div class="card overflow-hidden">
-          <table class="w-full text-sm">
-            <tbody>
-              <tr v-if="!workspaces?.workspaces.length"><td class="px-4 py-6 text-center text-neutral-400">{{ $t('orgAdmin.noWorkspaces') }}</td></tr>
-              <tr v-for="w in workspaces?.workspaces ?? []" :key="w.id" class="border-t border-neutral-100" data-testid="workspace-row">
-                <td class="px-4 py-2 text-neutral-900">{{ w.name }}</td>
-                <td class="px-4 py-2 capitalize text-neutral-500">{{ w.status }}</td>
-                <td class="px-4 py-2 text-right">
-                  <button v-if="session.canMutate && w.status !== 'archived'" class="text-xs text-clay-600 hover:underline" @click="run(() => updateWorkspace(w.id, { status: 'archived' }), 'ws-admin')">{{ $t('orgAdmin.archive') }}</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <Card v-if="workspaces?.workspaces.length" padding="none" class="overflow-hidden">
+          <ul role="list" class="divide-y divide-line">
+            <li
+              v-for="w in workspaces.workspaces"
+              :key="w.id"
+              class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-neutral-50/70"
+              data-testid="workspace-row"
+            >
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-clay-500/10 text-clay-600"><PhStack :size="18" /></span>
+              <p class="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-900">{{ w.name }}</p>
+              <Badge :tone="w.status === 'archived' ? 'neutral' : 'success'" size="sm" dot>{{ w.status }}</Badge>
+              <button
+                v-if="session.canMutate && w.status !== 'archived'"
+                class="shrink-0 text-xs font-medium text-clay-600 hover:underline"
+                @click="run(() => updateWorkspace(w.id, { status: 'archived' }), 'ws-admin')"
+              >
+                {{ $t('orgAdmin.archive') }}
+              </button>
+            </li>
+          </ul>
+        </Card>
+        <Card v-else padding="none">
+          <EmptyState :title="$t('orgAdmin.noWorkspaces')">
+            <template #icon><PhStack :size="24" /></template>
+          </EmptyState>
+        </Card>
       </template>
     </div>
 
@@ -136,21 +224,28 @@ async function makeKey() {
     <!-- API keys -->
     <div v-else class="space-y-4">
       <p v-if="newKey" class="rounded-lg bg-gold-50 px-4 py-3 font-mono text-sm text-gold-800">{{ newKey }} <span class="block font-body text-xs">{{ $t('orgAdmin.keyOnce') }}</span></p>
-      <div v-if="session.canMutate" class="flex gap-2">
-        <input v-model="keyName" :placeholder="$t('orgAdmin.apiKeyName')" :aria-label="$t('orgAdmin.apiKeyName')" class="input text-sm" />
+      <div v-if="session.canMutate" class="flex flex-wrap gap-2">
+        <input v-model="keyName" :placeholder="$t('orgAdmin.apiKeyName')" :aria-label="$t('orgAdmin.apiKeyName')" class="input max-w-xs text-sm" />
         <Button size="sm" @click="makeKey">{{ $t('orgAdmin.createKey') }}</Button>
       </div>
-      <div class="card overflow-hidden">
-        <table class="w-full text-sm">
-          <tbody>
-            <tr v-if="!(keys as { keys?: unknown[] })?.keys?.length"><td class="px-4 py-6 text-center text-neutral-400">{{ $t('orgAdmin.noKeys') }}</td></tr>
-            <tr v-for="k in ((keys as { keys?: Array<{ id: string; name: string }> })?.keys ?? [])" :key="k.id" class="border-t border-neutral-100">
-              <td class="px-4 py-2 text-neutral-900">{{ k.name }}</td>
-              <td class="px-4 py-2 text-right"><button class="text-xs text-clay-600 hover:underline" @click="run(() => revokeApiKey(k.id), 'apikeys')">{{ $t('orgAdmin.revoke') }}</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <Card v-if="((keys as { keys?: Array<{ id: string; name: string }> })?.keys?.length)" padding="none" class="overflow-hidden">
+        <ul role="list" class="divide-y divide-line">
+          <li
+            v-for="k in ((keys as { keys?: Array<{ id: string; name: string }> })?.keys ?? [])"
+            :key="k.id"
+            class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-neutral-50/70"
+          >
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-clay-500/10 text-clay-600"><PhKey :size="18" /></span>
+            <p class="min-w-0 flex-1 truncate font-mono text-sm text-neutral-900">{{ k.name }}</p>
+            <button class="shrink-0 text-xs font-medium text-clay-600 hover:underline" @click="run(() => revokeApiKey(k.id), 'apikeys')">{{ $t('orgAdmin.revoke') }}</button>
+          </li>
+        </ul>
+      </Card>
+      <Card v-else padding="none">
+        <EmptyState :title="$t('orgAdmin.noKeys')">
+          <template #icon><PhKey :size="24" /></template>
+        </EmptyState>
+      </Card>
     </div>
   </div>
 </template>
