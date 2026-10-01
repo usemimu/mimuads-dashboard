@@ -109,9 +109,23 @@ function shortDate(d: string): string {
   if (Number.isNaN(t)) return d
   return new Date(t).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
 }
-const recentDays = computed(() => byDay.value.slice(-90))
-const chartPoints = computed(() => recentDays.value.map((d) => d.plays))
-const chartLabels = computed(() => recentDays.value.map((d) => shortDate(d.day)))
+// Continuous daily series ending TODAY — zero-fill days with no plays so the
+// line always runs to the current date (UTC keys to match the backend's
+// to_char(date_trunc('day', …)) grouping).
+const CHART_DAYS = 30
+const dailySeries = computed(() => {
+  const map = new Map(byDay.value.map((d) => [d.day, d.plays]))
+  const out: { day: string; plays: number }[] = []
+  const now = new Date()
+  for (let i = CHART_DAYS - 1; i >= 0; i--) {
+    const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i))
+    const key = dt.toISOString().slice(0, 10)
+    out.push({ day: key, plays: map.get(key) ?? 0 })
+  }
+  return out
+})
+const chartPoints = computed(() => dailySeries.value.map((d) => d.plays))
+const chartLabels = computed(() => dailySeries.value.map((d) => shortDate(d.day)))
 
 const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKobo) < 500_000_00 : false))
 </script>
@@ -170,7 +184,7 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
       <!-- Trend chart, sharing the same frame. -->
       <div class="border-t border-line p-5">
         <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ $t('dashboard.chartTitle') }}</p>
-        <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" />
+        <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" unit="plays" />
       </div>
     </section>
 
