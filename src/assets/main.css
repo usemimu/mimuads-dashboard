@@ -43,6 +43,17 @@
   font-display: swap;
 }
 
+/* Geist Mono (SIL OFL) — self-hosted variable woff2, one file covers the whole
+   weight axis. Used for `font-mono` (money / metrics / IDs) so figures get a
+   true monospace instead of Aeonik's proportional fallback. */
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

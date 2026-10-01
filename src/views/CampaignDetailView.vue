@@ -9,11 +9,12 @@ import Badge from '@/components/ui/Badge.vue'
 import Tabs from '@/components/ui/Tabs.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
 import OfferCard from '@/components/OfferCard.vue'
-import { PhPlay, PhEye, PhClock, PhTimer } from '@phosphor-icons/vue'
+import { PhPlay, PhCurrencyNgn, PhChartLineUp, PhUsersThree } from '@phosphor-icons/vue'
 import { statusTone, statusLabel } from '@/lib/status'
 import { useSession } from '@/stores/session'
 import {
   getCampaign, getPerformance, getPerformanceBreakdown, getDecisionFactors,
+  getCampaignSummaries,
   pauseCampaign, resumeCampaign, topUpCampaign, extendCampaign, cloneCampaign,
 } from '@/api/campaigns'
 import { ctxKey } from '@/lib/ctx-key'
@@ -70,11 +71,24 @@ interface Overall {
 interface BreakdownRow {
   label: string
   plays: number
-  impressions: number
-  attentionSeconds: number
   formattedCost?: string
 }
 const overall = computed<Overall | null>(() => (tab.value === 'overall' ? ((perf.value as Overall) ?? null) : null))
+
+// Plays-first metrics (CV impressions/attention deferred until screens have cameras).
+const overallPlays = computed(() => overall.value?.metrics?.totalPlays ?? 0)
+const cpmPerKPlays = computed(() => {
+  const spent = Number(c.value?.spentKobo ?? 0)
+  return overallPlays.value > 0 ? Math.round((spent / overallPlays.value) * 1000) : 0
+})
+// Modeled reach (sensor-free) for this campaign, from the summaries endpoint.
+const { data: campaignSummaries } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'campaign-summaries')),
+  queryFn: getCampaignSummaries,
+})
+const estReach = computed(
+  () => campaignSummaries.value?.campaigns.find((x) => x.campaignId === id.value)?.estimatedReach ?? 0,
+)
 
 function formatHour(iso: string): string {
   const t = Date.parse(iso)
@@ -86,12 +100,6 @@ function shortDate(d: string): string {
   if (Number.isNaN(t)) return d
   return new Date(t).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' })
 }
-function formatDuration(sec: number): string {
-  if (!sec) return '0s'
-  if (sec < 60) return `${sec}s`
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ${sec % 60}s`
-  return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m`
-}
 
 const rows = computed<BreakdownRow[]>(() => {
   if (!perf.value || tab.value === 'overall') return []
@@ -100,8 +108,6 @@ const rows = computed<BreakdownRow[]>(() => {
   return arr.map((r) => ({
     label: (r.screenName as string) ?? (r.hour ? formatHour(r.hour as string) : (r.date as string)) ?? '—',
     plays: (r.plays as number) ?? 0,
-    impressions: (r.impressions as number) ?? 0,
-    attentionSeconds: (r.attentionSeconds as number) ?? 0,
     formattedCost: r.formattedCost as string | undefined,
   }))
 })
@@ -196,10 +202,10 @@ async function onClone() {
         <template v-if="tab === 'overall'">
           <div v-if="overall" class="space-y-5">
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <MetricTile :label="$t('campaigns.perf.plays')" :value="(overall.metrics?.totalPlays ?? 0).toLocaleString('en-NG')" :icon="PhPlay" />
-              <MetricTile :label="$t('campaigns.perf.impressions')" :value="(overall.metrics?.totalImpressions ?? 0).toLocaleString('en-NG')" :icon="PhEye" />
-              <MetricTile :label="$t('campaigns.perf.attention')" :value="formatDuration(overall.metrics?.totalAttentionSeconds ?? 0)" :icon="PhClock" />
-              <MetricTile :label="$t('campaigns.perf.avgAttention')" :value="formatDuration(Math.round(overall.metrics?.averageAttentionSeconds ?? 0))" :icon="PhTimer" />
+              <MetricTile :label="$t('campaigns.perf.plays')" :value="overallPlays.toLocaleString('en-NG')" :icon="PhPlay" />
+              <MetricTile :label="$t('campaigns.perf.estReach')" :value="estReach ? estReach.toLocaleString('en-NG') : '—'" :sub="$t('campaigns.perf.estReachHint')" :icon="PhUsersThree" />
+              <MetricTile :label="$t('campaigns.perf.spend')" :value="formatKobo(c?.spentKobo ?? '0', { showDecimals: false })" :icon="PhCurrencyNgn" />
+              <MetricTile :label="$t('campaigns.perf.cpmPlays')" :value="cpmPerKPlays ? formatKobo(String(cpmPerKPlays)) : '—'" :icon="PhChartLineUp" />
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
@@ -233,8 +239,6 @@ async function onClone() {
                 <tr>
                   <th class="py-2 pr-3 font-semibold">{{ breakdownColLabel }}</th>
                   <th class="px-3 py-2 text-right font-semibold">{{ $t('campaigns.perf.colPlays') }}</th>
-                  <th class="px-3 py-2 text-right font-semibold">{{ $t('campaigns.perf.colImpressions') }}</th>
-                  <th class="px-3 py-2 text-right font-semibold">{{ $t('campaigns.perf.colAttention') }}</th>
                   <th class="py-2 pl-3 text-right font-semibold">{{ $t('campaigns.perf.colCost') }}</th>
                 </tr>
               </thead>
@@ -242,8 +246,6 @@ async function onClone() {
                 <tr v-for="(r, i) in rows" :key="i" class="border-b border-neutral-100 last:border-0">
                   <td class="py-2 pr-3 text-neutral-900">{{ r.label }}</td>
                   <td class="px-3 py-2 text-right font-mono text-neutral-700">{{ r.plays.toLocaleString('en-NG') }}</td>
-                  <td class="px-3 py-2 text-right font-mono text-neutral-700">{{ r.impressions.toLocaleString('en-NG') }}</td>
-                  <td class="px-3 py-2 text-right font-mono text-neutral-700">{{ formatDuration(r.attentionSeconds) }}</td>
                   <td class="py-2 pl-3 text-right font-mono text-neutral-700">{{ r.formattedCost ?? '—' }}</td>
                 </tr>
               </tbody>

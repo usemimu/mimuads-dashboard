@@ -9,7 +9,7 @@ import MetricTile from '@/components/dashboard/MetricTile.vue'
 import TimeSeriesChart from '@/components/charts/TimeSeriesChart.vue'
 import { useSession } from '@/stores/session'
 import { getOrgSummary, campaignExportUrl } from '@/api/org'
-import { listCampaigns } from '@/api/campaigns'
+import { listCampaigns, getCampaignSummaries } from '@/api/campaigns'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo } from '@/lib/money'
 import { statusTone, statusLabel } from '@/lib/status'
@@ -33,6 +33,20 @@ const { data: summary } = useQuery({
 const { data: campaigns } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'report-campaigns')),
   queryFn: () => listCampaigns({}),
+})
+const { data: campaignSummaries } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'report-campaign-summaries')),
+  queryFn: getCampaignSummaries,
+})
+const playsByCampaign = computed(() => {
+  const m: Record<string, number> = {}
+  for (const c of campaignSummaries.value?.campaigns ?? []) m[c.campaignId] = c.totalPlays
+  return m
+})
+const reachByCampaign = computed(() => {
+  const m: Record<string, number> = {}
+  for (const c of campaignSummaries.value?.campaigns ?? []) m[c.campaignId] = c.estimatedReach
+  return m
 })
 
 const byWorkspace = computed(() => summary.value?.byWorkspace ?? [])
@@ -123,6 +137,8 @@ const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
           <tr class="border-b border-neutral-100">
             <th class="px-5 py-3 font-semibold">{{ $t('campaigns.name') }}</th>
             <th class="px-5 py-3 font-semibold">{{ $t('campaigns.status') }}</th>
+            <th class="px-5 py-3 text-right font-semibold">{{ $t('dashboard.colPlays') }}</th>
+            <th class="px-5 py-3 text-right font-semibold">{{ $t('dashboard.mReach') }}</th>
             <th class="px-5 py-3 text-right font-semibold">{{ $t('reports.spend') }}</th>
             <th class="px-5 py-3 text-right font-semibold">{{ $t('reports.exportCsv') }}</th>
           </tr>
@@ -131,6 +147,8 @@ const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
           <tr v-for="c in campaigns?.campaigns ?? []" :key="c.id" class="border-t border-neutral-100 hover:bg-neutral-50/70">
             <td class="px-5 py-3 text-neutral-900">{{ c.name }}</td>
             <td class="px-5 py-3"><Badge :tone="statusTone(c.status)">{{ statusLabel(c.status) }}</Badge></td>
+            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ (playsByCampaign[c.id] ?? 0).toLocaleString('en-NG') }}</td>
+            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ (reachByCampaign[c.id] ?? 0) > 0 ? (reachByCampaign[c.id] ?? 0).toLocaleString('en-NG') : '—' }}</td>
             <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ formatKobo(c.spentKobo) }}</td>
             <td class="px-5 py-3 text-right">
               <a :href="campaignExportUrl(c.id, 'csv')" target="_blank" rel="noopener" class="font-medium text-clay-600 hover:underline"><PhDownloadSimple :size="14" class="inline" /> CSV</a>

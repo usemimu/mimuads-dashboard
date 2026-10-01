@@ -27,37 +27,37 @@ withDefaults(
 
 <template>
   <div
-    class="p-4 [container-type:inline-size]"
+    class="[container-type:inline-size]"
     :class="[
-      bare ? 'bg-transparent' : 'rounded-xl border bg-surface shadow-card',
+      bare ? 'bg-transparent p-5' : 'rounded-xl border bg-surface p-4 shadow-card',
       !bare && active ? 'border-clay-300 ring-1 ring-clay-500/20' : '',
       !bare && !active ? 'border-line' : '',
     ]"
   >
-    <div class="flex items-start justify-between gap-2">
+    <div class="flex items-center justify-between gap-2">
       <p class="eyebrow">{{ label }}</p>
       <span
         v-if="icon"
-        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-clay-500/10 text-clay-600"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600"
       >
-        <component :is="icon" :size="16" weight="bold" />
+        <component :is="icon" :size="18" weight="bold" />
       </span>
     </div>
-    <div class="mt-1.5 flex items-baseline gap-2">
+    <div class="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
       <p
-        class="whitespace-nowrap font-display text-[clamp(1.125rem,9cqi,2rem)] font-semibold leading-none text-neutral-900 [font-variant-numeric:tabular-nums]"
+        class="whitespace-nowrap font-mono text-[clamp(1.125rem,14cqi,2.25rem)] font-bold leading-none tracking-tight text-neutral-900 [font-variant-numeric:tabular-nums]"
       >
         {{ value }}
       </p>
       <span
         v-if="delta != null"
-        class="inline-flex items-center gap-0.5 text-xs font-semibold"
-        :class="delta >= 0 ? 'text-moss-600' : 'text-red-600'"
+        class="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold"
+        :class="delta >= 0 ? 'bg-moss-50 text-moss-700' : 'bg-red-50 text-red-600'"
       >
-        <component :is="delta >= 0 ? PhArrowUp : PhArrowDown" :size="12" weight="bold" />
+        <component :is="delta >= 0 ? PhArrowUp : PhArrowDown" :size="11" weight="bold" />
         {{ Math.abs(delta) }}%
       </span>
     </div>
-    <p v-if="sub" class="mt-1 truncate text-xs text-neutral-400">{{ sub }}</p>
+    <p v-if="sub" class="mt-1.5 truncate text-xs text-neutral-400">{{ sub }}</p>
   </div>
 </template>
