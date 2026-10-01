@@ -82,8 +82,20 @@ function shortDate(d: string): string {
   return new Date(t).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
 }
 const byDay = computed<DayPoint[]>(() => summary.value?.byDay ?? [])
-const chartPoints = computed(() => byDay.value.map((d) => d.plays))
-const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
+// Continuous daily series over the selected period, ending today (zero-filled).
+const dailySeries = computed(() => {
+  const map = new Map(byDay.value.map((d) => [d.day, d.plays]))
+  const out: { day: string; plays: number }[] = []
+  const now = new Date()
+  for (let i = period.value - 1; i >= 0; i--) {
+    const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i))
+    const key = dt.toISOString().slice(0, 10)
+    out.push({ day: key, plays: map.get(key) ?? 0 })
+  }
+  return out
+})
+const chartPoints = computed(() => dailySeries.value.map((d) => d.plays))
+const chartLabels = computed(() => dailySeries.value.map((d) => shortDate(d.day)))
 </script>
 
 <template>
@@ -109,7 +121,7 @@ const chartLabels = computed(() => byDay.value.map((d) => shortDate(d.day)))
     <!-- Trend -->
     <Card class="mb-6">
       <p class="mb-4 text-sm font-semibold text-neutral-900">{{ $t('reports.trendTitle') }}</p>
-      <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" />
+      <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" unit="plays" />
     </Card>
 
     <!-- Per-workspace rollup (agencies) -->
