@@ -41,9 +41,14 @@ export const CAROUSEL_MIN_ITEMS = 2
 export const CAROUSEL_MAX_ITEMS = 6
 export const CAROUSEL_MAX_TOTAL_SECONDS = 30
 
-/** Minimum total campaign budget, in naira. Enforced in the wizard; the
- * backend remains the source of truth for any hard business ceiling. */
+/** Minimum total campaign budget, in naira. Absolute floor for the smallest
+ * selection; the real gate is "budget must cover the day-rate quote" (checked
+ * in the view against the live quote, authoritative on the backend). */
 export const MIN_BUDGET_NAIRA = 50_000
+
+/** Flight-length bounds (days), mirroring the backend's validateDates. */
+export const MIN_CAMPAIGN_DAYS = 7
+export const MAX_CAMPAIGN_DAYS = 90
 
 export function carouselTotalSeconds(items: CarouselDraftItem[]): number {
   return items.reduce((s, i) => s + i.dwellSeconds, 0)
@@ -99,8 +104,11 @@ export function stepValid(s: WizardState, step: WizardStep): boolean {
       return s.objective !== '' && s.name.trim().length >= 3
     case 'screens':
       return s.isWildcard || s.screenIds.length >= 1
-    case 'schedule':
-      return s.startDate !== '' && s.endDate !== '' && s.startDate < s.endDate
+    case 'schedule': {
+      if (s.startDate === '' || s.endDate === '' || s.startDate >= s.endDate) return false
+      const days = Math.round((Date.parse(s.endDate) - Date.parse(s.startDate)) / 86_400_000)
+      return days >= MIN_CAMPAIGN_DAYS && days <= MAX_CAMPAIGN_DAYS
+    }
     case 'budget':
       return s.budgetNaira != null && s.budgetNaira >= MIN_BUDGET_NAIRA
     case 'creative':

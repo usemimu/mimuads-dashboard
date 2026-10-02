@@ -144,6 +144,10 @@ export const QuoteResponseSchema = z
     bidCpmKobo: z.string().optional(),
     durationDays: z.number(),
     totalScreens: z.number().optional(),
+    // Tier budget bounds (kobo) — the authoritative floor/ceiling to enforce
+    // client-side. `maxCampaignKobo` is null for unlimited tiers.
+    minCampaignKobo: z.string().nullable().optional(),
+    maxCampaignKobo: z.string().nullable().optional(),
   })
   .passthrough()
 export type QuoteResponse = z.infer<typeof QuoteResponseSchema>
