@@ -32,7 +32,7 @@ import {
   probeCreative,
 } from '@/api/creatives'
 import { createCarousel, uploadCarouselFrame, deleteCarouselItem, reorderCarousel, confirmCarousel } from '@/api/carousel'
-import { CAROUSEL_MAX_ITEMS, CAROUSEL_MAX_TOTAL_SECONDS, carouselTotalSeconds } from '@/lib/wizard'
+import { CAROUSEL_MAX_ITEMS, CAROUSEL_MAX_TOTAL_SECONDS, carouselTotalSeconds, MIN_BUDGET_NAIRA } from '@/lib/wizard'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo, nairaToKobo } from '@/lib/money'
 import { isApiError } from '@/api/errors'
@@ -489,7 +489,12 @@ async function finish(submit: boolean) {
             <p class="font-display text-base font-semibold text-neutral-900">{{ $t('wizard.audience.budget') }}</p>
             <div class="grid grid-cols-2 gap-3">
               <label class="block"><span class="label">{{ $t('campaigns.totalBudget') }}</span>
-                <input v-model.number="s.budgetNaira" type="number" min="1" class="input" placeholder="50000" /></label>
+                <input v-model.number="s.budgetNaira" type="number" :min="MIN_BUDGET_NAIRA" step="1000" class="input" placeholder="50000" />
+                <span
+                  class="mt-1 block text-xs"
+                  :class="s.budgetNaira != null && s.budgetNaira < MIN_BUDGET_NAIRA ? 'text-red-600' : 'text-neutral-500'"
+                >{{ $t('wizard.audience.budgetMin', { min: formatKobo(String(nairaToKobo(MIN_BUDGET_NAIRA)), { showDecimals: false }) }) }}</span>
+              </label>
               <label class="block"><span class="label">{{ $t('campaigns.dailyCap') }}</span>
                 <input v-model.number="s.dailyCapNaira" type="number" min="1" class="input" /></label>
             </div>

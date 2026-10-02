@@ -270,6 +270,7 @@ export default {
       body: 'Choose the screens your ad runs on — pick specific ones, or run on all eligible screens.',
       schedule: 'Schedule',
       budget: 'Budget & delivery',
+      budgetMin: 'Minimum {min}.',
       pacing: 'Delivery',
       pacingStandard: 'Standard',
       pacingStandardHint: 'Spend as impression opportunities arise.',
