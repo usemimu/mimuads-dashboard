@@ -32,7 +32,7 @@ import {
   probeCreative,
 } from '@/api/creatives'
 import { createCarousel, uploadCarouselFrame, deleteCarouselItem, reorderCarousel, confirmCarousel } from '@/api/carousel'
-import { CAROUSEL_MAX_ITEMS, CAROUSEL_MAX_TOTAL_SECONDS, carouselTotalSeconds, MIN_BUDGET_NAIRA } from '@/lib/wizard'
+import { CAROUSEL_MAX_ITEMS, CAROUSEL_MAX_TOTAL_SECONDS, carouselTotalSeconds, MIN_BUDGET_NAIRA, MIN_CAMPAIGN_DAYS } from '@/lib/wizard'
 import { ctxKey } from '@/lib/ctx-key'
 import { formatKobo, nairaToKobo } from '@/lib/money'
 import { isApiError } from '@/api/errors'
@@ -59,13 +59,19 @@ function isoDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10)
 }
 const minStart = computed(() => isoDay(Date.now() + 86_400_000))
+// Flights run at least MIN_CAMPAIGN_DAYS and at most 90 days (both mirrored
+// server-side). The end-date picker is clamped into [start+min, start+90d].
+const minEnd = computed(() =>
+  s.startDate ? isoDay(Date.parse(s.startDate) + MIN_CAMPAIGN_DAYS * 86_400_000) : '',
+)
 const maxEnd = computed(() => (s.startDate ? isoDay(Date.parse(s.startDate) + 90 * 86_400_000) : ''))
 watch(
   () => s.startDate,
   (start) => {
     if (!start) return
     const startMs = Date.parse(start)
-    if (!s.endDate || s.endDate <= start) s.endDate = isoDay(startMs + 13 * 86_400_000)
+    const minEndMs = startMs + MIN_CAMPAIGN_DAYS * 86_400_000
+    if (!s.endDate || Date.parse(s.endDate) < minEndMs) s.endDate = isoDay(startMs + 13 * 86_400_000)
     const max = isoDay(startMs + 90 * 86_400_000)
     if (s.endDate > max) s.endDate = max
   },
@@ -135,6 +141,27 @@ const { data: quote, isFetching: quoteLoading } = useQuery({
       endDate: new Date(`${s.endDate}T00:00:00Z`).toISOString(),
     }),
 })
+
+// Budget must cover the booking at the day-rate ("fund the rent"). The live
+// quote's netKobo is the required amount; below it we block Next/Launch and
+// flag the field. The backend enforces the same rule authoritatively.
+const budgetKobo = computed(() => (s.budgetNaira != null ? Math.round(s.budgetNaira * 100) : null))
+const requiredBudgetKobo = computed(() => (quote.value ? Number(quote.value.netKobo) : null))
+// Tier ceiling from the backend (null = unlimited). Synced via the quote so the
+// client never diverges from what the API enforces.
+const tierMaxKobo = computed(() =>
+  quote.value?.maxCampaignKobo != null ? Number(quote.value.maxCampaignKobo) : null,
+)
+const budgetShort = computed(
+  () =>
+    budgetKobo.value != null &&
+    requiredBudgetKobo.value != null &&
+    budgetKobo.value < requiredBudgetKobo.value,
+)
+const budgetOverMax = computed(
+  () => budgetKobo.value != null && tierMaxKobo.value != null && budgetKobo.value > tierMaxKobo.value,
+)
+const budgetInvalid = computed(() => budgetShort.value || budgetOverMax.value)
 
 // Wallet — only needed so the health panel can warn "top up before launch".
 const { data: wallet } = useQuery({
@@ -461,9 +488,9 @@ async function finish(submit: boolean) {
               <label class="block"><span class="label">{{ $t('campaigns.startDate') }}</span>
                 <input v-model="s.startDate" type="date" class="input" :min="minStart" /></label>
               <label class="block"><span class="label">{{ $t('campaigns.endDate') }}</span>
-                <input v-model="s.endDate" type="date" class="input" :min="s.startDate || minStart" :max="maxEnd" :disabled="!s.startDate" /></label>
+                <input v-model="s.endDate" type="date" class="input" :min="minEnd || minStart" :max="maxEnd" :disabled="!s.startDate" /></label>
             </div>
-            <p class="-mt-2 text-xs text-neutral-400">{{ $t('campaigns.maxDurationHint') }}</p>
+            <p class="-mt-2 text-xs text-neutral-400">{{ $t('campaigns.durationHint') }}</p>
             <div>
               <p class="label">{{ $t('campaigns.daysOfWeek') }}</p>
               <div class="flex flex-wrap gap-1">
@@ -492,8 +519,12 @@ async function finish(submit: boolean) {
                 <input v-model.number="s.budgetNaira" type="number" :min="MIN_BUDGET_NAIRA" step="1000" class="input" placeholder="50000" />
                 <span
                   class="mt-1 block text-xs"
-                  :class="s.budgetNaira != null && s.budgetNaira < MIN_BUDGET_NAIRA ? 'text-red-600' : 'text-neutral-500'"
-                >{{ $t('wizard.audience.budgetMin', { min: formatKobo(String(nairaToKobo(MIN_BUDGET_NAIRA)), { showDecimals: false }) }) }}</span>
+                  :class="budgetInvalid || (s.budgetNaira != null && s.budgetNaira < MIN_BUDGET_NAIRA) ? 'text-red-600' : 'text-neutral-500'"
+                >
+                  <template v-if="budgetOverMax">{{ $t('wizard.audience.budgetMax', { amount: formatKobo(String(tierMaxKobo), { showDecimals: false }) }) }}</template>
+                  <template v-else-if="requiredBudgetKobo != null">{{ $t('wizard.audience.budgetNeeds', { amount: formatKobo(String(requiredBudgetKobo), { showDecimals: false }) }) }}</template>
+                  <template v-else>{{ $t('wizard.audience.budgetMin', { min: formatKobo(String(nairaToKobo(MIN_BUDGET_NAIRA)), { showDecimals: false }) }) }}</template>
+                </span>
               </label>
               <label class="block"><span class="label">{{ $t('campaigns.dailyCap') }}</span>
                 <input v-model.number="s.dailyCapNaira" type="number" min="1" class="input" /></label>
@@ -638,10 +669,10 @@ async function finish(submit: boolean) {
         <!-- Nav -->
         <div class="mt-8 flex items-center justify-between border-t border-line pt-5">
           <Button variant="ghost" :disabled="phase === 0" @click="phase--">{{ $t('campaigns.back') }}</Button>
-          <Button v-if="currentPhase !== 'launch'" :disabled="!canAdvance" @click="phase++">{{ $t('campaigns.next') }}</Button>
+          <Button v-if="currentPhase !== 'launch'" :disabled="!canAdvance || (currentPhase === 'audience' && budgetInvalid)" @click="phase++">{{ $t('campaigns.next') }}</Button>
           <div v-else class="flex gap-3">
             <Button variant="outline" :disabled="submitting" @click="finish(false)">{{ $t('campaigns.saveDraft') }}</Button>
-            <Button :disabled="submitting || !phaseValid(s, 'launch')" @click="finish(true)">
+            <Button :disabled="submitting || !phaseValid(s, 'launch') || budgetInvalid" @click="finish(true)">
               {{ submitting ? $t('campaigns.submitting') : $t('campaigns.submit') }}
             </Button>
           </div>

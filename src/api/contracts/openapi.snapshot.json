@@ -13269,6 +13269,14 @@
           },
           "totalScreens": {
             "type": "number"
+          },
+          "minCampaignKobo": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxCampaignKobo": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
