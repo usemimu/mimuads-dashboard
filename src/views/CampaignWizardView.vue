@@ -147,12 +147,21 @@ const { data: quote, isFetching: quoteLoading } = useQuery({
 // flag the field. The backend enforces the same rule authoritatively.
 const budgetKobo = computed(() => (s.budgetNaira != null ? Math.round(s.budgetNaira * 100) : null))
 const requiredBudgetKobo = computed(() => (quote.value ? Number(quote.value.netKobo) : null))
+// Tier ceiling from the backend (null = unlimited). Synced via the quote so the
+// client never diverges from what the API enforces.
+const tierMaxKobo = computed(() =>
+  quote.value?.maxCampaignKobo != null ? Number(quote.value.maxCampaignKobo) : null,
+)
 const budgetShort = computed(
   () =>
     budgetKobo.value != null &&
     requiredBudgetKobo.value != null &&
     budgetKobo.value < requiredBudgetKobo.value,
 )
+const budgetOverMax = computed(
+  () => budgetKobo.value != null && tierMaxKobo.value != null && budgetKobo.value > tierMaxKobo.value,
+)
+const budgetInvalid = computed(() => budgetShort.value || budgetOverMax.value)
 
 // Wallet — only needed so the health panel can warn "top up before launch".
 const { data: wallet } = useQuery({
@@ -510,9 +519,10 @@ async function finish(submit: boolean) {
                 <input v-model.number="s.budgetNaira" type="number" :min="MIN_BUDGET_NAIRA" step="1000" class="input" placeholder="50000" />
                 <span
                   class="mt-1 block text-xs"
-                  :class="budgetShort || (s.budgetNaira != null && s.budgetNaira < MIN_BUDGET_NAIRA) ? 'text-red-600' : 'text-neutral-500'"
+                  :class="budgetInvalid || (s.budgetNaira != null && s.budgetNaira < MIN_BUDGET_NAIRA) ? 'text-red-600' : 'text-neutral-500'"
                 >
-                  <template v-if="requiredBudgetKobo != null">{{ $t('wizard.audience.budgetNeeds', { amount: formatKobo(String(requiredBudgetKobo), { showDecimals: false }) }) }}</template>
+                  <template v-if="budgetOverMax">{{ $t('wizard.audience.budgetMax', { amount: formatKobo(String(tierMaxKobo), { showDecimals: false }) }) }}</template>
+                  <template v-else-if="requiredBudgetKobo != null">{{ $t('wizard.audience.budgetNeeds', { amount: formatKobo(String(requiredBudgetKobo), { showDecimals: false }) }) }}</template>
                   <template v-else>{{ $t('wizard.audience.budgetMin', { min: formatKobo(String(nairaToKobo(MIN_BUDGET_NAIRA)), { showDecimals: false }) }) }}</template>
                 </span>
               </label>
@@ -659,10 +669,10 @@ async function finish(submit: boolean) {
         <!-- Nav -->
         <div class="mt-8 flex items-center justify-between border-t border-line pt-5">
           <Button variant="ghost" :disabled="phase === 0" @click="phase--">{{ $t('campaigns.back') }}</Button>
-          <Button v-if="currentPhase !== 'launch'" :disabled="!canAdvance || (currentPhase === 'audience' && budgetShort)" @click="phase++">{{ $t('campaigns.next') }}</Button>
+          <Button v-if="currentPhase !== 'launch'" :disabled="!canAdvance || (currentPhase === 'audience' && budgetInvalid)" @click="phase++">{{ $t('campaigns.next') }}</Button>
           <div v-else class="flex gap-3">
             <Button variant="outline" :disabled="submitting" @click="finish(false)">{{ $t('campaigns.saveDraft') }}</Button>
-            <Button :disabled="submitting || !phaseValid(s, 'launch') || budgetShort" @click="finish(true)">
+            <Button :disabled="submitting || !phaseValid(s, 'launch') || budgetInvalid" @click="finish(true)">
               {{ submitting ? $t('campaigns.submitting') : $t('campaigns.submit') }}
             </Button>
           </div>

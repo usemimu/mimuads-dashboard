@@ -272,6 +272,7 @@ export default {
       budget: 'Budget & delivery',
       budgetMin: 'Minimum {min}.',
       budgetNeeds: 'This booking needs {amount} at the day-rate.',
+      budgetMax: 'Maximum {amount} on your plan.',
       pacing: 'Delivery',
       pacingStandard: 'Standard',
       pacingStandardHint: 'Spend as impression opportunities arise.',
