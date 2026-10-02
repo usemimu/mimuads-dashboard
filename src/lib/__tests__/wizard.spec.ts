@@ -42,7 +42,9 @@ describe('stepValid', () => {
     expect(stepValid(s, 'schedule')).toBe(true)
 
     expect(stepValid(s, 'budget')).toBe(false)
-    s.budgetNaira = 5000
+    s.budgetNaira = 5000 // below the ₦50,000 minimum
+    expect(stepValid(s, 'budget')).toBe(false)
+    s.budgetNaira = 50_000
     expect(stepValid(s, 'budget')).toBe(true)
 
     expect(stepValid(s, 'creative')).toBe(false)

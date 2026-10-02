@@ -41,6 +41,10 @@ export const CAROUSEL_MIN_ITEMS = 2
 export const CAROUSEL_MAX_ITEMS = 6
 export const CAROUSEL_MAX_TOTAL_SECONDS = 30
 
+/** Minimum total campaign budget, in naira. Enforced in the wizard; the
+ * backend remains the source of truth for any hard business ceiling. */
+export const MIN_BUDGET_NAIRA = 50_000
+
 export function carouselTotalSeconds(items: CarouselDraftItem[]): number {
   return items.reduce((s, i) => s + i.dwellSeconds, 0)
 }
@@ -98,7 +102,7 @@ export function stepValid(s: WizardState, step: WizardStep): boolean {
     case 'schedule':
       return s.startDate !== '' && s.endDate !== '' && s.startDate < s.endDate
     case 'budget':
-      return s.budgetNaira != null && s.budgetNaira > 0
+      return s.budgetNaira != null && s.budgetNaira >= MIN_BUDGET_NAIRA
     case 'creative':
       if (s.creativeMode === 'carousel') {
         return (
