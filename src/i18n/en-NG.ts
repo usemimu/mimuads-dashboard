@@ -116,6 +116,13 @@ export default {
     signingIn: 'Signing in…',
     signInFailed: 'Sign-in failed. Check your details and try again.',
     sessionExpired: 'Your session expired. Please sign in again.',
+    welcomeBack: 'Welcome back!',
+    loginSubtitle: 'Enter your email below to login to your account',
+    login: 'Login',
+    forgotPassword: 'Forgot your password?',
+    continueWith: 'Or continue with',
+    socialSoon: 'Social sign-in is coming soon.',
+    signUp: 'Sign up',
   },
   onboarding: {
     pendingTitle: 'Set up your organization',

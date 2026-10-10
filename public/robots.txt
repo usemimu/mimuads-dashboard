@@ -1,0 +1,7 @@
+# Mimuads advertiser console — ads.usemimu.com
+# Only the public entry points (/signup = "Get started", /login) are indexed;
+# the authenticated app is marked noindex per route in src/router/index.ts.
+User-agent: *
+Allow: /
+
+Sitemap: https://ads.usemimu.com/sitemap.xml
