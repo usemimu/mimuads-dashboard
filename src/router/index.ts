@@ -74,6 +74,89 @@ const router = createRouter({
   routes,
 })
 
+// ── SEO <head> per route ────────────────────────────────────────────────────
+// ads.usemimu.com is a SPA console. Only the public auth pages are meaningful
+// to search engines (the rest redirect bots to /login). We index the two entry
+// points — /signup is the "Get started" sitelink target, /login the returning
+// door — and noindex everything else. Titles/description/canonical are updated
+// on every navigation; index.html carries the first-paint defaults.
+const SITE = 'https://ads.usemimu.com'
+type PageSeo = { title: string; desc: string; path: string }
+const PUBLIC_SEO: Record<string, PageSeo> = {
+  signup: {
+    title: 'Get started with Mimuads | The infrastructure for physical ad buying',
+    desc: 'Create your account and start buying on the infrastructure for physical advertising. Every DOOH screen, verified and programmatic. Self serve, no agency needed, live in a day.',
+    path: '/signup',
+  },
+  login: {
+    title: 'Log in | Mimuads',
+    desc: 'Log in to Mimuads, the infrastructure for physical ad buying. Launch and manage verified, programmatic DOOH campaigns across the network.',
+    path: '/login',
+  },
+  'signup-verify': {
+    title: 'Verify your email | Mimuads',
+    desc: 'Verify your email to finish creating your Mimuads account.',
+    path: '/signup/verify',
+  },
+  'forgot-password': {
+    title: 'Reset your password | Mimuads',
+    desc: 'Reset the password for your Mimuads account.',
+    path: '/forgot-password',
+  },
+  'reset-password': {
+    title: 'Set a new password | Mimuads',
+    desc: 'Set a new password for your Mimuads account.',
+    path: '/reset-password',
+  },
+}
+// Only the two entry points earn a place in the index.
+const INDEXABLE = new Set(['signup', 'login'])
+const DEFAULT_TITLE = 'Mimuads | The infrastructure for physical ad buying'
+const DEFAULT_DESC = 'The Mimuads console. Launch and manage verified, programmatic DOOH campaigns on the infrastructure for physical ad buying.'
+
+function setMetaTag(attr: 'name' | 'property', key: string, content: string) {
+  let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
+  if (!el) {
+    el = document.createElement('meta')
+    el.setAttribute(attr, key)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('content', content)
+}
+
+function setCanonical(href: string) {
+  let el = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+  if (!el) {
+    el = document.createElement('link')
+    el.setAttribute('rel', 'canonical')
+    document.head.appendChild(el)
+  }
+  el.setAttribute('href', href)
+}
+
+router.afterEach((to) => {
+  if (typeof document === 'undefined') return
+  const page = PUBLIC_SEO[to.name as string]
+  const title = page?.title ?? DEFAULT_TITLE
+  const desc = page?.desc ?? DEFAULT_DESC
+  const canonical = SITE + (page?.path ?? to.path)
+  const indexable = INDEXABLE.has(to.name as string)
+
+  document.title = title
+  setMetaTag('name', 'description', desc)
+  setMetaTag(
+    'name',
+    'robots',
+    indexable ? 'index, follow, max-image-preview:large' : 'noindex, nofollow',
+  )
+  setCanonical(canonical)
+  setMetaTag('property', 'og:title', title)
+  setMetaTag('property', 'og:description', desc)
+  setMetaTag('property', 'og:url', canonical)
+  setMetaTag('name', 'twitter:title', title)
+  setMetaTag('name', 'twitter:description', desc)
+})
+
 router.beforeEach(async (to) => {
   const session = useSession()
   const invite = useInvite()
