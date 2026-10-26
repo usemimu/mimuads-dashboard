@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "8835JA7L46.ng.mimu.advertiser",
+        "paths": [ "/reset-password", "/reset-password/*" ]
+      }
+    ]
+  }
+}
