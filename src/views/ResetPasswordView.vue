@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
 import PasswordField from '@/components/ui/PasswordField.vue'
@@ -8,9 +8,16 @@ import { resetPassword } from '@/api/onboarding'
 import { isApiError } from '@/api/errors'
 import { useToastStore } from '@/stores/toast'
 
+const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
-const token = ref('')
+// The password-reset email links here as /reset-password?token=123456.
+// Prefill the code from the query so recipients who followed the link
+// (on desktop, or on a phone without the app) only type a new password.
+// Mobile users with the app installed never reach this page — the OS
+// intercepts the same URL as a Universal/App Link and opens the app.
+const tokenFromQuery = route.query.token
+const token = ref(typeof tokenFromQuery === 'string' ? tokenFromQuery : '')
 const newPassword = ref('')
 const submitting = ref(false)
 const done = ref(false)
