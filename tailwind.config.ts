@@ -3,8 +3,7 @@ import forms from '@tailwindcss/forms'
 
 /**
  * Brand system ported from mimu-web (the design source of truth). Palettes and
- * fonts mirror the mobile design language: clay (primary), moss (success/live),
- * gold (accent/verified), neutral (surfaces/text). Money uses the mono font.
+ * fonts: Plus Jakarta Sans (display/headings), Inter (body), Geist Mono (metrics/money).
  */
 export default {
   content: ['./index.html', './src/**/*.{vue,ts}'],
@@ -78,8 +77,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Aeonik', 'Georgia', 'serif'],
-        body: ['Aeonik', 'system-ui', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'Georgia', 'serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       // Restrained, warm-tinted elevation — an "editorial console" surface
