@@ -3,7 +3,7 @@ import forms from '@tailwindcss/forms'
 
 /**
  * Brand system ported from mimu-web (the design source of truth). Palettes and
- * fonts: Plus Jakarta Sans (display/headings), Inter (body), Geist Mono (metrics/money).
+ * fonts: Space Grotesk (display/headings), Inter (body), Geist Mono (metrics/money).
  */
 export default {
   content: ['./index.html', './src/**/*.{vue,ts}'],
@@ -77,7 +77,7 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Plus Jakarta Sans', 'Georgia', 'serif'],
+        display: ['Space Grotesk', 'Georgia', 'serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
