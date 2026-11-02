@@ -78,7 +78,7 @@ export default {
       },
       fontFamily: {
         display: ['Space Grotesk', 'Georgia', 'serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
+        body: ['Google Sans', 'system-ui', 'sans-serif'],
         mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       // Restrained, warm-tinted elevation — an "editorial console" surface
