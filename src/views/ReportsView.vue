@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { PhDownloadSimple, PhCurrencyNgn, PhPlay, PhUsersThree, PhMegaphone } from '@phosphor-icons/vue'
+import { PhDownloadSimple } from '@phosphor-icons/vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -113,10 +113,10 @@ const chartLabels = computed(() => dailySeries.value.map((d) => shortDate(d.day)
     <!-- Performance block: metrics + trend framed together -->
     <section class="mb-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
       <div class="grid grid-cols-2 divide-x divide-y divide-line sm:grid-cols-4 sm:divide-y-0">
-        <MetricTile bare :label="$t('dashboard.mPlays')" :value="totalPlays.toLocaleString('en-NG')" :icon="PhPlay" />
-        <MetricTile bare :label="$t('dashboard.mReach')" :value="estReachTotal ? estReachTotal.toLocaleString('en-NG') : '—'" :sub="$t('dashboard.mReachHint')" :icon="PhUsersThree" />
-        <MetricTile bare :label="$t('reports.spend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
-        <MetricTile bare :label="$t('reports.campaigns')" :value="campaignList.length" :icon="PhMegaphone" />
+        <MetricTile bare :label="$t('dashboard.mPlays')" :value="totalPlays.toLocaleString('en-NG')" sticker="screen" />
+        <MetricTile bare :label="$t('dashboard.mReach')" :value="estReachTotal ? estReachTotal.toLocaleString('en-NG') : '—'" :sub="$t('dashboard.mReachHint')" sticker="footfall" />
+        <MetricTile bare :label="$t('reports.spend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" sticker="naira" />
+        <MetricTile bare :label="$t('reports.campaigns')" :value="campaignList.length" sticker="campaign" />
       </div>
       <div class="border-t border-line p-5">
         <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ $t('reports.trendTitle') }}</p>

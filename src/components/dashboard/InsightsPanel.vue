@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed } from 'vue'
 import { formatKobo } from '@/lib/money'
 import type { Campaign } from '@/api/contracts/campaigns'
+import { objectiveSticker } from '@/lib/objectiveSticker'
 
 /**
  * Dashboard "insights" — the OOH stand-in for X's Audience Insights, built from
@@ -30,16 +32,22 @@ const hasSpend = computed(() => rows.value.some((r) => r.spend > 0))
     <p class="mb-1 text-sm font-semibold text-neutral-900">{{ $t('dashboard.insightsTitle') }}</p>
     <p class="mb-4 text-xs text-neutral-400">{{ $t('dashboard.insightsSub') }}</p>
 
-    <p v-if="!hasSpend" class="py-8 text-center text-sm text-neutral-400">{{ emptyText }}</p>
+    <div v-if="!hasSpend" class="flex flex-col items-center py-6 text-center">
+      <MimuIcon name="report" variant="sticker" :size="96" class="mb-2" />
+      <p class="text-sm text-neutral-400">{{ emptyText }}</p>
+    </div>
 
     <ul v-else class="space-y-3">
-      <li v-for="r in rows" :key="r.objective">
+      <li v-for="r in rows" :key="r.objective" class="flex items-center gap-3">
+        <MimuIcon :name="objectiveSticker(r.objective)" variant="sticker" :size="48" />
+        <div class="min-w-0 flex-1">
         <div class="mb-1 flex items-center justify-between text-sm">
           <span class="capitalize text-neutral-700">{{ $t('campaigns.objectives.' + r.objective) }}</span>
           <span class="font-display text-[13px] font-medium text-neutral-500">{{ formatKobo(String(r.spend), { showDecimals: false }) }}</span>
         </div>
         <div class="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
           <div class="h-full rounded-full bg-clay-500" :style="{ width: r.pct + '%' }" />
+        </div>
         </div>
       </li>
     </ul>

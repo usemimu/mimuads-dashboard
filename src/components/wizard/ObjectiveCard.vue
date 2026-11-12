@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 /**
  * Objective option card (X pattern): a selectable tile that, when active,
  * expands to show "How it works" + "Good for" detail. Content is passed in so
@@ -12,6 +13,8 @@ defineProps<{
   selected: boolean
   howItWorksLabel: string
   goodForLabel: string
+  /** Mimuads sticker name shown on the right of the card. */
+  sticker?: string
 }>()
 </script>
 
@@ -43,6 +46,14 @@ defineProps<{
           </div>
         </div>
       </div>
+      <MimuIcon
+        v-if="sticker"
+        :name="sticker"
+        variant="sticker"
+        :size="64"
+        class="-my-2 shrink-0 transition-transform duration-200"
+        :class="selected ? '-rotate-6 scale-110' : ''"
+      />
     </div>
   </button>
 </template>

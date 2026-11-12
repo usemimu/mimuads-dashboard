@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
@@ -177,7 +178,7 @@ async function makeKey() {
             </Menu>
           </li>
         </ul>
-        <EmptyState v-else :title="$t('orgAdmin.member')" :message="$t('orgAdmin.subtitle')">
+        <EmptyState sticker="leads" v-else :title="$t('orgAdmin.member')" :message="$t('orgAdmin.subtitle')">
           <template #icon><PhUsersThree :size="24" /></template>
         </EmptyState>
       </Card>
@@ -203,7 +204,7 @@ async function makeKey() {
             class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-sunken/60"
             data-testid="workspace-row"
           >
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-clay-500/10 text-clay-600"><PhStack :size="18" /></span>
+            <MimuIcon name="store" variant="sticker" :size="68" class="shrink-0" />
             <p class="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-900">{{ w.name }}</p>
             <Badge :tone="w.status === 'archived' ? 'neutral' : 'success'" size="sm" dot>{{ w.status }}</Badge>
             <button
@@ -215,7 +216,7 @@ async function makeKey() {
             </button>
           </li>
         </ul>
-        <EmptyState v-else :title="$t('orgAdmin.noWorkspaces')">
+        <EmptyState sticker="store" v-else :title="$t('orgAdmin.noWorkspaces')">
           <template #icon><PhStack :size="24" /></template>
         </EmptyState>
       </Card>
@@ -225,9 +226,7 @@ async function makeKey() {
     <div v-else-if="tab === 'verification'">
       <Card>
         <div class="flex items-start gap-4">
-          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-clay-500/10 text-clay-600">
-            <PhSealCheck :size="24" weight="fill" />
-          </span>
+          <MimuIcon name="approved" variant="sticker" :size="104" class="shrink-0" />
           <div class="min-w-0 flex-1">
             <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('orgAdmin.verificationLevel') }}</p>
             <div class="mt-1 flex flex-wrap items-center gap-2">
@@ -269,12 +268,12 @@ async function makeKey() {
             :key="k.id"
             class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-sunken/60"
           >
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-clay-500/10 text-clay-600"><PhKey :size="18" /></span>
+            <MimuIcon name="api" variant="sticker" :size="68" class="shrink-0" />
             <p class="min-w-0 flex-1 truncate text-sm text-neutral-900">{{ k.name }}</p>
             <button class="shrink-0 text-xs font-medium text-clay-600 hover:underline" @click="run(() => revokeApiKey(k.id), 'apikeys')">{{ $t('orgAdmin.revoke') }}</button>
           </li>
         </ul>
-        <EmptyState v-else :title="$t('orgAdmin.noKeys')">
+        <EmptyState sticker="api" v-else :title="$t('orgAdmin.noKeys')">
           <template #icon><PhKey :size="24" /></template>
         </EmptyState>
       </Card>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import {
@@ -186,7 +187,7 @@ function saveSet() {
           <tbody class="divide-y divide-line">
             <tr v-if="!isLoading && !filteredList.length">
               <td colspan="6" class="px-4 py-14">
-                <EmptyState :title="$t('screens.noResults')" :message="$t('screens.noResultsHint')">
+                <EmptyState sticker="screen-map" :title="$t('screens.noResults')" :message="$t('screens.noResultsHint')">
                   <template #icon><PhMapTrifold :size="24" /></template>
                   <template #actions>
                     <Button variant="outline" size="sm" @click="clearFilters">{{ $t('screens.clearFilters') }}</Button>
@@ -342,9 +343,7 @@ function saveSet() {
     <div v-if="cardScreen" class="absolute bottom-4 left-4 z-[2] w-[340px] max-w-[calc(100%-2rem)]">
       <div class="rounded-xl border border-line bg-surface p-4 shadow-pop">
         <div class="flex items-start gap-3">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
-            <PhMapTrifold :size="22" />
-          </div>
+          <MimuIcon name="screen" variant="sticker" :size="104" class="shrink-0" />
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <p class="truncate font-body text-[15px] font-semibold text-neutral-900">{{ cardScreen.name }}</p>

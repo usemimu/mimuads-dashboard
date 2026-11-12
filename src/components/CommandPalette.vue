@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 /**
  * Global ⌘K / Ctrl-K command palette (Tailwind Plus "Command Palette" pattern,
  * clay-themed). Jumps between pages and fires quick actions. Opened via the
@@ -237,7 +238,8 @@ defineExpose({ open: () => (open.value = true) })
                 </template>
               </ComboboxOptions>
 
-              <div v-else class="border-t border-line px-6 py-10 text-center text-sm text-neutral-400">
+              <div v-else class="flex flex-col items-center border-t border-line px-6 py-10 text-center text-sm text-neutral-400">
+                <MimuIcon name="nearby" variant="sticker" :size="88" class="mb-2" />
                 {{ $t('cmd.empty') }}
               </div>
             </Combobox>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MimuIcon from './MimuIcon.vue'
+
 /**
  * Centered empty/zero state: optional icon, title, message, and an
  * actions slot for a primary CTA. Used inside a Card or a page section.
@@ -7,6 +9,8 @@ withDefaults(
   defineProps<{
     title: string
     message?: string
+    /** Mimuads neo-brutalist sticker name; shown large in place of the icon slot. */
+    sticker?: string
   }>(),
   {},
 )
@@ -14,8 +18,9 @@ withDefaults(
 
 <template>
   <div class="flex flex-col items-center justify-center px-6 py-12 text-center">
+    <MimuIcon v-if="sticker" :name="sticker" variant="sticker" :size="152" class="mb-4" />
     <div
-      v-if="$slots.icon"
+      v-else-if="$slots.icon"
       class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-sunken text-neutral-400"
     >
       <slot name="icon" />

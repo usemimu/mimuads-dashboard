@@ -1,16 +1,9 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import {
-  PhUser,
-  PhShieldCheck,
-  PhLockKey,
-  PhBuildings,
-  PhSignOut,
-  PhTrash,
-  PhCamera,
-} from '@phosphor-icons/vue'
+import { PhSignOut, PhTrash, PhCamera } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -215,9 +208,7 @@ async function onSignOut() {
         <!-- Account + avatar -->
         <Card>
           <div class="mb-5 flex items-start gap-3">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
-              <PhUser :size="20" />
-            </div>
+            <MimuIcon name="happy-customer" variant="sticker" :size="68" class="shrink-0" />
             <div>
               <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.account') }}</h2>
               <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.accountHint') }}</p>
@@ -278,9 +269,7 @@ async function onSignOut() {
         <!-- Change password -->
         <Card>
           <div class="mb-5 flex items-start gap-3">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-500/10 text-gold-600">
-              <PhLockKey :size="20" />
-            </div>
+            <MimuIcon name="venue-owner" variant="sticker" :size="68" class="shrink-0" />
             <div>
               <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.password') }}</h2>
               <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.passwordHint') }}</p>
@@ -309,9 +298,7 @@ async function onSignOut() {
         <!-- Access -->
         <Card>
           <div class="mb-5 flex items-start gap-3">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-900/[0.05] text-neutral-500">
-              <PhShieldCheck :size="20" />
-            </div>
+            <MimuIcon name="secure" variant="sticker" :size="68" class="shrink-0" />
             <div>
               <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.access') }}</h2>
               <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.accessHint') }}</p>
@@ -357,9 +344,7 @@ async function onSignOut() {
       <!-- ── Right column: business profile ───────────────── -->
       <Card>
         <div class="mb-5 flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-moss-500/10 text-moss-600">
-            <PhBuildings :size="20" />
-          </div>
+          <MimuIcon name="agency" variant="sticker" :size="68" class="shrink-0" />
           <div>
             <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.business') }}</h2>
             <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.businessHint') }}</p>
