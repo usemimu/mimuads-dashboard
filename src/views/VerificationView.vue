@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed, ref } from 'vue'
-import { PhSealCheck, PhIdentificationCard, PhBuildings } from '@phosphor-icons/vue'
+import { PhSealCheck } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -52,9 +53,7 @@ async function onStart() {
         <div class="p-5">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-start gap-3">
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
-                <PhIdentificationCard :size="20" />
-              </div>
+              <MimuIcon name="secure" variant="sticker" :size="68" class="-my-2 shrink-0" />
               <div>
                 <p class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('verification.identity') }}</p>
                 <p class="mt-0.5 text-sm text-neutral-500">{{ $t('verification.identityHint') }}</p>
@@ -84,9 +83,7 @@ async function onStart() {
         <div class="p-5">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-start gap-3">
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-moss-500/10 text-moss-600">
-                <PhBuildings :size="20" />
-              </div>
+              <MimuIcon name="agency" variant="sticker" :size="68" class="-my-2 shrink-0" />
               <div>
                 <p class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('verification.business') }}</p>
                 <p class="mt-0.5 text-sm text-neutral-500">{{ $t('verification.businessHint') }}</p>

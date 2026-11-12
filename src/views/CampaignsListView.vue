@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate, PhPlay, PhArrowsOut, PhVideoCamera, PhImage, PhStack, PhX, PhBroadcast, PhCurrencyNgn } from '@phosphor-icons/vue'
+import { PhPlus, PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhSquaresFour, PhListBullets, PhFilmSlate, PhPlay, PhArrowsOut, PhVideoCamera, PhImage, PhStack, PhX } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -192,7 +192,7 @@ function startWizard() {
     </Card>
 
     <Card v-else-if="!kycComplete">
-      <EmptyState :title="$t('verification.gateTitle')" :message="$t('verification.gateBody')">
+      <EmptyState sticker="approved" :title="$t('verification.gateTitle')" :message="$t('verification.gateBody')">
         <template #icon><PhSealCheck :size="24" /></template>
         <template #actions>
           <RouterLink to="/verify">
@@ -205,9 +205,9 @@ function startWizard() {
     <template v-else>
     <!-- Metric strip -->
     <div class="mb-5 grid grid-cols-3 gap-4">
-      <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" :icon="PhBroadcast" />
-      <MetricTile :label="$t('campaigns.title')" :value="totalCount" :icon="PhMegaphone" />
-      <MetricTile :label="$t('dashboard.mSpend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
+      <MetricTile :label="$t('dashboard.mActive')" :value="activeCount" sticker="launch" />
+      <MetricTile :label="$t('campaigns.title')" :value="totalCount" sticker="campaign" />
+      <MetricTile :label="$t('dashboard.mSpend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" sticker="naira" />
     </div>
 
     <!-- Controls -->
@@ -248,7 +248,7 @@ function startWizard() {
     <div v-if="view === 'grid'">
       <p v-if="isLoading" class="py-10 text-center text-sm text-neutral-400">{{ $t('common.loading') }}</p>
       <Card v-else-if="!visible.length">
-        <EmptyState :title="$t('campaigns.empty')">
+        <EmptyState sticker="campaign" :title="$t('campaigns.empty')">
           <template #icon><PhMegaphone :size="24" /></template>
           <template v-if="session.canSubmitCampaign" #actions>
             <Button @click="startWizard"><PhPlus :size="16" /> {{ $t('campaigns.newCampaign') }}</Button>
@@ -388,7 +388,7 @@ function startWizard() {
           </tr>
           <tr v-else-if="!visible.length">
             <td colspan="6" class="p-0">
-              <EmptyState :title="$t('campaigns.empty')">
+              <EmptyState sticker="campaign" :title="$t('campaigns.empty')">
                 <template #icon><PhMegaphone :size="24" /></template>
                 <template v-if="session.canSubmitCampaign" #actions>
                   <Button @click="startWizard"><PhPlus :size="16" /> {{ $t('campaigns.newCampaign') }}</Button>

@@ -10,6 +10,7 @@ import ScreenPicker from '@/components/screens/ScreenPicker.vue'
 import WizardShell from '@/components/wizard/WizardShell.vue'
 import PhaseRail from '@/components/wizard/PhaseRail.vue'
 import ObjectiveCard from '@/components/wizard/ObjectiveCard.vue'
+import { objectiveSticker } from '@/lib/objectiveSticker'
 import EstimatePanel from '@/components/wizard/EstimatePanel.vue'
 import HealthPanel from '@/components/wizard/HealthPanel.vue'
 import { useWizard } from '@/stores/wizard'
@@ -448,6 +449,7 @@ async function finish(submit: boolean) {
                 :how-it-works-label="$t('wizard.objective.howItWorks')"
                 :good-for-label="$t('wizard.objective.goodFor')"
                 :selected="s.objective === o"
+                :sticker="objectiveSticker(o)"
                 @click="s.objective = o"
               />
             </div>

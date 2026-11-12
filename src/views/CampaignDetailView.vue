@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -247,7 +248,10 @@ async function onClone() {
                   </tbody>
                 </table>
               </div>
-              <p v-else class="py-8 text-center text-sm text-neutral-400">{{ $t('campaigns.perf.empty') }}</p>
+              <div v-else class="flex flex-col items-center py-8 text-center text-sm text-neutral-400">
+                <MimuIcon name="dashboard" variant="sticker" :size="104" class="mb-2" />
+                {{ $t('campaigns.perf.empty') }}
+              </div>
             </template>
           </div>
         </Card>

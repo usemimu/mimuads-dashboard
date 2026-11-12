@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { PhDownloadSimple, PhArrowDownLeft, PhArrowUpRight, PhPlus, PhReceipt, PhWarningCircle, PhFileText, PhCaretDown, PhArrowsLeftRight, PhArrowCounterClockwise, PhMegaphone, PhWallet, PhArrowsDownUp } from '@phosphor-icons/vue'
+import { PhDownloadSimple, PhArrowDownLeft, PhArrowUpRight, PhPlus, PhReceipt, PhWarningCircle, PhFileText, PhCaretDown, PhArrowsLeftRight, PhArrowCounterClockwise, PhMegaphone } from '@phosphor-icons/vue'
 import type { Component } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -213,9 +214,7 @@ async function doTransfer() {
     <Card class="mb-6 overflow-hidden" padding="none">
       <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div class="flex items-start gap-4">
-          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-clay-500/10 text-clay-600">
-            <PhWallet :size="24" weight="fill" />
-          </span>
+          <MimuIcon name="wallet" variant="sticker" :size="104" class="shrink-0" />
           <div>
             <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
               {{ $t('billing.balance') }}
@@ -316,7 +315,7 @@ async function doTransfer() {
         </ul>
       </Card>
       <Card v-else padding="none">
-        <EmptyState :title="$t('billing.noTransactions')">
+        <EmptyState sticker="coins" :title="$t('billing.noTransactions')">
           <template #icon><PhReceipt :size="24" /></template>
         </EmptyState>
       </Card>
@@ -329,7 +328,7 @@ async function doTransfer() {
       <p v-else-if="topupState === 'failed'" class="rounded-xl border border-clay-200/60 bg-clay-500/10 px-4 py-3 text-sm text-clay-700">{{ $t('billing.topupFailed') }}</p>
       <Card v-if="canBill" class="space-y-3.5">
         <div class="flex items-center gap-2.5">
-          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600"><PhPlus :size="18" weight="bold" /></span>
+          <MimuIcon name="top-up" variant="sticker" :size="68" class="shrink-0" />
           <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('billing.topupTitle') }}</h2>
         </div>
         <label class="block"><span class="label">{{ $t('billing.amount') }}</span>
@@ -344,7 +343,7 @@ async function doTransfer() {
       <!-- Request form -->
       <Card v-if="canBill" class="space-y-3.5 lg:sticky lg:top-4">
         <div class="flex items-center gap-2.5">
-          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600"><PhFileText :size="18" weight="bold" /></span>
+          <MimuIcon name="receipt" variant="sticker" :size="68" class="shrink-0" />
           <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('billing.invoiceRequest') }}</h2>
         </div>
         <label class="block"><span class="label">{{ $t('billing.amount') }}</span>
@@ -377,7 +376,7 @@ async function doTransfer() {
           </table>
         </Card>
         <Card v-else padding="none">
-          <EmptyState :title="$t('billing.noInvoices')">
+          <EmptyState sticker="receipt" :title="$t('billing.noInvoices')">
             <template #icon><PhFileText :size="24" /></template>
           </EmptyState>
         </Card>
@@ -387,7 +386,7 @@ async function doTransfer() {
     <!-- Transfers -->
     <Card v-else class="max-w-md space-y-3.5">
       <div class="flex items-center gap-2.5">
-        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600"><PhArrowsDownUp :size="18" weight="bold" /></span>
+        <MimuIcon name="cash-stack" variant="sticker" :size="68" class="shrink-0" />
         <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('billing.transfersTitle') }}</h2>
       </div>
       <p v-if="!canBill" class="text-sm text-neutral-400">{{ $t('billing.transferReadonly') }}</p>

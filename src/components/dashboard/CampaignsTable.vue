@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { RouterLink } from 'vue-router'
 import { formatKobo } from '@/lib/money'
 import { statusTone, statusLabel } from '@/lib/status'
@@ -36,7 +37,10 @@ function pacing(c: Campaign): number {
       </thead>
       <tbody>
         <tr v-if="!campaigns.length">
-          <td colspan="6" class="px-3 py-10 text-center text-sm text-neutral-400">{{ emptyText }}</td>
+          <td colspan="6" class="px-3 py-10 text-center text-sm text-neutral-400">
+            <MimuIcon name="campaign" variant="sticker" :size="104" class="mx-auto mb-2" />
+            {{ emptyText }}
+          </td>
         </tr>
         <tr
           v-for="c in campaigns"

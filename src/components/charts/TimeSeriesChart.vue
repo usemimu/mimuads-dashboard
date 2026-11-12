@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 /**
@@ -198,6 +199,7 @@ const hoverLabel = computed(() => (hoverIdx.value == null ? '' : props.labels[ho
       v-else
       class="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed border-line text-sm text-neutral-400"
     >
+      <MimuIcon name="sales" variant="sticker" :size="104" class="mb-2" />
       <p>{{ empty }}</p>
     </div>
   </div>

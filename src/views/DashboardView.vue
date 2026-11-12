@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import { PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhWarningCircle, PhPlay, PhUsersThree, PhCurrencyNgn, PhMapPin, PhChartLineUp } from '@phosphor-icons/vue'
+import { PhMegaphone, PhSealCheck, PhMagnifyingGlass, PhWarningCircle } from '@phosphor-icons/vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import MetricTile from '@/components/dashboard/MetricTile.vue'
@@ -163,9 +164,7 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
     <section class="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <div class="flex items-center gap-2.5">
-          <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
-            <PhChartLineUp :size="18" weight="bold" />
-          </span>
+          <MimuIcon name="report" variant="sticker" :size="60" class="shrink-0" />
           <h2 class="text-[15px] font-bold tracking-tight text-neutral-900">{{ $t('dashboard.performance') }}</h2>
         </div>
         <span class="text-xs font-medium text-neutral-400">{{ $t('dashboard.toDate') }}</span>
@@ -173,12 +172,12 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
 
       <!-- Headline metrics: a flush row of divided cells so the baseline aligns. -->
       <div class="grid grid-cols-2 divide-x divide-y divide-line sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-        <MetricTile bare :label="$t('dashboard.mPlays')" :value="plays.toLocaleString('en-NG')" :icon="PhPlay" />
-        <MetricTile bare :label="$t('dashboard.mReach')" :value="estimatedReach ? estimatedReach.toLocaleString('en-NG') : '—'" :sub="$t('dashboard.mReachHint')" :icon="PhUsersThree" />
-        <MetricTile bare :label="$t('dashboard.mSpend')" :value="formatKobo(String(spendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
-        <MetricTile bare :label="$t('dashboard.mCpm')" :value="cpmKobo ? formatKobo(String(cpmKobo)) : '—'" :icon="PhChartLineUp" />
-        <MetricTile bare :label="$t('dashboard.mActive')" :value="activeCount" :icon="PhMegaphone" />
-        <MetricTile bare :label="$t('dashboard.mScreens')" :value="screensCount" :icon="PhMapPin" />
+        <MetricTile bare :label="$t('dashboard.mPlays')" :value="plays.toLocaleString('en-NG')" sticker="screen" />
+        <MetricTile bare :label="$t('dashboard.mReach')" :value="estimatedReach ? estimatedReach.toLocaleString('en-NG') : '—'" :sub="$t('dashboard.mReachHint')" sticker="footfall" />
+        <MetricTile bare :label="$t('dashboard.mSpend')" :value="formatKobo(String(spendKobo), { showDecimals: false })" sticker="naira" />
+        <MetricTile bare :label="$t('dashboard.mCpm')" :value="cpmKobo ? formatKobo(String(cpmKobo)) : '—'" sticker="sales" />
+        <MetricTile bare :label="$t('dashboard.mActive')" :value="activeCount" sticker="campaign" />
+        <MetricTile bare :label="$t('dashboard.mScreens')" :value="screensCount" sticker="location" />
       </div>
 
       <!-- Trend chart, sharing the same frame. -->

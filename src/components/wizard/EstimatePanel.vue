@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 import { computed } from 'vue'
-import { PhUsersThree } from '@phosphor-icons/vue'
 import Gauge from '@/components/ui/Gauge.vue'
 import { formatKobo } from '@/lib/money'
 import type { QuoteResponse } from '@/api/contracts/campaigns'
@@ -48,14 +48,15 @@ const range = computed(() =>
 <template>
   <div class="rounded-xl border border-line bg-surface p-4 shadow-card" data-testid="estimate">
     <div class="mb-3 flex items-center gap-2">
-      <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-clay-500/10 text-clay-500">
-        <PhUsersThree :size="16" />
-      </span>
+      <MimuIcon name="footfall" variant="sticker" :size="52" class="-my-2" />
       <p class="text-[13px] font-semibold text-neutral-900">{{ $t('wizard.estimate.title') }}</p>
     </div>
 
     <!-- Not enough to price yet -->
-    <p v-if="!ready" class="text-sm text-neutral-400">{{ $t('wizard.estimate.empty') }}</p>
+    <div v-if="!ready" class="flex items-center gap-3 text-sm text-neutral-400">
+      <MimuIcon name="targeting" variant="sticker" :size="64" />
+      <p>{{ $t('wizard.estimate.empty') }}</p>
+    </div>
 
     <template v-else>
       <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">

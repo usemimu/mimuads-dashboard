@@ -8,6 +8,7 @@
  */
 import type { Component } from 'vue'
 import { PhArrowUp, PhArrowDown } from '@phosphor-icons/vue'
+import MimuIcon from '@/components/ui/MimuIcon.vue'
 
 withDefaults(
   defineProps<{
@@ -16,6 +17,8 @@ withDefaults(
     sub?: string
     active?: boolean
     icon?: Component
+    /** Mimuads neo-brutalist sticker name (src/assets/icons/brutal). Takes the place of `icon`. */
+    sticker?: string
     /** Signed period-over-period change (%). Positive = up (moss), negative = down (red). */
     delta?: number
     /** Flush cell — no border/rounding/shadow, for use inside a framed divided grid. */
@@ -36,8 +39,9 @@ withDefaults(
   >
     <div class="flex items-center justify-between gap-2">
       <p class="eyebrow">{{ label }}</p>
+      <MimuIcon v-if="sticker" :name="sticker" variant="sticker" :size="76" class="-my-4 -mr-2" />
       <span
-        v-if="icon"
+        v-else-if="icon"
         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600"
       >
         <component :is="icon" :size="18" weight="bold" />
