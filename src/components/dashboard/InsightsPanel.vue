@@ -36,7 +36,7 @@ const hasSpend = computed(() => rows.value.some((r) => r.spend > 0))
       <li v-for="r in rows" :key="r.objective">
         <div class="mb-1 flex items-center justify-between text-sm">
           <span class="capitalize text-neutral-700">{{ $t('campaigns.objectives.' + r.objective) }}</span>
-          <span class="font-mono text-neutral-500">{{ formatKobo(String(r.spend), { showDecimals: false }) }}</span>
+          <span class="font-display text-[13px] font-medium text-neutral-500">{{ formatKobo(String(r.spend), { showDecimals: false }) }}</span>
         </div>
         <div class="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
           <div class="h-full rounded-full bg-clay-500" :style="{ width: r.pct + '%' }" />

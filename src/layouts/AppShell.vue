@@ -1,12 +1,6 @@
 <script setup lang="ts">
-/**
- * App shell — Tailwind Plus "Sidebar Layout" structure, re-themed to the clay
- * palette. Static sidebar on desktop (md+); a proper off-canvas drawer
- * (Headless UI Dialog) on mobile. Topbar carries the mobile hamburger, theme
- * toggle, notifications and the user menu. Content hosts the banners + RouterView.
- */
-import { computed, ref, watch } from 'vue'
-import { RouterView, useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
 import {
   Dialog,
   DialogPanel,
@@ -27,9 +21,13 @@ import {
   PhSignOut,
   PhSun,
   PhMoon,
-  PhSidebarSimple,
+  PhGauge,
+  PhMegaphone,
+  PhMapPin,
+  PhChartLine,
+  PhWallet,
+  PhBuildings,
 } from '@phosphor-icons/vue'
-import AppSidebar from '@/layouts/AppSidebar.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
 import VerificationBanner from '@/components/VerificationBanner.vue'
 import { useSession } from '@/stores/session'
@@ -37,23 +35,25 @@ import { useSession } from '@/stores/session'
 const session = useSession()
 const router = useRouter()
 
-const sidebarOpen = ref(false)
+const mobileOpen = ref(false)
 const palette = ref<InstanceType<typeof CommandPalette> | null>(null)
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
-// Desktop rail collapse — persisted so it survives reloads. Mobile uses the
-// off-canvas drawer instead, so this only drives the md+ static sidebar.
-const collapsed = ref(localStorage.getItem('mimu-platform-sidebar') === 'collapsed')
-watch(collapsed, (v) => localStorage.setItem('mimu-platform-sidebar', v ? 'collapsed' : 'expanded'))
-
-// Light / dark theme — flip `data-theme` on <html>, persist. Initial attribute
-// is set in main.ts before mount to avoid a flash.
 const theme = ref(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light')
 function toggleTheme() {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
   document.documentElement.setAttribute('data-theme', theme.value)
   localStorage.setItem('mimu-platform-theme', theme.value)
 }
+
+const navItems = [
+  { to: '/dashboard',    key: 'nav.dashboard',    icon: PhGauge },
+  { to: '/campaigns',    key: 'nav.campaigns',    icon: PhMegaphone },
+  { to: '/screens',      key: 'nav.screens',      icon: PhMapPin },
+  { to: '/reports',      key: 'nav.reports',      icon: PhChartLine },
+  { to: '/billing',      key: 'nav.billing',      icon: PhWallet },
+  { to: '/organization', key: 'nav.organization', icon: PhBuildings },
+] as const
 
 const userName = computed(() => session.user?.name ?? session.context.userId ?? '')
 const userEmail = computed(() => session.user?.email ?? '')
@@ -72,151 +72,152 @@ async function onSignOut() {
 
 <template>
   <div class="min-h-screen bg-[var(--bg)]">
-    <!-- Global command palette (⌘K) -->
     <CommandPalette ref="palette" :on-toggle-theme="toggleTheme" />
 
-    <!-- Mobile off-canvas sidebar -->
-    <TransitionRoot as="template" :show="sidebarOpen">
-      <Dialog as="div" class="relative z-40 md:hidden" @close="sidebarOpen = false">
+    <!-- Mobile nav sheet (drops from top) -->
+    <TransitionRoot as="template" :show="mobileOpen">
+      <Dialog as="div" class="relative z-50 md:hidden" @close="mobileOpen = false">
         <TransitionChild
           as="template"
-          enter="transition-opacity ease-linear duration-300"
+          enter="transition-opacity ease-out duration-200"
           enter-from="opacity-0"
           enter-to="opacity-100"
-          leave="transition-opacity ease-linear duration-300"
+          leave="transition-opacity ease-in duration-150"
           leave-from="opacity-100"
           leave-to="opacity-0"
         >
-          <div class="fixed inset-0 bg-neutral-900/60" />
+          <div class="fixed inset-0 bg-neutral-900/40 backdrop-blur-sm" />
         </TransitionChild>
 
-        <div class="fixed inset-0 z-40 flex">
+        <div class="fixed inset-x-0 top-0 p-3">
           <TransitionChild
             as="template"
-            enter="transition ease-in-out duration-300 transform"
-            enter-from="-translate-x-full"
-            enter-to="translate-x-0"
-            leave="transition ease-in-out duration-300 transform"
-            leave-from="translate-x-0"
-            leave-to="-translate-x-full"
+            enter="transition ease-out duration-200 transform"
+            enter-from="opacity-0 -translate-y-3"
+            enter-to="opacity-100 translate-y-0"
+            leave="transition ease-in duration-150 transform"
+            leave-from="opacity-100 translate-y-0"
+            leave-to="opacity-0 -translate-y-3"
           >
-            <DialogPanel class="relative flex w-full max-w-xs flex-1 flex-col border-r border-line bg-surface">
-              <TransitionChild
-                as="template"
-                enter="ease-in-out duration-300"
-                enter-from="opacity-0"
-                enter-to="opacity-100"
-                leave="ease-in-out duration-300"
-                leave-from="opacity-100"
-                leave-to="opacity-0"
-              >
-                <div class="absolute right-0 top-0 -mr-12 pt-2">
-                  <button
-                    type="button"
-                    class="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                    @click="sidebarOpen = false"
-                  >
-                    <span class="sr-only">Close sidebar</span>
-                    <PhX :size="22" class="text-white" />
-                  </button>
+            <DialogPanel class="rounded-[14px] border border-line bg-surface shadow-pop">
+              <div class="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-line">
+                <div class="flex items-center gap-2.5">
+                  <img src="/bimi-logo.svg" alt="" class="h-7 w-7 rounded-lg object-cover" />
+                  <span class="text-[16px] font-semibold tracking-tight text-neutral-900">{{ $t('app.name') }}</span>
                 </div>
-              </TransitionChild>
-              <AppSidebar @navigate="sidebarOpen = false" />
+                <button
+                  type="button"
+                  class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-900/[0.05]"
+                  @click="mobileOpen = false"
+                >
+                  <PhX :size="18" />
+                </button>
+              </div>
+              <nav class="p-2">
+                <RouterLink
+                  v-for="item in navItems"
+                  :key="item.to"
+                  :to="item.to"
+                  class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-900/[0.04] hover:text-neutral-900"
+                  active-class="bg-clay-500/10 !text-neutral-900 font-semibold"
+                  @click="mobileOpen = false"
+                >
+                  <component :is="item.icon" :size="17" class="shrink-0" />
+                  {{ $t(item.key) }}
+                </RouterLink>
+              </nav>
             </DialogPanel>
           </TransitionChild>
-          <div class="w-14 shrink-0" aria-hidden="true" />
         </div>
       </Dialog>
     </TransitionRoot>
 
-    <!-- Static desktop sidebar -->
-    <div
-      class="hidden transition-[width] duration-200 ease-in-out md:fixed md:inset-y-0 md:flex md:flex-col"
-      :class="collapsed ? 'md:w-16' : 'md:w-64'"
-    >
-      <div class="flex min-h-0 flex-1 flex-col border-r border-line">
-        <AppSidebar :collapsed="collapsed" />
-      </div>
-    </div>
-
-    <!-- Main column -->
-    <div
-      class="flex min-h-screen flex-col transition-[padding] duration-200 ease-in-out"
-      :class="collapsed ? 'md:pl-16' : 'md:pl-64'"
-    >
-      <!-- Topbar -->
-      <header
-        class="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-3 sm:px-4"
+    <!-- Floating pill topbar -->
+    <header class="sticky top-0 z-10 px-3 pt-2.5 pb-2">
+      <div
+        class="mx-auto flex h-[52px] max-w-screen-2xl items-center gap-2 rounded-[14px] border border-line bg-surface/[0.96] px-3 shadow-float backdrop-blur-md"
       >
-        <!-- Mobile: open drawer -->
-        <button
-          type="button"
-          class="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:hidden"
-          @click="sidebarOpen = true"
+        <!-- Logo -->
+        <RouterLink
+          to="/dashboard"
+          class="flex shrink-0 items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-neutral-900/[0.04]"
         >
-          <span class="sr-only">Open sidebar</span>
-          <PhList :size="20" />
-        </button>
+          <img src="/bimi-logo.svg" alt="" class="h-7 w-7 rounded-lg object-cover" />
+          <span class="hidden text-[15px] font-semibold tracking-[-0.02em] text-neutral-900 sm:block">{{ $t('app.name') }}</span>
+        </RouterLink>
 
-        <!-- Desktop: collapse / expand rail -->
-        <button
-          type="button"
-          class="hidden h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:flex"
-          :title="$t('nav.toggleSidebar')"
-          @click="collapsed = !collapsed"
-        >
-          <span class="sr-only">{{ $t('nav.toggleSidebar') }}</span>
-          <PhSidebarSimple :size="20" />
-        </button>
+        <div class="hidden h-4 w-px shrink-0 bg-line md:block" />
 
-        <button
-          type="button"
-          class="mx-auto flex max-w-[520px] flex-1 items-center gap-2 rounded-lg border border-line bg-neutral-50 px-3 py-1.5 text-sm text-neutral-400 transition-colors hover:border-line-strong hover:text-neutral-500"
-          @click="palette?.open()"
-        >
-          <PhMagnifyingGlass :size="15" />
-          <span class="flex-1 truncate text-left">{{ $t('cmd.placeholder') }}</span>
-          <kbd
-            class="hidden items-center gap-0.5 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] font-semibold text-neutral-400 sm:inline-flex"
+        <!-- Desktop nav -->
+        <nav class="hidden flex-1 items-center gap-0.5 md:flex">
+          <RouterLink
+            v-for="item in navItems"
+            :key="item.to"
+            :to="item.to"
+            class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-neutral-500 transition-colors hover:bg-neutral-900/[0.04] hover:text-neutral-900"
+            active-class="!bg-clay-500/10 !text-neutral-900 font-semibold"
           >
-            {{ isMac ? '⌘' : 'Ctrl' }} K
-          </kbd>
-        </button>
+            <component :is="item.icon" :size="14" weight="regular" />
+            {{ $t(item.key) }}
+          </RouterLink>
+        </nav>
 
-        <div class="flex items-center gap-1.5">
+        <!-- Right actions -->
+        <div class="ml-auto flex items-center gap-0.5 md:ml-0">
+          <!-- Search (desktop) -->
           <button
-            class="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+            type="button"
+            class="hidden h-8 items-center gap-1.5 rounded-lg border border-line bg-neutral-50 px-2.5 text-[12px] text-neutral-400 transition-colors hover:border-line-strong hover:text-neutral-600 md:flex"
+            @click="palette?.open()"
+          >
+            <PhMagnifyingGlass :size="13" />
+            <span>{{ $t('cmd.placeholder') }}</span>
+            <kbd
+              class="hidden items-center gap-0.5 rounded border border-line px-1 py-0.5 text-[9px] font-semibold leading-none text-neutral-400 sm:inline-flex"
+            >
+              {{ isMac ? '⌘' : 'Ctrl' }} K
+            </kbd>
+          </button>
+
+          <!-- Theme toggle -->
+          <button
+            type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-900/[0.04] hover:text-neutral-900"
             :title="$t('nav.toggleTheme')"
             @click="toggleTheme"
           >
-            <PhMoon v-if="theme === 'light'" :size="18" />
-            <PhSun v-else :size="18" />
+            <PhMoon v-if="theme === 'light'" :size="16" />
+            <PhSun v-else :size="16" />
           </button>
 
+          <!-- Notifications -->
           <button
-            class="relative flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100"
+            type="button"
+            class="relative flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-900/[0.04]"
             title="Notifications"
           >
-            <PhBell :size="18" />
-            <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-clay-500" />
+            <PhBell :size="16" />
+            <span class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-clay-500" />
           </button>
 
           <!-- User menu -->
           <Menu as="div" class="relative">
-            <MenuButton class="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-neutral-100">
+            <MenuButton
+              class="flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-neutral-900/[0.04]"
+            >
               <img
                 v-if="session.user?.profileImageUrl"
                 :src="session.user.profileImageUrl"
                 alt="avatar"
-                class="h-7 w-7 rounded-lg object-cover"
+                class="h-6 w-6 rounded-lg object-cover"
               />
               <div
                 v-else
-                class="flex h-7 w-7 items-center justify-center rounded-lg bg-clay-500 text-[11px] font-bold text-white"
+                class="flex h-6 w-6 items-center justify-center rounded-lg bg-clay-500 text-[10px] font-bold text-white"
               >
                 {{ userInitials }}
               </div>
-              <PhCaretDown :size="12" class="text-neutral-400" />
+              <PhCaretDown :size="11" class="text-neutral-400" />
             </MenuButton>
             <transition
               enter-active-class="transition ease-out duration-100"
@@ -237,7 +238,7 @@ async function onSignOut() {
                 <div class="p-1">
                   <MenuItem v-slot="{ active }">
                     <button
-                      :class="[active ? 'bg-neutral-100' : '', 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700']"
+                      :class="[active ? 'bg-neutral-900/[0.05]' : '', 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700']"
                       @click="router.push('/settings')"
                     >
                       <PhGearSix :size="16" /> {{ $t('nav.settings') }}
@@ -247,7 +248,7 @@ async function onSignOut() {
                 <div class="border-t border-line p-1">
                   <MenuItem v-slot="{ active }">
                     <button
-                      :class="[active ? 'bg-neutral-100' : '', 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-clay-700']"
+                      :class="[active ? 'bg-neutral-900/[0.05]' : '', 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-clay-700']"
                       @click="onSignOut"
                     >
                       <PhSignOut :size="16" /> {{ $t('auth.signOut') }}
@@ -257,24 +258,33 @@ async function onSignOut() {
               </MenuItems>
             </transition>
           </Menu>
+
+          <!-- Mobile hamburger -->
+          <button
+            type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-900/[0.04] md:hidden"
+            @click="mobileOpen = true"
+          >
+            <PhList :size="18" />
+          </button>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <!-- Content -->
-      <main class="min-h-0 flex-1">
-        <VerificationBanner />
+    <!-- Content -->
+    <main class="min-h-0 flex-1">
+      <VerificationBanner />
 
-        <p
-          v-if="!session.canMutate"
-          class="border-b border-gold-200/60 bg-gold-50 px-6 py-2 text-center text-sm text-gold-800"
-        >
-          {{ $t('roles.viewerReadOnly') }}
-        </p>
+      <p
+        v-if="!session.canMutate"
+        class="border-b border-gold-200/60 bg-gold-50 px-6 py-2 text-center text-sm text-gold-800"
+      >
+        {{ $t('roles.viewerReadOnly') }}
+      </p>
 
-        <div class="page-body animate-fade-in">
-          <RouterView />
-        </div>
-      </main>
-    </div>
+      <div class="page-body animate-fade-in">
+        <RouterView />
+      </div>
+    </main>
   </div>
 </template>

@@ -39,10 +39,10 @@ async function onSubmit() {
 <template>
   <AuthCard>
     <form class="space-y-4" @submit.prevent="onSubmit">
-      <h2 class="font-display text-2xl font-semibold text-neutral-900">{{ $t('reset.resetTitle') }}</h2>
+      <h2 class="font-body text-2xl font-semibold text-neutral-900">{{ $t('reset.resetTitle') }}</h2>
       <label class="block">
         <span class="label">{{ $t('reset.code') }}</span>
-        <input v-model="token" inputmode="numeric" maxlength="6" required class="input text-center font-mono tracking-widest" />
+        <input v-model="token" inputmode="numeric" maxlength="6" required class="input text-center tracking-widest" />
       </label>
       <label class="block">
         <span class="label">{{ $t('reset.newPassword') }}</span>

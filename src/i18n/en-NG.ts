@@ -137,6 +137,7 @@ export default {
     email: 'Email address',
     phone: 'Phone number',
     positionLabel: 'Position at company',
+    positionPlaceholder: 'Select your position',
     positionOptional: 'Optional',
     positions: [
       'CEO / Founder',
@@ -531,7 +532,7 @@ export default {
     txReference: 'Reference',
     txId: 'Transaction ID',
     amount: 'Amount (₦)',
-    topupTitle: 'Top up with Paystack',
+    topupTitle: 'Top up your wallet',
     topupHint: 'You will be redirected to Paystack to complete payment.',
     continue: 'Continue to Paystack',
     surcharge: 'Card surcharge',

@@ -22,7 +22,7 @@ const show = computed(() => session.hasOrg && !kycComplete.value)
 <template>
   <div
     v-if="show"
-    class="flex items-center justify-center gap-2 border-b border-gold-200/60 bg-gold-50 px-6 py-2.5 text-center text-sm text-gold-800"
+    class="flex items-center justify-center gap-2 border-b border-gold-200/60 bg-gold-500/10 px-6 py-2.5 text-center text-sm text-gold-800"
   >
     <PhSealWarning :size="17" weight="fill" class="shrink-0 text-gold-500" />
     <template v-if="isAgency">{{ $t('verification.bannerAgency') }}</template>

@@ -10,7 +10,7 @@ const titleKey = computed(() => (route.meta.titleKey as string) ?? 'app.name')
 
 <template>
   <div>
-    <h1 class="mb-8 font-display text-3xl font-semibold leading-none text-neutral-900 sm:text-4xl">
+    <h1 class="mb-8 font-body text-3xl font-semibold leading-none text-neutral-900 sm:text-4xl">
       {{ $t(titleKey) }}
     </h1>
     <div

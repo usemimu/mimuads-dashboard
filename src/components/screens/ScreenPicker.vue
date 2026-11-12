@@ -80,7 +80,7 @@ function clearAll() {
 <template>
   <div class="overflow-hidden rounded-xl border border-line">
     <!-- Filter row -->
-    <div class="flex flex-wrap items-center gap-2 border-b border-line bg-neutral-50 p-2.5">
+    <div class="flex flex-wrap items-center gap-2 border-b border-line bg-surface-sunken p-2.5">
       <div class="relative min-w-[9rem] flex-1">
         <PhMagnifyingGlass :size="15" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
         <input v-model="search" :placeholder="$t('screens.search')" class="input py-1.5 pl-8 text-sm" />
@@ -96,7 +96,7 @@ function clearAll() {
     </div>
 
     <!-- Map -->
-    <div class="h-56 border-b border-line bg-neutral-100">
+    <div class="h-56 border-b border-line bg-surface-sunken">
       <ScreensMap :screens="filtered" :selected-ids="selected" @select="toggle" />
     </div>
 
@@ -106,7 +106,7 @@ function clearAll() {
       <p v-else-if="!filtered.length" class="px-4 py-6 text-center text-sm text-neutral-400">
         {{ $t('screens.resultCount', { count: 0 }) }}
       </p>
-      <ul v-else class="divide-y divide-neutral-100">
+      <ul v-else class="divide-y divide-line">
         <li v-for="s in filtered" :key="s.id" class="flex items-center gap-3 px-3 py-2 hover:bg-neutral-50">
           <span class="inline-block h-2 w-2 shrink-0 rounded-full" :class="isOnline(s.status) ? 'bg-moss-500' : 'bg-neutral-400'" />
           <div class="min-w-0 flex-1">
@@ -126,7 +126,7 @@ function clearAll() {
     </div>
 
     <!-- Selection summary -->
-    <div class="flex items-center gap-3 border-t border-line bg-neutral-50 px-3 py-2 text-sm">
+    <div class="flex items-center gap-3 border-t border-line bg-surface-sunken px-3 py-2 text-sm">
       <span class="font-semibold text-neutral-900" data-testid="picker-count">{{ $t('screens.resultCount', { count: selected.length }) }}</span>
       <span class="text-neutral-500">{{ $t('screens.estReach') }}: <span class="font-mono">{{ selectedReach.toLocaleString() }}</span></span>
       <div class="ml-auto flex items-center gap-3">

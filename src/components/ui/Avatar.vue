@@ -43,7 +43,7 @@ const initials = computed(() => {
   />
   <div
     v-else
-    class="flex shrink-0 items-center justify-center rounded-full bg-clay-500/15 font-semibold text-clay-700"
+    class="flex shrink-0 items-center justify-center rounded-full bg-clay-500/10 font-semibold text-clay-600"
     :class="dims"
   >
     {{ initials }}

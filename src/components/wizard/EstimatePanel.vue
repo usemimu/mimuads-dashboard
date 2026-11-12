@@ -61,20 +61,20 @@ const range = computed(() =>
       <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
         {{ budgetKobo != null ? $t('wizard.estimate.forBudget') : $t('wizard.estimate.audience') }}
       </p>
-      <p v-if="loading" class="mt-1 font-display text-2xl text-neutral-300">{{ $t('campaigns.quoteLoading') }}</p>
-      <p v-else-if="range" class="mt-1 font-display text-2xl font-semibold text-neutral-900 [font-variant-numeric:tabular-nums]">
+      <p v-if="loading" class="mt-1 font-body text-2xl text-neutral-300">{{ $t('campaigns.quoteLoading') }}</p>
+      <p v-else-if="range" class="mt-1 font-body text-2xl font-semibold text-neutral-900 [font-variant-numeric:tabular-nums]">
         {{ range.low }}<span class="text-neutral-400">–</span>{{ range.high }}
       </p>
-      <p v-else class="mt-1 font-display text-2xl text-neutral-300">—</p>
+      <p v-else class="mt-1 font-body text-2xl text-neutral-300">—</p>
       <p class="text-[11px] text-neutral-400">{{ $t('wizard.estimate.impressionsOver') }}</p>
 
       <!-- Reach + frequency -->
       <div v-if="quote && reach" class="mt-3 grid grid-cols-2 gap-2">
-        <div class="rounded-lg bg-neutral-50 p-2.5">
+        <div class="rounded-lg bg-surface-sunken p-2.5">
           <p class="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">{{ $t('wizard.estimate.reach') }}</p>
           <p class="mt-0.5 font-mono text-sm font-semibold text-neutral-900">{{ fmt(reach) }}</p>
         </div>
-        <div class="rounded-lg bg-neutral-50 p-2.5">
+        <div class="rounded-lg bg-surface-sunken p-2.5">
           <p class="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">{{ $t('wizard.estimate.frequency') }}</p>
           <p class="mt-0.5 font-mono text-sm font-semibold text-neutral-900">{{ frequency.toFixed(1) }}×</p>
         </div>
@@ -118,7 +118,7 @@ const range = computed(() =>
 
       <!-- Budget below full delivery: normal in DOOH — explain, don't alarm.
            Also the honest caveat that reach is a set value today. -->
-      <p v-if="quote && underDelivers" class="mt-3 rounded-lg bg-neutral-50 px-2.5 py-2 text-[11px] leading-relaxed text-neutral-500">
+      <p v-if="quote && underDelivers" class="mt-3 rounded-lg bg-surface-sunken px-2.5 py-2 text-[11px] leading-relaxed text-neutral-500">
         {{ $t('wizard.estimate.partial', { pct: Math.round(fraction * 100) }) }}
         <span class="text-neutral-400">{{ $t('wizard.estimate.fullDelivery', { cost: formatKobo(quote.netKobo, { showDecimals: false }) }) }}</span>
       </p>

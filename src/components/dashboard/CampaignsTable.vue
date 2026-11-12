@@ -41,7 +41,7 @@ function pacing(c: Campaign): number {
         <tr
           v-for="c in campaigns"
           :key="c.id"
-          class="border-b border-neutral-100 last:border-0 hover:bg-neutral-50"
+          class="border-b border-line last:border-0 hover:bg-neutral-50/60"
         >
           <td class="px-3 py-2.5">
             <RouterLink :to="`/campaigns/${c.id}`" class="font-medium text-neutral-900 hover:text-clay-600">
@@ -50,15 +50,15 @@ function pacing(c: Campaign): number {
             <p class="text-xs capitalize text-neutral-400">{{ c.objective }}</p>
           </td>
           <td class="px-3 py-2.5"><Badge :tone="statusTone(c.status)" size="sm">{{ statusLabel(c.status) }}</Badge></td>
-          <td class="px-3 py-2.5 text-right font-mono text-neutral-700">{{ playsFor(c.id).toLocaleString('en-NG') }}</td>
-          <td class="px-3 py-2.5 text-right font-mono text-neutral-700">{{ formatKobo(c.budgetKobo, { showDecimals: false }) }}</td>
-          <td class="px-3 py-2.5 text-right font-mono text-neutral-700">{{ formatKobo(c.spentKobo, { showDecimals: false }) }}</td>
+          <td class="px-3 py-2.5 text-right font-display text-[13px] font-medium text-neutral-700">{{ playsFor(c.id).toLocaleString('en-NG') }}</td>
+          <td class="px-3 py-2.5 text-right font-display text-[13px] font-medium text-neutral-700">{{ formatKobo(c.budgetKobo, { showDecimals: false }) }}</td>
+          <td class="px-3 py-2.5 text-right font-display text-[13px] font-medium text-neutral-700">{{ formatKobo(c.spentKobo, { showDecimals: false }) }}</td>
           <td class="px-3 py-2.5">
             <div class="flex items-center gap-2">
               <div class="h-1.5 w-20 overflow-hidden rounded-full bg-neutral-100">
                 <div class="h-full rounded-full bg-clay-500" :style="{ width: pacing(c) + '%' }" />
               </div>
-              <span class="font-mono text-xs text-neutral-500">{{ pacing(c) }}%</span>
+              <span class="font-display text-xs font-medium text-neutral-500">{{ pacing(c) }}%</span>
             </div>
           </td>
         </tr>

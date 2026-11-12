@@ -31,7 +31,7 @@ async function onSubmit() {
   <AuthCard>
     <form class="space-y-4" @submit.prevent="onSubmit">
       <div>
-        <h2 class="font-display text-2xl font-semibold text-neutral-900">{{ $t('reset.forgotTitle') }}</h2>
+        <h2 class="font-body text-2xl font-semibold text-neutral-900">{{ $t('reset.forgotTitle') }}</h2>
         <p class="text-sm text-neutral-500">{{ $t('reset.forgotBody') }}</p>
       </div>
       <label class="block">

@@ -113,7 +113,7 @@ const inputClass =
 <template>
   <Card class="mb-5">
     <div class="flex items-center justify-between mb-1">
-      <h2 class="font-display text-lg text-neutral-900">Offer</h2>
+      <h2 class="font-body text-[15px] font-semibold text-neutral-900">Offer</h2>
       <Badge :tone="statusTone">{{ statusLabel }}</Badge>
     </div>
     <p class="text-sm text-neutral-500 mb-4">
@@ -121,7 +121,7 @@ const inputClass =
       only after admin approval, while this campaign is running.
     </p>
 
-    <p v-if="status === 'rejected' && offer?.rejectionReason" class="text-sm text-clay-700 bg-clay-50 border border-clay-200 rounded-lg px-3 py-2 mb-4">
+    <p v-if="status === 'rejected' && offer?.rejectionReason" class="text-sm text-clay-700 bg-clay-500/10 border border-clay-200/60 rounded-lg px-3 py-2 mb-4">
       Rejected: {{ offer.rejectionReason }}
     </p>
 

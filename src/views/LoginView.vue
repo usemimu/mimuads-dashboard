@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhGithubLogo, PhGoogleLogo } from '@phosphor-icons/vue'
+import { PhGoogleLogo } from '@phosphor-icons/vue'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
 import PasswordField from '@/components/ui/PasswordField.vue'
@@ -82,14 +82,9 @@ function social() {
         </span>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
-        <Button variant="secondary" size="lg" @click="social">
-          <PhGithubLogo :size="18" weight="fill" /> GitHub
-        </Button>
-        <Button variant="secondary" size="lg" @click="social">
-          <PhGoogleLogo :size="18" weight="bold" /> Google
-        </Button>
-      </div>
+      <Button variant="secondary" size="lg" class="w-full" @click="social">
+        <PhGoogleLogo :size="18" weight="bold" /> Google
+      </Button>
     </div>
 
     <template #footer>

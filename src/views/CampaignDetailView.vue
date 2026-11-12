@@ -198,7 +198,7 @@ async function onClone() {
       <RouterLink to="/campaigns" class="mb-2 inline-flex items-center gap-1 text-xs font-medium text-neutral-400 hover:text-clay-600">
         <PhArrowLeft :size="13" /> {{ $t('nav.campaigns') }}
       </RouterLink>
-      <h1 class="font-display text-3xl font-bold leading-none tracking-tight text-neutral-900 sm:text-4xl">
+      <h1 class="font-body text-3xl font-bold leading-none tracking-tight text-neutral-900 sm:text-4xl">
         {{ c.name }}
       </h1>
       <div class="mt-2.5 flex flex-wrap items-center gap-2">
@@ -239,10 +239,10 @@ async function onClone() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(r, i) in rows" :key="i" class="border-b border-neutral-100 last:border-0">
+                    <tr v-for="(r, i) in rows" :key="i" class="border-b border-line last:border-0">
                       <td class="py-2 pr-3 text-neutral-900">{{ r.label }}</td>
-                      <td class="px-3 py-2 text-right font-mono text-neutral-700">{{ r.plays.toLocaleString('en-NG') }}</td>
-                      <td class="py-2 pl-3 text-right font-mono text-neutral-700">{{ r.formattedCost ?? '—' }}</td>
+                      <td class="px-3 py-2 text-right font-display text-[13px] font-medium text-neutral-700">{{ r.plays.toLocaleString('en-NG') }}</td>
+                      <td class="py-2 pl-3 text-right font-display text-[13px] font-medium text-neutral-700">{{ r.formattedCost ?? '—' }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -257,12 +257,12 @@ async function onClone() {
 
         <!-- Decision factors -->
         <Card>
-          <h2 class="mb-4 font-display text-lg font-semibold text-neutral-900">{{ $t('campaigns.decisionFactors') }}</h2>
+          <h2 class="mb-4 font-body text-lg font-semibold text-neutral-900">{{ $t('campaigns.decisionFactors') }}</h2>
           <div v-if="factorList.length" class="space-y-3">
             <div v-for="(f, i) in factorList" :key="i">
               <div class="mb-1 flex justify-between text-xs">
                 <span class="font-medium text-neutral-600">{{ f.label ?? f.name }}</span>
-                <span class="font-mono text-neutral-400">{{ Math.round((f.weight ?? f.value ?? 0) * 100) }}%</span>
+                <span class="font-display text-neutral-400">{{ Math.round((f.weight ?? f.value ?? 0) * 100) }}%</span>
               </div>
               <div class="h-1.5 overflow-hidden rounded-full bg-neutral-100">
                 <div class="h-full rounded-full bg-moss-400" :style="{ width: Math.round((f.weight ?? f.value ?? 0) * 100) + '%' }" />
@@ -316,18 +316,18 @@ async function onClone() {
         <Card>
           <div class="mb-2 flex items-center justify-between text-sm">
             <span class="font-medium text-neutral-700">{{ $t('campaigns.pacing') }}</span>
-            <span class="font-mono text-xs text-neutral-500">{{ pacing }}%</span>
+            <span class="font-display text-xs font-medium text-neutral-500">{{ pacing }}%</span>
           </div>
           <div class="h-2.5 overflow-hidden rounded-full bg-neutral-100">
             <div class="h-full rounded-full bg-clay-500 transition-all" :style="{ width: pacing + '%' }" />
           </div>
           <div class="mt-2.5 flex items-center justify-between gap-2 text-xs">
-            <span class="font-mono text-neutral-500">{{ formatKobo(c.spentKobo) }} / {{ formatKobo(c.budgetKobo) }}</span>
+            <span class="font-display text-[13px] font-medium text-neutral-500">{{ formatKobo(c.spentKobo) }}<span class="text-neutral-300"> / </span>{{ formatKobo(c.budgetKobo) }}</span>
             <Badge :tone="pacingTone" size="sm" class="capitalize">{{ (overall?.pacing?.status ?? 'on track').replace(/_/g, ' ') }}</Badge>
           </div>
           <div v-if="overall?.pacing?.formattedExpectedSpend" class="mt-2 flex justify-between text-xs">
             <span class="text-neutral-500">{{ $t('campaigns.perf.expectedSpend') }}</span>
-            <span class="font-mono text-neutral-700">{{ overall.pacing.formattedExpectedSpend }}</span>
+            <span class="font-display text-[13px] font-medium text-neutral-700">{{ overall.pacing.formattedExpectedSpend }}</span>
           </div>
         </Card>
 
@@ -338,11 +338,11 @@ async function onClone() {
             <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.status') }}</dt><dd><Badge :tone="statusTone(c.status)" size="sm">{{ statusLabel(c.status) }}</Badge></dd></div>
             <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.objective') }}</dt><dd class="capitalize text-neutral-900">{{ c.objective }}</dd></div>
             <div v-if="creativeFmt" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.format') }}</dt><dd class="capitalize text-neutral-900">{{ creativeFmt }}</dd></div>
-            <div v-if="c.screenCount != null" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('nav.screens') }}</dt><dd class="font-mono text-neutral-900">{{ c.screenCount.toLocaleString('en-NG') }}</dd></div>
+            <div v-if="c.screenCount != null" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('nav.screens') }}</dt><dd class="font-display text-[13px] font-medium text-neutral-900">{{ c.screenCount.toLocaleString('en-NG') }}</dd></div>
             <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.starts') }}</dt><dd class="text-neutral-900">{{ shortDate(c.startDate) }}</dd></div>
             <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.ends') }}</dt><dd class="text-neutral-900">{{ shortDate(c.endDate) }}</dd></div>
-            <div v-if="daysLeft != null" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.daysRemaining') }}</dt><dd class="font-mono text-neutral-900">{{ daysLeft }}</dd></div>
-            <div v-if="c.formattedBidCpm" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.cpmRate') }}</dt><dd class="font-mono text-neutral-900">{{ c.formattedBidCpm }}</dd></div>
+            <div v-if="daysLeft != null" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.daysRemaining') }}</dt><dd class="font-display text-[13px] font-medium text-neutral-900">{{ daysLeft }}</dd></div>
+            <div v-if="c.formattedBidCpm" class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.cpmRate') }}</dt><dd class="font-display text-[13px] font-medium text-neutral-900">{{ c.formattedBidCpm }}</dd></div>
             <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.created') }}</dt><dd class="text-neutral-900">{{ shortDate(c.createdAt) }}</dd></div>
             <div class="flex items-center justify-between gap-3"><dt class="text-neutral-500">{{ $t('campaigns.perf.lastPlay') }}</dt><dd class="text-neutral-900">{{ overall?.timeline?.lastPlayAt ? shortDate(overall.timeline.lastPlayAt) : $t('campaigns.perf.never') }}</dd></div>
           </dl>

@@ -47,55 +47,57 @@ async function onStart() {
     <PageHeader :title="$t('verification.hubTitle')" :subtitle="$t('verification.hubSubtitle')" />
 
     <div class="max-w-2xl">
-    <Card>
-      <!-- Identity verification -->
-      <div class="flex items-start justify-between gap-4">
-        <div class="flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-50 text-clay-600">
-            <PhIdentificationCard :size="20" />
+      <Card padding="none" class="overflow-hidden divide-y divide-line">
+        <!-- Identity verification -->
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
+                <PhIdentificationCard :size="20" />
+              </div>
+              <div>
+                <p class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('verification.identity') }}</p>
+                <p class="mt-0.5 text-sm text-neutral-500">{{ $t('verification.identityHint') }}</p>
+              </div>
+            </div>
+            <Badge :tone="kycComplete ? 'success' : 'pending'" :dot="true" class="shrink-0">
+              {{ isLoading ? $t('verification.checking') : kycComplete ? $t('verification.verified') : $t('verification.none') }}
+            </Badge>
           </div>
-          <div>
-            <p class="font-display text-lg font-semibold text-neutral-900">{{ $t('verification.identity') }}</p>
-            <p class="text-sm text-neutral-500">{{ $t('verification.identityHint') }}</p>
-          </div>
-        </div>
-        <Badge :tone="kycComplete ? 'success' : 'pending'" :dot="true">
-          {{ isLoading ? $t('verification.checking') : kycComplete ? $t('verification.verified') : $t('verification.none') }}
-        </Badge>
-      </div>
 
-      <div v-if="!kycComplete" class="mt-5 border-t border-neutral-100 pt-5">
-        <p v-if="isAgency" class="rounded-xl bg-gold-50 px-4 py-3 text-sm text-gold-800">
-          {{ $t('verification.bannerAgency') }}
-        </p>
-        <div v-else class="flex gap-3">
-          <Button :disabled="starting" @click="onStart">
-            <PhSealCheck :size="18" />
-            {{ starting ? $t('verification.starting') : $t('verification.start') }}
-          </Button>
-          <Button variant="outline" @click="() => refetch()">{{ $t('common.retry') }}</Button>
+          <div v-if="!kycComplete" class="mt-4 border-t border-line pt-4">
+            <p v-if="isAgency" class="rounded-xl bg-gold-500/10 px-4 py-3 text-sm text-gold-800">
+              {{ $t('verification.bannerAgency') }}
+            </p>
+            <div v-else class="flex gap-3">
+              <Button :disabled="starting" @click="onStart">
+                <PhSealCheck :size="18" />
+                {{ starting ? $t('verification.starting') : $t('verification.start') }}
+              </Button>
+              <Button variant="outline" @click="() => refetch()">{{ $t('common.retry') }}</Button>
+            </div>
+          </div>
+          <p v-else class="mt-3 text-sm text-moss-600">{{ $t('verification.identityDone') }}</p>
         </div>
-      </div>
-      <p v-else class="mt-4 text-sm text-moss-600">{{ $t('verification.identityDone') }}</p>
-    </Card>
 
-    <!-- Business approval — separate, non-blocking -->
-    <Card class="mt-6">
-      <div class="flex items-start justify-between gap-4">
-        <div class="flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-moss-50 text-moss-600">
-            <PhBuildings :size="20" />
-          </div>
-          <div>
-            <p class="font-display text-lg font-semibold text-neutral-900">{{ $t('verification.business') }}</p>
-            <p class="text-sm text-neutral-500">{{ $t('verification.businessHint') }}</p>
+        <!-- Business approval — non-blocking -->
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-moss-500/10 text-moss-600">
+                <PhBuildings :size="20" />
+              </div>
+              <div>
+                <p class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('verification.business') }}</p>
+                <p class="mt-0.5 text-sm text-neutral-500">{{ $t('verification.businessHint') }}</p>
+              </div>
+            </div>
+            <Badge :tone="approvalTone" :dot="true" class="shrink-0 capitalize">
+              {{ businessApprovalStatus || $t('verification.none') }}
+            </Badge>
           </div>
         </div>
-        <Badge :tone="approvalTone" :dot="true" class="capitalize">
-          {{ businessApprovalStatus || $t('verification.none') }}
-        </Badge>
-      </div>
-    </Card>
+      </Card>
     </div>
   </div>
 </template>

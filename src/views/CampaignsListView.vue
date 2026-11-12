@@ -234,12 +234,12 @@ function startWizard() {
         <Button size="sm" variant="secondary" @click="bulk('pause')">{{ $t('campaigns.bulkPause') }}</Button>
         <Button size="sm" variant="secondary" @click="bulk('resume')">{{ $t('campaigns.bulkResume') }}</Button>
       </template>
-      <div class="flex overflow-hidden rounded-lg border border-line-strong">
-        <button class="flex items-center gap-1 px-3 py-1.5 text-sm" :class="view === 'grid' ? 'bg-clay-50 text-clay-700' : 'text-neutral-600'" :title="$t('campaigns.gridView')" @click="view = 'grid'">
-          <PhSquaresFour :size="16" />
+      <div class="flex rounded-full border border-line-strong bg-surface p-0.5">
+        <button class="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm transition-colors" :class="view === 'grid' ? 'bg-clay-500 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'" :title="$t('campaigns.gridView')" @click="view = 'grid'">
+          <PhSquaresFour :size="15" />
         </button>
-        <button class="flex items-center gap-1 px-3 py-1.5 text-sm" :class="view === 'list' ? 'bg-clay-50 text-clay-700' : 'text-neutral-600'" :title="$t('campaigns.listView')" @click="view = 'list'">
-          <PhListBullets :size="16" />
+        <button class="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm transition-colors" :class="view === 'list' ? 'bg-clay-500 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'" :title="$t('campaigns.listView')" @click="view = 'list'">
+          <PhListBullets :size="15" />
         </button>
       </div>
     </div>
@@ -255,7 +255,7 @@ function startWizard() {
           </template>
         </EmptyState>
       </Card>
-      <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <div
           v-for="c in visible"
           :key="c.id"
@@ -338,27 +338,32 @@ function startWizard() {
               </span>
             </template>
           </div>
-          <div class="p-3">
+          <div class="p-3.5">
             <div class="flex items-start justify-between gap-2">
-              <RouterLink :to="`/campaigns/${c.id}`" class="min-w-0">
-                <p class="truncate font-medium text-neutral-900 hover:text-clay-600">{{ c.name }}</p>
-                <p class="text-xs capitalize text-neutral-400">{{ c.objective }}</p>
+              <RouterLink :to="`/campaigns/${c.id}`" class="min-w-0 flex-1">
+                <p class="truncate text-[13px] font-semibold text-neutral-900 hover:text-clay-600">{{ c.name }}</p>
+                <p class="mt-0.5 text-[11px] capitalize text-neutral-400">{{ c.objective }}</p>
               </RouterLink>
-              <!-- "Full" opens the campaign detail page. -->
               <RouterLink
                 :to="`/campaigns/${c.id}`"
-                class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-line-strong px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50 hover:text-clay-600"
+                class="inline-flex shrink-0 items-center gap-1 rounded-full border border-line-strong px-2.5 py-1 text-xs font-medium text-neutral-500 transition-colors hover:border-clay-400/60 hover:text-clay-600"
                 :title="$t('campaigns.full')"
               >
                 <PhArrowsOut :size="13" /> {{ $t('campaigns.full') }}
               </RouterLink>
             </div>
-            <div class="mt-2 flex items-center justify-between text-xs">
-              <span class="font-mono text-neutral-500">{{ formatKobo(c.spentKobo, { showDecimals: false }) }} / {{ formatKobo(c.budgetKobo, { showDecimals: false }) }}</span>
-              <span class="font-mono text-neutral-400">{{ pacing(c) }}%</span>
-            </div>
-            <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
-              <div class="h-full rounded-full bg-clay-500" :style="{ width: pacing(c) + '%' }" />
+            <div class="mt-2.5">
+              <div class="mb-1 flex items-center justify-between gap-1 text-[11px]">
+                <span class="font-mono text-neutral-500">{{ formatKobo(c.spentKobo, { showDecimals: false }) }}<span class="text-neutral-300"> / </span>{{ formatKobo(c.budgetKobo, { showDecimals: false }) }}</span>
+                <span class="font-mono font-medium" :class="pacing(c) >= 90 ? 'text-clay-600' : 'text-neutral-400'">{{ pacing(c) }}%</span>
+              </div>
+              <div class="h-1 w-full overflow-hidden rounded-full bg-neutral-100">
+                <div
+                  class="h-full rounded-full transition-all"
+                  :class="pacing(c) >= 90 ? 'bg-clay-500' : 'bg-clay-400'"
+                  :style="{ width: pacing(c) + '%' }"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -368,7 +373,7 @@ function startWizard() {
     <Card v-else padding="none" class="overflow-hidden">
       <table class="w-full text-sm">
         <thead class="text-left text-[11px] uppercase tracking-wider text-neutral-400">
-          <tr class="border-b border-neutral-100">
+          <tr class="border-b border-line">
             <th class="w-10 px-5 py-3"></th>
             <th class="px-5 py-3 font-semibold">{{ $t('campaigns.name') }}</th>
             <th class="px-5 py-3 font-semibold">{{ $t('campaigns.status') }}</th>
@@ -394,7 +399,7 @@ function startWizard() {
           <tr
             v-for="c in visible"
             :key="c.id"
-            class="border-t border-neutral-100 transition-colors hover:bg-neutral-50/70"
+            class="border-t border-line transition-colors hover:bg-neutral-50/70"
           >
             <td class="px-5 py-3">
               <input
@@ -470,7 +475,7 @@ function startWizard() {
             <p class="truncate font-medium text-neutral-900">{{ framesFor.name }}</p>
             <p class="text-xs text-neutral-400">{{ frames.length }} frames · {{ framesTotal }}s</p>
           </div>
-          <button type="button" class="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100" @click="closeFrames">
+          <button type="button" class="rounded-full p-1.5 text-neutral-500 hover:bg-neutral-900/[0.05]" @click="closeFrames">
             <PhX :size="18" />
           </button>
         </div>

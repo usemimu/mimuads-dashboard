@@ -1,13 +1,3 @@
-/* Geist Mono (SIL OFL) — self-hosted variable woff2, one file covers the whole
-   weight axis. Used for `font-mono` (money / metrics / IDs). */
-@font-face {
-  font-family: 'Geist Mono';
-  src: url('/fonts/GeistMono-Variable.woff2') format('woff2-variations');
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,8 +6,8 @@
   :root {
     color-scheme: light;
 
-    /* Theme-aware ramp (RGB triplets → Tailwind `neutral-*` / `surface` /
-       `line`). Light = the warm sand→ink palette. See `[data-theme="dark"]`. */
+    /* Neutral ramp — RGB triplets for Tailwind's neutral-* utilities.
+       Values match mimu-web exactly (the design source of truth). */
     --n-50: 247 245 242;
     --n-100: 237 233 227;
     --n-200: 221 216 208;
@@ -28,23 +18,26 @@
     --n-700: 64 60 54;
     --n-800: 40 36 32;
     --n-900: 14 13 11;
+
+    /* Surface tokens */
     --surface: 255 255 255;
     --surface-raised: 255 255 255;
-    --surface-sunken: 237 233 227;
-    --line: 230 225 217;
-    --line-strong: 221 216 208;
-    --shell-base: 221 216 208; /* tint behind the floating shell panels */
+    --surface-sunken: 251 244 240; /* clay-50 — warm tinted, matches mimu-web section-alt */
 
-    /* Semantic tokens used by the var-based component classes (.card, .page-*,
-       .sb-*, .topbar, .pill, .input…). Ported from mimu-admin. */
+    /* Border tokens — transparent rgba matching mimu-web's card/divider approach */
+    --line: 232 230 227;
+    --line-strong: 226 223 219;
+
+    /* Semantic tokens */
     --bg: #f7f5f2;
     --bg-raised: #ffffff;
-    --bg-sunken: #ede9e3;
+    --bg-sunken: #fbf4f0;    /* clay-50 — warm section alt */
+    --bg-alt: #f0ebe6;       /* mid-warm strip */
     --bg-hover: rgba(14, 13, 11, 0.035);
     --bg-active: rgba(181, 84, 48, 0.08);
     --bg-selected: rgba(181, 84, 48, 0.09);
-    --border: #e6e1d9;
-    --border-strong: #ddd8d0;
+    --border: rgba(14, 13, 11, 0.09);
+    --border-strong: rgba(14, 13, 11, 0.13);
     --border-focus: #b55430;
     --fg: #0e0d0b;
     --fg-2: #5e574f;
@@ -52,19 +45,14 @@
     --shadow-sm: 0 1px 2px rgba(14, 13, 11, 0.06);
     --shadow-md: 0 4px 14px rgba(14, 13, 11, 0.1);
     --shadow-lg: 0 12px 40px rgba(14, 13, 11, 0.16);
-    --sidebar-bg: #fdfcfa;
-    --topbar-bg: rgba(247, 245, 242, 0.88);
 
-    /* Soft brand wash behind the auth screens (AuthCard). Light = a warm clay
-       glow; dark overrides below so it doesn't read as a white patch. */
+    /* Auth page wash */
     --auth-wash: rgba(244, 227, 215, 0.5);
 
     --ease: cubic-bezier(0.2, 0, 0.1, 1);
     --dur-med: 160ms;
   }
 
-  /* Dark theme — surfaces darken, text lightens (a designed ramp, not a naive
-     inversion). Toggled by setting `data-theme="dark"` on <html>. */
   [data-theme='dark'] {
     color-scheme: dark;
 
@@ -78,32 +66,29 @@
     --n-700: 197 189 179;
     --n-800: 221 216 208;
     --n-900: 242 239 233;
-    --surface: 23 21 15;
-    --surface-raised: 30 26 20;
-    --surface-sunken: 10 9 7;
-    --line: 38 34 27;
-    --line-strong: 51 45 37;
-    --shell-base: 10 9 7;
+    --surface: 27 25 21;        /* #1b1915 — mimu-web card */
+    --surface-raised: 35 32 24; /* #232018 — elevated layer */
+    --surface-sunken: 22 20 16; /* #161410 — mimu-web alt */
+    --line: 51 46 38;
+    --line-strong: 68 62 51;
 
     --bg: #0e0d0b;
-    --bg-raised: #17150f;
-    --bg-sunken: #0a0907;
+    --bg-raised: #1b1915;
+    --bg-sunken: #161410;
+    --bg-alt: #232018;
     --bg-hover: rgba(255, 255, 255, 0.04);
     --bg-active: rgba(200, 119, 76, 0.14);
     --bg-selected: rgba(200, 119, 76, 0.16);
-    --border: #26221b;
-    --border-strong: #332d25;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.14);
     --border-focus: #c8774c;
-    --fg: #f2efe9;
+    --fg: #f4ede4;
     --fg-2: #a89f94;
     --fg-3: #6b6358;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 16px 50px rgba(0, 0, 0, 0.75);
-    --sidebar-bg: #120f0a;
-    --topbar-bg: rgba(14, 13, 11, 0.85);
 
-    /* Dark: a subtle warm clay glow instead of the pale light-mode wash. */
     --auth-wash: rgba(181, 84, 48, 0.12);
   }
 
@@ -117,17 +102,15 @@
     @apply bg-neutral-50 font-body text-[13px] leading-normal text-neutral-900 antialiased;
   }
 
-  /* Warm-tinted text selection instead of the default browser blue. */
   ::selection {
     @apply bg-clay-100 text-clay-800;
   }
 
-  /* Tabular figures for money/metrics wherever the mono font is used. */
+  /* Tabular figures for money/metrics on font-mono elements. */
   .font-mono {
     font-variant-numeric: tabular-nums;
   }
 
-  /* Slim, warm scrollbars so long tables/sidebars feel considered. */
   * {
     scrollbar-width: thin;
     scrollbar-color: theme('colors.neutral.300') transparent;
@@ -145,195 +128,22 @@
 }
 
 @layer components {
-  /* Core container — an "editorial console" surface: white on the sand
-     background, a warm hairline border and only a whisper of shadow.
-     Prefer the <Card> component; this class is here for one-off markup.
-     Shadow is inlined so it never depends on a custom utility. */
   .card {
     @apply rounded-xl border border-line bg-surface;
-    box-shadow: 0 1px 2px rgba(14, 13, 11, 0.05);
+    box-shadow: 0 1px 2px rgba(14, 13, 11, 0.04);
   }
 
-  /* Consistent form controls across every form. Pairs with
-     @tailwindcss/forms; denser (admin-like) with a warm clay ring. */
   .label {
     @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-neutral-500;
   }
   .input,
   .select {
-    @apply w-full rounded-lg border-line-strong bg-surface py-2 text-sm text-neutral-900 transition
+    @apply w-full rounded-lg border border-line-strong bg-surface py-2 text-sm text-neutral-900 transition
       placeholder:text-neutral-400 focus:border-clay-400 focus:ring-2 focus:ring-clay-400/25;
   }
 
-  /* Micro-label used above stats and section groupings. */
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-wider text-neutral-400;
-  }
-
-  /* ────────────────────────────────────────────────────────────────
-     App shell — ported from mimu-admin so the console frame (sidebar,
-     topbar, page chrome) is visually identical. Light theme only.
-     ──────────────────────────────────────────────────────────────── */
-  .app-shell {
-    @apply grid h-screen;
-    grid-template-columns: 240px 1fr;
-    grid-template-rows: 44px 1fr;
-  }
-
-  .sidebar {
-    grid-row: 1 / 3;
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border);
-    @apply flex flex-col overflow-x-hidden overflow-y-auto;
-  }
-
-  .topbar {
-    background: var(--topbar-bg);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    @apply z-[5] flex items-center gap-3 px-4;
-  }
-
-  .page {
-    @apply relative overflow-x-hidden overflow-y-auto;
-    background: var(--bg);
-  }
-
-  /* Sidebar chrome */
-  .sb-logo {
-    @apply flex h-[44px] cursor-pointer items-center gap-2.5 px-4;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sb-logo-txt {
-    @apply font-display text-[20px] font-normal leading-none;
-    letter-spacing: -0.02em;
-    color: var(--fg);
-  }
-
-  .sb-env {
-    @apply ml-auto rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase;
-    letter-spacing: 0.1em;
-    color: var(--fg-3);
-    border: 1px solid var(--border);
-  }
-
-  .sb-section {
-    @apply px-2 py-3;
-  }
-
-  .sb-section-label {
-    @apply px-2.5 pb-1.5 text-[10px] font-bold uppercase;
-    letter-spacing: 0.1em;
-    color: var(--fg-3);
-  }
-
-  .sb-item {
-    @apply relative my-0.5 flex cursor-pointer select-none items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px];
-    color: var(--fg-2);
-  }
-
-  .sb-item:hover {
-    background: var(--bg-hover);
-    color: var(--fg);
-  }
-
-  .sb-item.active {
-    background: var(--bg-active);
-    color: var(--fg);
-    @apply font-semibold;
-  }
-
-  .sb-item.active::before {
-    content: '';
-    @apply absolute left-[-8px] bottom-1.5 top-1.5 w-0.5 rounded-r;
-    background: #b55430;
-  }
-
-  .sb-item i {
-    @apply shrink-0 text-base;
-  }
-
-  .sb-item-label {
-    @apply flex-1;
-  }
-
-  .sb-badge {
-    @apply min-w-[18px] rounded px-1.5 py-0.5 text-center font-mono text-[10px] font-bold;
-    background: var(--bg-sunken);
-    color: var(--fg-2);
-  }
-
-  .sb-badge.attn {
-    @apply bg-gold-500 text-white;
-  }
-
-  .sb-badge.alert {
-    @apply bg-clay-700 text-white;
-  }
-
-  .sb-user {
-    position: sticky;
-    bottom: 0;
-    @apply flex cursor-pointer items-center gap-2.5 px-3 py-2.5;
-    border-top: 1px solid var(--border);
-    background: var(--sidebar-bg);
-  }
-
-  .sb-user:hover {
-    background: var(--bg-hover);
-  }
-
-  .avatar {
-    @apply flex shrink-0 items-center justify-center rounded-md text-xs font-bold text-white;
-    background: #b55430;
-  }
-
-  .sb-user-name {
-    @apply truncate text-xs font-semibold leading-tight;
-    color: var(--fg);
-  }
-
-  .sb-user-role {
-    @apply text-[11px] capitalize leading-tight;
-    color: var(--fg-3);
-  }
-
-  /* Topbar chrome */
-  .tb-search {
-    @apply mx-auto flex max-w-[560px] flex-1 cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px];
-    background: var(--bg-sunken);
-    border: 1px solid var(--border);
-    color: var(--fg-3);
-  }
-
-  .tb-search:hover {
-    border-color: var(--border-strong);
-  }
-
-  .tb-right {
-    @apply ml-auto flex items-center gap-2;
-  }
-
-  .tb-btn {
-    @apply relative flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-md border-0 bg-transparent;
-    color: var(--fg-2);
-  }
-
-  .tb-btn:hover {
-    background: var(--bg-hover);
-    color: var(--fg);
-  }
-
-  .tb-btn .dot {
-    @apply absolute right-[5px] top-[5px] h-1.5 w-1.5 rounded-full bg-clay-500;
-  }
-
-  .kbd {
-    @apply inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-sm px-1.5 font-mono text-[10px] font-semibold leading-none;
-    color: var(--fg-2);
-    background: var(--bg-sunken);
-    border: 1px solid var(--border-strong);
   }
 
   /* Page chrome */
@@ -354,7 +164,7 @@
   }
 
   .page-title {
-    @apply font-display text-xl font-semibold;
+    @apply font-body text-xl font-semibold;
     letter-spacing: -0.01em;
     color: var(--fg);
   }
@@ -387,7 +197,7 @@
     color: var(--fg);
   }
 
-  /* Pills */
+  /* Status pills */
   .pill {
     @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-transparent px-2 py-0.5 text-[11px] font-semibold leading-relaxed;
   }
@@ -426,18 +236,10 @@
   .sdot {
     @apply inline-block h-[7px] w-[7px] rounded-full;
   }
-  .sdot.green {
-    @apply bg-moss-500;
-  }
-  .sdot.red {
-    @apply bg-clay-700;
-  }
-  .sdot.amber {
-    @apply bg-gold-500;
-  }
-  .sdot.grey {
-    background: var(--fg-3);
-  }
+  .sdot.green  { @apply bg-moss-500; }
+  .sdot.red    { @apply bg-clay-700; }
+  .sdot.amber  { @apply bg-gold-500; }
+  .sdot.grey   { background: var(--fg-3); }
 
   /* Filter bar / chips */
   .filterbar {
@@ -462,11 +264,8 @@
 }
 
 /* ── Screens map pulse markers ───────────────────────────────────────────────
-   Rendered by ScreensMap.vue's OverlayView into the Google Maps panes — i.e.
-   OUTSIDE the Vue component tree — so these rules must be GLOBAL (not scoped).
-   Mirrors the mobile app's radar-ring pulse: a clay core dot with two
-   phase-offset expanding rings. `left/top` are the projected pixel; the
-   negative margins centre the dot on the exact coordinate. */
+   Rendered by ScreensMap.vue's OverlayView into the Google Maps panes —
+   outside the Vue component tree — so these rules must be GLOBAL (not scoped). */
 .screen-pulse {
   position: absolute;
   width: 16px;
@@ -474,8 +273,7 @@
   margin-left: -8px;
   margin-top: -8px;
   border-radius: 9999px;
-  background: #b55430; /* clay-500 — Mimuads brown, = mobile accent */
-  /* white keyline + a warm brown glow so the mark reads brown on the map */
+  background: #b55430;
   box-shadow:
     0 0 0 2.5px #fff,
     0 0 12px 2px rgba(181, 84, 48, 0.35),
@@ -483,7 +281,6 @@
   cursor: pointer;
   z-index: 1;
 }
-/* Two phase-offset radar rings (mirrors the mobile pulse). */
 .screen-pulse::before,
 .screen-pulse::after {
   content: '';
@@ -498,7 +295,7 @@
   animation-delay: 1.1s;
 }
 .screen-pulse.is-offline {
-  background: #a89f94; /* neutral-400 */
+  background: #a89f94;
   box-shadow:
     0 0 0 2.5px #fff,
     0 1px 4px rgba(14, 13, 11, 0.35);
@@ -512,7 +309,7 @@
   height: 20px;
   margin-left: -10px;
   margin-top: -10px;
-  background: #79321e; /* clay-700 */
+  background: #79321e;
   box-shadow:
     0 0 0 3px #fff,
     0 0 14px 3px rgba(181, 84, 48, 0.45),
@@ -520,17 +317,9 @@
   z-index: 2;
 }
 @keyframes screen-pulse-ring {
-  0% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(4);
-    opacity: 0;
-  }
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(4); opacity: 0; }
 }
-/* Reduced motion: no expansion, but keep a static brown ring so the marker
-   still reads as a highlighted location. */
 @media (prefers-reduced-motion: reduce) {
   .screen-pulse::before,
   .screen-pulse::after {
@@ -539,33 +328,3 @@
     transform: scale(1.6);
   }
 }
-
-/* ── Sidebar collapse (icon rail) ─────────────────────────────────────────────
-   Unlayered so these win over the layered .sb-* rules. One model on every
-   viewport: 64px icon rail when `.collapsed`, full otherwise. The shell
-   defaults it collapsed under 768px (see AppShell) until the user toggles. */
-.app-shell.collapsed {
-  grid-template-columns: 64px 1fr;
-}
-.app-shell.collapsed .sb-logo-txt,
-.app-shell.collapsed .sb-env,
-.app-shell.collapsed .sb-section-label,
-.app-shell.collapsed .sb-item-label,
-.app-shell.collapsed .sb-user-name,
-.app-shell.collapsed .sb-user-role,
-.app-shell.collapsed [data-collapse-hide] {
-  display: none;
-}
-.app-shell.collapsed .sb-item,
-.app-shell.collapsed .sb-logo,
-.app-shell.collapsed .sb-user {
-  justify-content: center;
-  gap: 0;
-  padding-left: 0;
-  padding-right: 0;
-}
-.app-shell.collapsed .sb-section {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-

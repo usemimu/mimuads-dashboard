@@ -3,7 +3,7 @@ import forms from '@tailwindcss/forms'
 
 /**
  * Brand system ported from mimu-web (the design source of truth). Palettes and
- * fonts: Space Grotesk (display/headings), Inter (body), Geist Mono (metrics/money).
+ * fonts: Space Grotesk (display/headings on auth pages), Google Sans Flex (everywhere else).
  */
 export default {
   content: ['./index.html', './src/**/*.{vue,ts}'],
@@ -78,8 +78,8 @@ export default {
       },
       fontFamily: {
         display: ['Space Grotesk', 'Georgia', 'serif'],
-        body: ['Google Sans', 'system-ui', 'sans-serif'],
-        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        body: ['Google Sans Flex', 'system-ui', 'sans-serif'],
+        mono: ['Google Sans Flex', 'system-ui', 'sans-serif'],
       },
       // Restrained, warm-tinted elevation — an "editorial console" surface
       // language: cards lean on a hairline border with only a whisper of

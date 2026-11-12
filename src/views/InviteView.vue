@@ -57,7 +57,7 @@ onMounted(() => {
 <template>
   <AuthCard>
     <div class="space-y-4 text-center">
-      <h2 class="font-display text-2xl font-semibold text-neutral-900">{{ $t('invite.title') }}</h2>
+      <h2 class="font-body text-2xl font-semibold text-neutral-900">{{ $t('invite.title') }}</h2>
       <p v-if="accepting" class="text-sm text-neutral-500">{{ $t('invite.accepting') }}</p>
       <p v-else-if="failed" role="alert" class="text-sm text-clay-700">{{ $t('invite.invalid') }}</p>
       <Button v-if="failed" variant="outline" class="w-full" @click="accept">{{ $t('common.retry') }}</Button>

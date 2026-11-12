@@ -135,7 +135,7 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
     <!-- Header -->
     <div class="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
       <div>
-        <h1 class="font-display text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-neutral-900">{{ $t('nav.dashboard') }}</h1>
+        <h1 class="font-body text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-neutral-900">{{ $t('nav.dashboard') }}</h1>
         <p class="page-subtitle mt-1">{{ $t('dashboard.overviewSub') }}</p>
       </div>
       <template v-if="session.canSubmitCampaign">
@@ -195,12 +195,12 @@ const lowBalance = computed(() => (wallet.value ? Number(wallet.value.balanceKob
         <PhMagnifyingGlass :size="15" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
         <input v-model="search" :placeholder="$t('dashboard.searchPlaceholder')" class="input py-1.5 pl-8 text-sm" />
       </div>
-      <div class="flex overflow-hidden rounded-lg border border-line-strong">
+      <div class="flex rounded-full border border-line-strong bg-surface p-0.5">
         <button
           v-for="opt in (['current', 'archived', 'all'] as const)"
           :key="opt"
-          class="px-3 py-1.5 text-sm capitalize"
-          :class="scope === opt ? 'bg-clay-50 text-clay-700' : 'text-neutral-600 hover:bg-neutral-50'"
+          class="rounded-full px-3 py-1 text-sm capitalize transition-colors"
+          :class="scope === opt ? 'bg-clay-500 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'"
           @click="scope = opt"
         >
           {{ $t('dashboard.scope' + opt.charAt(0).toUpperCase() + opt.slice(1)) }}

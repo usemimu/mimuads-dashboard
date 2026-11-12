@@ -159,7 +159,7 @@ function saveSet() {
        adapted for the desktop buying flow. -->
   <!-- Fills the floating content card: 100vh minus shell padding (24px),
        topbar (48px), the gap (12px) and the card border. -->
-  <div class="relative -mx-6 -my-5 h-[calc(100vh-5.5rem)] overflow-hidden rounded-2xl bg-neutral-100">
+  <div class="relative -mx-6 -my-5 h-[calc(100vh-5.5rem)] overflow-hidden rounded-2xl bg-surface-sunken">
     <!-- Map -->
     <ScreensMap
       v-show="view === 'map'"
@@ -171,48 +171,106 @@ function saveSet() {
 
     <!-- List (overlays the map when toggled) -->
     <div v-show="view === 'list'" class="absolute inset-0 overflow-auto bg-[var(--bg)] p-6 pt-20">
-      <table class="w-full text-sm">
-        <thead class="sticky top-0 bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-400">
-          <tr>
-            <th class="px-4 py-2">{{ $t('screens.venue') }}</th>
-            <th class="px-4 py-2">{{ $t('nav.screens') }}</th>
-            <th class="px-4 py-2">{{ $t('screens.estReach') }}</th>
-            <th class="px-4 py-2">{{ $t('screens.basePrice') }}</th>
-            <th class="px-4 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="!isLoading && !filteredList.length">
-            <td colspan="5" class="px-4 py-14">
-              <EmptyState :title="$t('screens.noResults')" :message="$t('screens.noResultsHint')">
-                <template #icon><PhMapTrifold :size="24" /></template>
-                <template #actions>
-                  <Button variant="outline" size="sm" @click="clearFilters">{{ $t('screens.clearFilters') }}</Button>
-                </template>
-              </EmptyState>
-            </td>
-          </tr>
-          <tr v-for="s in filteredList" :key="s.id" class="border-t border-neutral-100 hover:bg-neutral-50">
-            <td class="px-4 py-2">
-              <button class="font-medium text-neutral-900 hover:text-clay-600" @click="drawerId = s.id">{{ s.name }}</button>
-              <span class="ml-2 inline-block h-2 w-2 rounded-full" :class="isOnline(s.status) ? 'bg-moss-500' : 'bg-neutral-400'" />
-            </td>
-            <td class="px-4 py-2 text-neutral-500">{{ s.lga }} · {{ s.venueType }}</td>
-            <td class="px-4 py-2 font-mono">{{ s.estimatedDailyReach ?? '—' }}</td>
-            <td class="px-4 py-2 font-mono">{{ s.basePriceKobo ? formatKobo(s.basePriceKobo) : '—' }}</td>
-            <td class="px-4 py-2 text-right">
-              <button
-                v-if="session.canMutate"
-                class="text-sm"
-                :class="basket.has(s.id) ? 'text-clay-600' : 'text-neutral-500 hover:text-clay-600'"
-                @click="basket.toggle(s)"
-              >
-                {{ basket.has(s.id) ? $t('screens.added') : $t('screens.add') }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="overflow-hidden rounded-xl border border-line bg-surface">
+        <table class="w-full text-sm">
+          <thead class="border-b border-line text-left text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+            <tr>
+              <th class="px-4 py-3">{{ $t('screens.venue') }}</th>
+              <th class="hidden px-4 py-3 sm:table-cell">Location</th>
+              <th class="px-4 py-3">{{ $t('screens.estReach') }}</th>
+              <th class="hidden px-4 py-3 md:table-cell">Dwell</th>
+              <th class="px-4 py-3">{{ $t('screens.basePrice') }}</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line">
+            <tr v-if="!isLoading && !filteredList.length">
+              <td colspan="6" class="px-4 py-14">
+                <EmptyState :title="$t('screens.noResults')" :message="$t('screens.noResultsHint')">
+                  <template #icon><PhMapTrifold :size="24" /></template>
+                  <template #actions>
+                    <Button variant="outline" size="sm" @click="clearFilters">{{ $t('screens.clearFilters') }}</Button>
+                  </template>
+                </EmptyState>
+              </td>
+            </tr>
+            <tr
+              v-for="s in filteredList"
+              :key="s.id"
+              class="transition-colors hover:bg-surface-sunken/60"
+              data-testid="screen-row"
+            >
+              <!-- Screen name + photo + address -->
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                    <img v-if="s.photoUrl" :src="s.photoUrl" :alt="s.name" class="h-full w-full object-cover" />
+                    <PhMapTrifold v-else :size="18" class="absolute inset-0 m-auto text-neutral-300" />
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        class="truncate text-left text-[13px] font-semibold text-neutral-900 hover:text-clay-600"
+                        @click="drawerId = s.id"
+                      >{{ s.name }}</button>
+                      <span
+                        class="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                        :class="isOnline(s.status) ? 'bg-moss-500' : 'bg-neutral-300'"
+                      />
+                    </div>
+                    <p v-if="s.address" class="mt-0.5 max-w-[200px] truncate text-[11px] text-neutral-400">{{ s.address }}</p>
+                  </div>
+                </div>
+              </td>
+              <!-- Location: venue + LGA + type -->
+              <td class="hidden px-4 py-3 sm:table-cell">
+                <p class="text-[13px] font-medium text-neutral-700">{{ s.venueName }}</p>
+                <p class="mt-0.5 text-[11px] capitalize text-neutral-400">{{ s.lga }} · {{ s.venueType }}</p>
+              </td>
+              <!-- Est. daily reach -->
+              <td class="px-4 py-3">
+                <p class="font-display text-[13px] font-medium text-neutral-900">
+                  {{ s.estimatedDailyReach != null ? s.estimatedDailyReach.toLocaleString() : '—' }}
+                </p>
+                <p v-if="s.estimatedDailyReach != null" class="text-[11px] text-neutral-400">per day</p>
+              </td>
+              <!-- Avg dwell -->
+              <td class="hidden px-4 py-3 md:table-cell">
+                <p class="font-display text-[13px] font-medium text-neutral-900">
+                  {{ s.averageAttentionSeconds != null ? s.averageAttentionSeconds + 's' : '—' }}
+                </p>
+                <p v-if="s.averageAttentionSeconds != null" class="text-[11px] text-neutral-400">avg dwell</p>
+              </td>
+              <!-- Rate / day -->
+              <td class="px-4 py-3">
+                <p class="font-display text-[13px] font-medium text-neutral-900">
+                  {{ s.basePriceKobo ? formatKobo(s.basePriceKobo) : '—' }}
+                </p>
+                <p v-if="s.basePriceKobo" class="text-[11px] text-neutral-400">/ day</p>
+              </td>
+              <!-- Actions -->
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-end gap-2.5">
+                  <button
+                    class="text-xs text-neutral-400 transition-colors hover:text-clay-600"
+                    @click="drawerId = s.id"
+                  >{{ $t('screens.details') }}</button>
+                  <button
+                    v-if="session.canMutate"
+                    class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
+                    :class="basket.has(s.id)
+                      ? 'border-clay-300/60 bg-clay-500/10 text-clay-600'
+                      : 'border-line-strong text-neutral-500 hover:border-clay-400/60 hover:text-clay-600'"
+                    @click="basket.toggle(s)"
+                  >
+                    {{ basket.has(s.id) ? $t('screens.added') : $t('screens.add') }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- TOP-LEFT: Filters panel -->
@@ -224,7 +282,7 @@ function saveSet() {
         >
           <PhFunnel :size="16" class="text-clay-600" />
           <span class="text-[13px] font-semibold text-neutral-900">{{ $t('screens.filters') }}</span>
-          <span v-if="activeFilterCount" class="rounded bg-clay-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-clay-600">
+          <span v-if="activeFilterCount" class="rounded-full bg-clay-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
             {{ activeFilterCount }}
           </span>
           <span class="ml-auto text-[11px] text-neutral-400" data-testid="result-count">
@@ -267,12 +325,12 @@ function saveSet() {
 
     <!-- TOP-RIGHT: view toggle + export -->
     <div class="absolute right-4 top-4 z-[2] flex items-center gap-2">
-      <div class="flex overflow-hidden rounded-lg border border-line bg-surface shadow-card">
-        <button class="flex items-center gap-1 px-3 py-1.5 text-sm" :class="view === 'map' ? 'bg-clay-50 text-clay-700' : 'text-neutral-600'" @click="view = 'map'">
-          <PhMapTrifold :size="16" /> {{ $t('screens.mapView') }}
+      <div class="flex rounded-full border border-line-strong bg-surface/95 p-0.5 shadow-card backdrop-blur">
+        <button class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors" :class="view === 'map' ? 'bg-clay-500 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'" @click="view = 'map'">
+          <PhMapTrifold :size="15" /> {{ $t('screens.mapView') }}
         </button>
-        <button class="flex items-center gap-1 px-3 py-1.5 text-sm" :class="view === 'list' ? 'bg-clay-50 text-clay-700' : 'text-neutral-600'" @click="view = 'list'">
-          <PhListBullets :size="16" /> {{ $t('screens.listView') }}
+        <button class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors" :class="view === 'list' ? 'bg-clay-500 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'" @click="view = 'list'">
+          <PhListBullets :size="15" /> {{ $t('screens.listView') }}
         </button>
       </div>
       <Button variant="secondary" size="sm" class="shadow-card" @click="exportCsv">
@@ -284,16 +342,16 @@ function saveSet() {
     <div v-if="cardScreen" class="absolute bottom-4 left-4 z-[2] w-[340px] max-w-[calc(100%-2rem)]">
       <div class="rounded-xl border border-line bg-surface p-4 shadow-pop">
         <div class="flex items-start gap-3">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-clay-50 text-clay-600">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
             <PhMapTrifold :size="22" />
           </div>
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
-              <p class="truncate font-display text-[15px] font-semibold text-neutral-900">{{ cardScreen.name }}</p>
+              <p class="truncate font-body text-[15px] font-semibold text-neutral-900">{{ cardScreen.name }}</p>
               <span class="inline-block h-2 w-2 shrink-0 rounded-full" :class="isOnline(cardScreen.status) ? 'bg-moss-500' : 'bg-neutral-400'" />
             </div>
             <p class="truncate text-xs capitalize text-neutral-500">{{ cardScreen.lga }} · {{ cardScreen.venueType }}</p>
-            <p v-if="cardScreen.basePriceKobo" class="mt-1 font-mono text-sm font-semibold text-clay-700">
+            <p v-if="cardScreen.basePriceKobo" class="mt-1 font-display text-sm font-semibold text-clay-700">
               {{ formatKobo(cardScreen.basePriceKobo) }}<span class="text-xs font-normal text-neutral-400"> / day</span>
             </p>
           </div>
@@ -320,16 +378,16 @@ function saveSet() {
       <div class="overflow-hidden rounded-xl border border-line bg-surface shadow-pop">
         <button class="flex w-full items-center gap-2 px-3.5 py-2.5 text-left" @click="basketOpen = !basketOpen">
           <span class="text-[13px] font-semibold text-neutral-900">{{ $t('screens.basket') }}</span>
-          <span class="rounded bg-clay-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-clay-600" data-testid="basket-count">
+          <span class="rounded-full bg-clay-500 px-1.5 py-0.5 text-[10px] font-bold text-white" data-testid="basket-count">
             {{ basket.count }}
           </span>
           <PhCaretDown :size="14" class="ml-auto shrink-0 text-neutral-400 transition-transform" :class="basketOpen ? '' : '-rotate-90'" />
         </button>
 
         <div v-if="basketOpen" class="space-y-3 border-t border-line p-3.5">
-          <div class="rounded-lg bg-neutral-50 p-3">
+          <div class="rounded-lg bg-surface-sunken p-3">
             <p class="text-xs text-neutral-500">{{ $t('screens.estReach') }}</p>
-            <p class="font-mono text-xl text-neutral-900">{{ basket.reach }}</p>
+            <p class="font-display text-xl font-semibold text-neutral-900">{{ basket.reach }}</p>
           </div>
           <p v-if="basket.count === 0" class="text-sm text-neutral-400">{{ $t('screens.basketEmpty') }}</p>
           <template v-else>
@@ -342,7 +400,7 @@ function saveSet() {
               <button class="text-sm text-neutral-500 hover:text-clay-600" @click="basket.clear()">{{ $t('screens.clearSelection') }}</button>
             </div>
           </template>
-          <div v-if="basket.savedSets.length" class="border-t border-neutral-100 pt-2">
+          <div v-if="basket.savedSets.length" class="border-t border-line pt-2">
             <p class="mb-1 text-[10px] uppercase tracking-wide text-neutral-400">{{ $t('screens.savedSets') }}</p>
             <ul class="space-y-1">
               <li v-for="st in basket.savedSets" :key="st.name" class="flex items-center justify-between text-sm">

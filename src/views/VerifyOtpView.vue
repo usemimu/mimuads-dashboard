@@ -63,7 +63,7 @@ async function onResend() {
   <AuthCard :step="1">
     <form class="space-y-4" @submit.prevent="onSubmit">
       <div>
-        <h2 class="font-display text-2xl font-semibold text-neutral-900">{{ $t('verify.title') }}</h2>
+        <h2 class="font-body text-2xl font-semibold text-neutral-900">{{ $t('verify.title') }}</h2>
         <p class="text-sm text-neutral-500">{{ $t('verify.body') }}</p>
       </div>
 
@@ -75,7 +75,7 @@ async function onResend() {
           maxlength="6"
           required
           autocomplete="one-time-code"
-          class="input text-center font-mono text-2xl tracking-[0.4em]"
+          class="input text-center text-2xl tracking-[0.4em]"
         />
       </label>
 

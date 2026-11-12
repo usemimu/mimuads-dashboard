@@ -118,7 +118,7 @@ async function pickWorkspace(workspaceId: string | null) {
       </button>
 
       <template v-if="workspaces?.workspaces.length">
-        <div class="my-1.5 border-t border-neutral-100" />
+        <div class="my-1.5 border-t border-line" />
         <p class="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('context.switchWorkspace') }}</p>
         <button class="flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-neutral-50" @click="pickWorkspace(null)">
           <span class="text-neutral-800">{{ $t('context.org') }}</span>

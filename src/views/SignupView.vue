@@ -36,7 +36,7 @@ const passwordsMatch = computed(() => confirm.value.length === 0 || password.val
 const phoneE164 = computed(() => '+234' + localPhone.value.replace(/\D/g, ''))
 
 async function onSubmit() {
-  if (!passwordsMatch.value) return
+  if (!passwordsMatch.value || !position.value) return
   submitting.value = true
   try {
     const payload = {
@@ -45,7 +45,7 @@ async function onSubmit() {
       signup: {
         name: `${firstName.value} ${lastName.value}`.trim(),
         password: password.value,
-        position: position.value || undefined,
+        position: position.value,
       },
     }
     await requestOtp(payload)
@@ -86,32 +86,28 @@ async function onSubmit() {
       <label class="block">
         <span class="label">{{ $t('signup.phone') }}</span>
         <div class="flex">
-          <span class="inline-flex items-center rounded-l-xl border border-r-0 border-neutral-200 bg-neutral-50 px-3 font-mono text-sm text-neutral-600">+234</span>
+          <span class="inline-flex items-center rounded-l-xl border border-r-0 border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-600">+234</span>
           <input v-model="localPhone" inputmode="numeric" maxlength="10" required placeholder="8030000000" class="input rounded-l-none" />
         </div>
       </label>
 
       <label class="block">
-        <span class="label">
-          {{ $t('signup.positionLabel') }}
-          <span class="font-normal text-neutral-400">· {{ $t('signup.positionOptional') }}</span>
-        </span>
-        <SelectMenu v-model="position" :options="positions" :placeholder="$t('signup.positionOptional')" :aria-label="$t('signup.positionLabel')" />
+        <span class="label">{{ $t('signup.positionLabel') }}</span>
+        <SelectMenu v-model="position" :options="positions" :placeholder="$t('signup.positionPlaceholder')" :aria-label="$t('signup.positionLabel')" />
       </label>
 
-      <div class="grid grid-cols-2 gap-3">
-        <label class="block">
-          <span class="label">{{ $t('signup.password') }}</span>
-          <PasswordField v-model="password" required :minlength="8" autocomplete="new-password" :aria-label="$t('signup.password')" />
-        </label>
-        <label class="block">
-          <span class="label">{{ $t('signup.confirmPassword') }}</span>
-          <PasswordField v-model="confirm" required autocomplete="new-password" :aria-label="$t('signup.confirmPassword')" />
-        </label>
-      </div>
+      <label class="block">
+        <span class="label">{{ $t('signup.password') }}</span>
+        <PasswordField v-model="password" required :minlength="8" autocomplete="new-password" :aria-label="$t('signup.password')" />
+      </label>
+
+      <label class="block">
+        <span class="label">{{ $t('signup.confirmPassword') }}</span>
+        <PasswordField v-model="confirm" required autocomplete="new-password" :aria-label="$t('signup.confirmPassword')" />
+      </label>
       <p v-if="!passwordsMatch" class="text-sm text-clay-700">{{ $t('signup.passwordsMustMatch') }}</p>
 
-      <Button type="submit" size="lg" class="w-full" :disabled="submitting || !passwordsMatch">
+      <Button type="submit" size="lg" class="w-full" :disabled="submitting || !passwordsMatch || !position">
         {{ submitting ? $t('signup.creating') : $t('signup.next') }}
       </Button>
     </form>

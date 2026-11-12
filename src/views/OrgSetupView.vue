@@ -84,14 +84,14 @@ async function onSubmit() {
 
 <template>
   <AuthCard :step="2">
-    <h2 class="mb-4 font-display text-2xl font-semibold text-neutral-900">{{ $t('org.title') }}</h2>
+    <h2 class="mb-4 font-body text-2xl font-semibold text-neutral-900">{{ $t('org.title') }}</h2>
 
     <!-- The fork: two selectable cards -->
     <div class="mb-5 grid gap-3">
       <button
         type="button"
         class="rounded-xl border p-4 text-left transition-colors"
-        :class="kind === 'advertiser' ? 'border-clay-500 bg-clay-50' : 'border-neutral-200 hover:bg-neutral-50'"
+        :class="kind === 'advertiser' ? 'border-clay-500 bg-clay-50' : 'border-line hover:bg-surface-sunken'"
         @click="selectKind('advertiser')"
       >
         <p class="font-medium text-neutral-900">{{ $t('org.advertiserCard') }}</p>
@@ -100,7 +100,7 @@ async function onSubmit() {
       <button
         type="button"
         class="rounded-xl border p-4 text-left transition-colors"
-        :class="kind === 'agency' ? 'border-clay-500 bg-clay-50' : 'border-neutral-200 hover:bg-neutral-50'"
+        :class="kind === 'agency' ? 'border-clay-500 bg-clay-50' : 'border-line hover:bg-surface-sunken'"
         @click="selectKind('agency')"
       >
         <p class="font-medium text-neutral-900">{{ $t('org.agencyCard') }}</p>

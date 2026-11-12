@@ -19,7 +19,7 @@ defineProps<{
   <button
     type="button"
     class="w-full rounded-xl border p-4 text-left transition-colors"
-    :class="selected ? 'border-clay-500 bg-clay-500/10 ring-1 ring-clay-500/40' : 'border-line-strong hover:bg-neutral-50'"
+    :class="selected ? 'border-clay-500 bg-clay-500/10 ring-1 ring-clay-500/40' : 'border-line-strong hover:bg-surface-sunken'"
   >
     <div class="flex items-start gap-3">
       <span
@@ -29,7 +29,7 @@ defineProps<{
         <span v-if="selected" class="h-2 w-2 rounded-full bg-clay-500" />
       </span>
       <div class="min-w-0 flex-1">
-        <p class="font-display text-[15px] font-semibold text-neutral-900">{{ title }}</p>
+        <p class="font-body text-[15px] font-semibold text-neutral-900">{{ title }}</p>
         <p class="mt-0.5 text-sm text-neutral-500">{{ hint }}</p>
 
         <div v-if="selected" class="mt-3 space-y-2 border-t border-line pt-3">

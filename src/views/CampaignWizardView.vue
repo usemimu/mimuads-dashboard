@@ -425,7 +425,7 @@ async function finish(submit: boolean) {
         <!-- Phase 1 · Objective -->
         <div v-if="currentPhase === 'objective'" class="space-y-5">
           <div class="rounded-xl border border-line bg-surface p-4">
-            <p class="font-display text-lg font-semibold text-neutral-900">{{ $t('wizard.welcomeTitle') }}</p>
+            <p class="font-body text-lg font-semibold text-neutral-900">{{ $t('wizard.welcomeTitle') }}</p>
             <p class="mt-1 text-sm text-neutral-500">{{ $t('wizard.welcomeBody') }}</p>
           </div>
 
@@ -459,7 +459,7 @@ async function finish(submit: boolean) {
           <!-- Screens -->
           <section class="space-y-3">
             <div>
-              <p class="font-display text-base font-semibold text-neutral-900">{{ $t('wizard.audience.screens') }}</p>
+              <p class="font-body text-base font-semibold text-neutral-900">{{ $t('wizard.audience.screens') }}</p>
               <p class="text-sm text-neutral-500">{{ $t('wizard.audience.body') }}</p>
             </div>
             <label
@@ -473,7 +473,7 @@ async function finish(submit: boolean) {
               </span>
             </label>
             <div v-if="!s.isWildcard" class="space-y-3">
-              <div v-if="basket.count" class="flex items-center justify-between gap-3 rounded-lg bg-neutral-50 px-3 py-2">
+              <div v-if="basket.count" class="flex items-center justify-between gap-3 rounded-lg bg-surface-sunken px-3 py-2">
                 <span class="text-sm text-neutral-500">{{ $t('campaigns.basketAvailable', { count: basket.count }) }}</span>
                 <Button variant="secondary" size="sm" @click="useBasketScreens">{{ $t('campaigns.useBasket', { count: basket.count }) }}</Button>
               </div>
@@ -483,7 +483,7 @@ async function finish(submit: boolean) {
 
           <!-- Schedule -->
           <section class="space-y-4 border-t border-line pt-5">
-            <p class="font-display text-base font-semibold text-neutral-900">{{ $t('wizard.audience.schedule') }}</p>
+            <p class="font-body text-base font-semibold text-neutral-900">{{ $t('wizard.audience.schedule') }}</p>
             <div class="grid grid-cols-2 gap-3">
               <label class="block"><span class="label">{{ $t('campaigns.startDate') }}</span>
                 <input v-model="s.startDate" type="date" class="input" :min="minStart" /></label>
@@ -513,7 +513,7 @@ async function finish(submit: boolean) {
 
           <!-- Budget & delivery -->
           <section class="space-y-4 border-t border-line pt-5">
-            <p class="font-display text-base font-semibold text-neutral-900">{{ $t('wizard.audience.budget') }}</p>
+            <p class="font-body text-base font-semibold text-neutral-900">{{ $t('wizard.audience.budget') }}</p>
             <div class="grid grid-cols-2 gap-3">
               <label class="block"><span class="label">{{ $t('campaigns.totalBudget') }}</span>
                 <input v-model.number="s.budgetNaira" type="number" :min="MIN_BUDGET_NAIRA" step="1000" class="input" placeholder="50000" />
@@ -533,13 +533,13 @@ async function finish(submit: boolean) {
               <p class="label">{{ $t('wizard.audience.pacing') }}</p>
               <div class="grid grid-cols-2 gap-2">
                 <button type="button" class="rounded-xl border p-3 text-left transition-colors"
-                  :class="!s.isEvenPacing ? 'border-clay-500 bg-clay-500/10' : 'border-line-strong hover:bg-neutral-50'"
+                  :class="!s.isEvenPacing ? 'border-clay-500 bg-clay-500/10' : 'border-line-strong hover:bg-surface-sunken'"
                   @click="s.isEvenPacing = false">
                   <p class="text-sm font-semibold text-neutral-900">{{ $t('wizard.audience.pacingStandard') }}</p>
                   <p class="text-xs text-neutral-500">{{ $t('wizard.audience.pacingStandardHint') }}</p>
                 </button>
                 <button type="button" class="rounded-xl border p-3 text-left transition-colors"
-                  :class="s.isEvenPacing ? 'border-clay-500 bg-clay-500/10' : 'border-line-strong hover:bg-neutral-50'"
+                  :class="s.isEvenPacing ? 'border-clay-500 bg-clay-500/10' : 'border-line-strong hover:bg-surface-sunken'"
                   @click="s.isEvenPacing = true">
                   <p class="text-sm font-semibold text-neutral-900">{{ $t('wizard.audience.pacingEven') }}</p>
                   <p class="text-xs text-neutral-500">{{ $t('wizard.audience.pacingEvenHint') }}</p>
@@ -552,25 +552,25 @@ async function finish(submit: boolean) {
         <!-- Phase 3 · Creative -->
         <div v-else-if="currentPhase === 'creative'" class="space-y-4">
           <div>
-            <p class="font-display text-base font-semibold text-neutral-900">{{ $t('wizard.creative.title') }}</p>
+            <p class="font-body text-base font-semibold text-neutral-900">{{ $t('wizard.creative.title') }}</p>
             <p class="text-sm text-neutral-500">{{ $t('wizard.creative.body') }}</p>
           </div>
 
           <!-- Single ad vs carousel toggle -->
-          <div class="inline-flex rounded-lg border border-neutral-200 p-0.5 text-sm">
+          <div class="inline-flex rounded-full border border-line-strong bg-surface p-0.5 text-sm">
             <button type="button"
-              class="rounded-md px-3 py-1.5"
-              :class="s.creativeMode === 'single' ? 'bg-clay-500 text-white' : 'text-neutral-600'"
+              class="rounded-full px-3.5 py-1.5 transition-colors"
+              :class="s.creativeMode === 'single' ? 'bg-clay-500 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'"
               @click="switchCreativeMode('single')">Single ad</button>
             <button type="button"
-              class="rounded-md px-3 py-1.5"
-              :class="s.creativeMode === 'carousel' ? 'bg-clay-500 text-white' : 'text-neutral-600'"
+              class="rounded-full px-3.5 py-1.5 transition-colors"
+              :class="s.creativeMode === 'carousel' ? 'bg-clay-500 text-white shadow-sm' : 'text-neutral-500 hover:text-neutral-900'"
               @click="switchCreativeMode('carousel')">Carousel</button>
           </div>
 
           <!-- SINGLE -->
           <template v-if="s.creativeMode === 'single'">
-            <p class="rounded-lg bg-gold-50 px-3 py-2 text-sm text-gold-800">{{ $t('campaigns.creativePending') }}</p>
+            <p class="rounded-lg bg-gold-500/10 px-3 py-2 text-sm text-gold-800">{{ $t('campaigns.creativePending') }}</p>
             <div v-if="selectedCreative"
               class="flex items-center gap-3 rounded-lg border border-clay-500 bg-clay-500/10 p-3">
               <span class="text-sm text-neutral-900">{{ selectedCreative.name || selectedCreative.filename }}</span>
@@ -599,7 +599,7 @@ async function finish(submit: boolean) {
             <!-- Frame cards -->
             <ul v-if="s.carouselItems.length" class="space-y-2">
               <li v-for="(item, i) in s.carouselItems" :key="item.itemId"
-                class="flex items-center gap-3 rounded-lg border border-neutral-200 p-2">
+                class="flex items-center gap-3 rounded-lg border border-line p-2">
                 <div class="relative h-12 w-[72px] shrink-0 overflow-hidden rounded bg-black">
                   <video v-if="item.format === 'video' && item.previewUrl" :src="item.previewUrl" muted
                     class="h-full w-full object-contain" />
@@ -613,7 +613,7 @@ async function finish(submit: boolean) {
                 </div>
                 <label class="flex items-center gap-1 text-xs text-neutral-500">
                   <input type="number" min="3" max="30" :value="item.dwellSeconds"
-                    class="w-14 rounded border border-neutral-200 px-1.5 py-1 text-right text-sm"
+                    class="w-14 rounded border border-line-strong px-1.5 py-1 text-right text-sm"
                     @change="setFrameDwell(item.itemId, ($event.target as HTMLInputElement).valueAsNumber)" />
                   s
                 </label>
@@ -653,16 +653,16 @@ async function finish(submit: boolean) {
         <!-- Phase 4 · Launch (review) -->
         <div v-else class="space-y-4">
           <div>
-            <p class="font-display text-base font-semibold text-neutral-900">{{ $t('wizard.launch.title') }}</p>
+            <p class="font-body text-base font-semibold text-neutral-900">{{ $t('wizard.launch.title') }}</p>
             <p class="text-sm text-neutral-500">{{ $t('wizard.launch.body') }}</p>
           </div>
           <dl class="grid grid-cols-2 gap-3 text-sm">
             <div><dt class="text-neutral-500">{{ $t('campaigns.name') }}</dt><dd class="text-neutral-900">{{ s.name }}</dd></div>
             <div><dt class="text-neutral-500">{{ $t('campaigns.steps.objective') }}</dt><dd class="capitalize text-neutral-900">{{ s.objective }}</dd></div>
             <div><dt class="text-neutral-500">{{ $t('campaigns.screens') }}</dt><dd class="text-neutral-900">{{ s.isWildcard ? $t('campaigns.wildcard') : $t('screens.resultCount', { count: s.screenIds.length }) }}</dd></div>
-            <div><dt class="text-neutral-500">{{ $t('campaigns.budget') }}</dt><dd class="font-mono text-neutral-900">{{ s.budgetNaira ? formatKobo(String(nairaToKobo(s.budgetNaira))) : '—' }}</dd></div>
+            <div><dt class="text-neutral-500">{{ $t('campaigns.budget') }}</dt><dd class="font-display text-[13px] font-medium text-neutral-900">{{ s.budgetNaira ? formatKobo(String(nairaToKobo(s.budgetNaira))) : '—' }}</dd></div>
             <div><dt class="text-neutral-500">{{ $t('campaigns.dates') }}</dt><dd class="text-neutral-900">{{ s.startDate }} → {{ s.endDate }}</dd></div>
-            <div v-if="quote"><dt class="text-neutral-500">{{ $t('campaigns.quoteNet') }}</dt><dd class="font-mono text-clay-700">{{ formatKobo(quote.netKobo) }}</dd></div>
+            <div v-if="quote"><dt class="text-neutral-500">{{ $t('campaigns.quoteNet') }}</dt><dd class="font-display text-[13px] font-semibold text-clay-700">{{ formatKobo(quote.netKobo) }}</dd></div>
           </dl>
         </div>
 

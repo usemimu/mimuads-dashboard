@@ -110,36 +110,36 @@ const chartLabels = computed(() => dailySeries.value.map((d) => shortDate(d.day)
       </template>
     </PageHeader>
 
-    <!-- Metric strip -->
-    <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-      <MetricTile :label="$t('dashboard.mPlays')" :value="totalPlays.toLocaleString('en-NG')" :icon="PhPlay" />
-      <MetricTile :label="$t('dashboard.mReach')" :value="estReachTotal ? estReachTotal.toLocaleString('en-NG') : '—'" :sub="$t('dashboard.mReachHint')" :icon="PhUsersThree" />
-      <MetricTile :label="$t('reports.spend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
-      <MetricTile :label="$t('reports.campaigns')" :value="campaignList.length" :icon="PhMegaphone" />
-    </div>
-
-    <!-- Trend -->
-    <Card class="mb-6">
-      <p class="mb-4 text-sm font-semibold text-neutral-900">{{ $t('reports.trendTitle') }}</p>
-      <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" unit="plays" />
-    </Card>
+    <!-- Performance block: metrics + trend framed together -->
+    <section class="mb-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+      <div class="grid grid-cols-2 divide-x divide-y divide-line sm:grid-cols-4 sm:divide-y-0">
+        <MetricTile bare :label="$t('dashboard.mPlays')" :value="totalPlays.toLocaleString('en-NG')" :icon="PhPlay" />
+        <MetricTile bare :label="$t('dashboard.mReach')" :value="estReachTotal ? estReachTotal.toLocaleString('en-NG') : '—'" :sub="$t('dashboard.mReachHint')" :icon="PhUsersThree" />
+        <MetricTile bare :label="$t('reports.spend')" :value="formatKobo(String(totalSpendKobo), { showDecimals: false })" :icon="PhCurrencyNgn" />
+        <MetricTile bare :label="$t('reports.campaigns')" :value="campaignList.length" :icon="PhMegaphone" />
+      </div>
+      <div class="border-t border-line p-5">
+        <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-400">{{ $t('reports.trendTitle') }}</p>
+        <TimeSeriesChart :points="chartPoints" :labels="chartLabels" :empty="$t('dashboard.noData')" unit="plays" />
+      </div>
+    </section>
 
     <!-- Per-workspace rollup (agencies) -->
     <Card v-if="byWorkspace.length" padding="none" class="mb-6 overflow-hidden">
-      <div class="border-b border-neutral-100 px-5 py-3 text-sm font-semibold text-neutral-900">{{ $t('reports.perWorkspace') }}</div>
+      <div class="border-b border-line px-5 py-3 text-sm font-semibold text-neutral-900">{{ $t('reports.perWorkspace') }}</div>
       <table class="w-full text-sm">
         <thead class="text-left text-[11px] uppercase tracking-wider text-neutral-400">
-          <tr class="border-b border-neutral-100">
+          <tr class="border-b border-line">
             <th class="px-5 py-3 font-semibold">{{ $t('reports.workspace') }}</th>
             <th class="px-5 py-3 text-right font-semibold">{{ $t('reports.spend') }}</th>
             <th class="px-5 py-3 text-right font-semibold">{{ $t('dashboard.colPlays') }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(w, i) in byWorkspace" :key="i" class="border-t border-neutral-100">
+          <tr v-for="(w, i) in byWorkspace" :key="i" class="border-t border-line">
             <td class="px-5 py-3 text-neutral-900">{{ w.workspaceName ?? w.name ?? w.workspaceId ?? '—' }}</td>
-            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ kobo(w.spendKobo ?? w.spend) }}</td>
-            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ w.plays ?? '—' }}</td>
+            <td class="px-5 py-3 text-right font-display text-[13px] font-medium text-neutral-700">{{ kobo(w.spendKobo ?? w.spend) }}</td>
+            <td class="px-5 py-3 text-right font-display text-[13px] font-medium text-neutral-700">{{ w.plays ?? '—' }}</td>
           </tr>
         </tbody>
       </table>
@@ -147,10 +147,10 @@ const chartLabels = computed(() => dailySeries.value.map((d) => shortDate(d.day)
 
     <!-- Cross-campaign table + exports -->
     <Card padding="none" class="overflow-hidden">
-      <div class="border-b border-neutral-100 px-5 py-3 text-sm font-semibold text-neutral-900">{{ $t('reports.campaigns') }}</div>
+      <div class="border-b border-line px-5 py-3 text-sm font-semibold text-neutral-900">{{ $t('reports.campaigns') }}</div>
       <table class="w-full text-sm">
         <thead class="text-left text-[11px] uppercase tracking-wider text-neutral-400">
-          <tr class="border-b border-neutral-100">
+          <tr class="border-b border-line">
             <th class="px-5 py-3 font-semibold">{{ $t('campaigns.name') }}</th>
             <th class="px-5 py-3 font-semibold">{{ $t('campaigns.status') }}</th>
             <th class="px-5 py-3 text-right font-semibold">{{ $t('dashboard.colPlays') }}</th>
@@ -160,12 +160,12 @@ const chartLabels = computed(() => dailySeries.value.map((d) => shortDate(d.day)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="c in campaigns?.campaigns ?? []" :key="c.id" class="border-t border-neutral-100 hover:bg-neutral-50/70">
+          <tr v-for="c in campaigns?.campaigns ?? []" :key="c.id" class="border-t border-line hover:bg-neutral-50/70">
             <td class="px-5 py-3 text-neutral-900">{{ c.name }}</td>
             <td class="px-5 py-3"><Badge :tone="statusTone(c.status)">{{ statusLabel(c.status) }}</Badge></td>
-            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ (playsByCampaign[c.id] ?? 0).toLocaleString('en-NG') }}</td>
-            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ (reachByCampaign[c.id] ?? 0) > 0 ? (reachByCampaign[c.id] ?? 0).toLocaleString('en-NG') : '—' }}</td>
-            <td class="px-5 py-3 text-right font-mono text-neutral-700">{{ formatKobo(c.spentKobo) }}</td>
+            <td class="px-5 py-3 text-right font-display text-[13px] font-medium text-neutral-700">{{ (playsByCampaign[c.id] ?? 0).toLocaleString('en-NG') }}</td>
+            <td class="px-5 py-3 text-right font-display text-[13px] font-medium text-neutral-700">{{ (reachByCampaign[c.id] ?? 0) > 0 ? (reachByCampaign[c.id] ?? 0).toLocaleString('en-NG') : '—' }}</td>
+            <td class="px-5 py-3 text-right font-display text-[13px] font-medium text-neutral-700">{{ formatKobo(c.spentKobo) }}</td>
             <td class="px-5 py-3 text-right">
               <a :href="campaignExportUrl(c.id, 'csv')" target="_blank" rel="noopener" class="font-medium text-clay-600 hover:underline"><PhDownloadSimple :size="14" class="inline" /> CSV</a>
               <a :href="campaignExportUrl(c.id, 'pdf')" target="_blank" rel="noopener" class="ml-3 font-medium text-clay-600 hover:underline">PDF</a>

@@ -207,79 +207,162 @@ async function onSignOut() {
   <div>
     <PageHeader :title="$t('settings.title')" :subtitle="$t('settings.subtitle')" />
 
-    <div class="max-w-3xl space-y-6">
-      <!-- Account + avatar -->
-      <Card>
-        <div class="mb-5 flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-50 text-clay-600">
-            <PhUser :size="20" />
-          </div>
-          <div>
-            <h2 class="font-display text-lg font-semibold text-neutral-900">{{ $t('settings.account') }}</h2>
-            <p class="text-sm text-neutral-500">{{ $t('settings.accountHint') }}</p>
-          </div>
-        </div>
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
 
-        <div class="mb-5 flex items-center gap-4">
-          <div class="relative">
-            <img
-              v-if="session.user?.profileImageUrl"
-              :src="session.user.profileImageUrl"
-              alt="avatar"
-              class="h-16 w-16 rounded-full object-cover ring-1 ring-neutral-200"
-            />
-            <div
-              v-else
-              class="flex h-16 w-16 items-center justify-center rounded-full bg-clay-100 text-lg font-semibold text-clay-700"
-            >
-              {{ initials }}
+      <!-- ── Left column ───────────────────────────────────── -->
+      <div class="space-y-6">
+
+        <!-- Account + avatar -->
+        <Card>
+          <div class="mb-5 flex items-start gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
+              <PhUser :size="20" />
+            </div>
+            <div>
+              <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.account') }}</h2>
+              <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.accountHint') }}</p>
             </div>
           </div>
-          <div class="flex flex-col gap-1.5">
-            <div class="flex items-center gap-2">
-              <Button size="sm" variant="outline" :disabled="avatarBusy" @click="pickAvatar">
-                <PhCamera :size="16" /> {{ $t('settings.changePhoto') }}
-              </Button>
-              <Button
+
+          <div class="mb-5 flex items-center gap-4">
+            <div class="relative shrink-0">
+              <img
                 v-if="session.user?.profileImageUrl"
-                size="sm"
-                variant="ghost"
-                :disabled="avatarBusy"
-                @click="onRemoveAvatar"
+                :src="session.user.profileImageUrl"
+                alt="avatar"
+                class="h-16 w-16 rounded-full object-cover ring-1 ring-line"
+              />
+              <div
+                v-else
+                class="flex h-16 w-16 items-center justify-center rounded-full bg-clay-500/10 text-lg font-semibold text-clay-600"
               >
-                {{ $t('settings.removePhoto') }}
-              </Button>
+                {{ initials }}
+              </div>
             </div>
-            <p class="text-xs text-neutral-400">{{ $t('settings.photoHint') }}</p>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" :disabled="avatarBusy" @click="pickAvatar">
+                  <PhCamera :size="16" /> {{ $t('settings.changePhoto') }}
+                </Button>
+                <Button
+                  v-if="session.user?.profileImageUrl"
+                  size="sm"
+                  variant="ghost"
+                  :disabled="avatarBusy"
+                  @click="onRemoveAvatar"
+                >
+                  {{ $t('settings.removePhoto') }}
+                </Button>
+              </div>
+              <p class="text-xs text-neutral-400">{{ $t('settings.photoHint') }}</p>
+            </div>
+            <input ref="fileInput" type="file" accept=".jpg,.jpeg,.png,.webp,image/*" class="hidden" @change="onAvatarChange" />
           </div>
-          <input ref="fileInput" type="file" accept=".jpg,.jpeg,.png,.webp,image/*" class="hidden" @change="onAvatarChange" />
-        </div>
 
-        <dl class="divide-y divide-neutral-100">
-          <div class="flex items-center justify-between py-3">
-            <dt class="text-sm text-neutral-500">{{ $t('settings.name') }}</dt>
-            <dd class="text-sm font-medium text-neutral-900">{{ session.user?.name || $t('settings.notSet') }}</dd>
-          </div>
-          <div class="flex items-center justify-between py-3">
-            <dt class="text-sm text-neutral-500">{{ $t('settings.email') }}</dt>
-            <dd class="text-sm font-medium text-neutral-900">{{ session.user?.email || $t('settings.notSet') }}</dd>
-          </div>
-          <div class="flex items-center justify-between py-3">
-            <dt class="text-sm text-neutral-500">{{ $t('settings.phone') }}</dt>
-            <dd class="font-mono text-sm font-medium text-neutral-900">{{ session.user?.phoneNumber || $t('settings.notSet') }}</dd>
-          </div>
-        </dl>
-      </Card>
+          <dl class="divide-y divide-line">
+            <div class="flex items-center justify-between py-3">
+              <dt class="text-sm text-neutral-500">{{ $t('settings.name') }}</dt>
+              <dd class="text-sm font-medium text-neutral-900">{{ session.user?.name || $t('settings.notSet') }}</dd>
+            </div>
+            <div class="flex items-center justify-between py-3">
+              <dt class="text-sm text-neutral-500">{{ $t('settings.email') }}</dt>
+              <dd class="truncate text-sm font-medium text-neutral-900">{{ session.user?.email || $t('settings.notSet') }}</dd>
+            </div>
+            <div class="flex items-center justify-between py-3">
+              <dt class="text-sm text-neutral-500">{{ $t('settings.phone') }}</dt>
+              <dd class="text-sm font-medium text-neutral-900">{{ session.user?.phoneNumber || $t('settings.notSet') }}</dd>
+            </div>
+          </dl>
+        </Card>
 
-      <!-- Business profile -->
+        <!-- Change password -->
+        <Card>
+          <div class="mb-5 flex items-start gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-500/10 text-gold-600">
+              <PhLockKey :size="20" />
+            </div>
+            <div>
+              <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.password') }}</h2>
+              <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.passwordHint') }}</p>
+            </div>
+          </div>
+          <form class="space-y-4" @submit.prevent="onChangePassword">
+            <label class="block">
+              <span class="label">{{ $t('settings.currentPassword') }}</span>
+              <input v-model="pw.current" type="password" autocomplete="current-password" required class="input" />
+            </label>
+            <label class="block">
+              <span class="label">{{ $t('settings.newPassword') }}</span>
+              <input v-model="pw.next" type="password" minlength="8" autocomplete="new-password" required class="input" />
+            </label>
+            <label class="block">
+              <span class="label">{{ $t('settings.confirmPassword') }}</span>
+              <input v-model="pw.confirm" type="password" autocomplete="new-password" required class="input" />
+            </label>
+            <p v-if="!pwMatch" class="text-sm text-clay-700">{{ $t('settings.passwordsMustMatch') }}</p>
+            <Button type="submit" :disabled="pwBusy || !pwMatch || pw.next.length < 8">
+              {{ pwBusy ? $t('settings.saving') : $t('settings.updatePassword') }}
+            </Button>
+          </form>
+        </Card>
+
+        <!-- Access -->
+        <Card>
+          <div class="mb-5 flex items-start gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-900/[0.05] text-neutral-500">
+              <PhShieldCheck :size="20" />
+            </div>
+            <div>
+              <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.access') }}</h2>
+              <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.accessHint') }}</p>
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <p class="label mb-1.5">{{ $t('settings.organization') }}</p>
+            <OrgWorkspaceSwitcher />
+          </div>
+
+          <dl class="divide-y divide-line">
+            <div class="flex items-center justify-between py-3">
+              <dt class="text-sm text-neutral-500">{{ $t('settings.role') }}</dt>
+              <dd><Badge tone="accent" class="capitalize">{{ roleLabel }}</Badge></dd>
+            </div>
+            <div class="flex items-center justify-between py-3">
+              <dt class="text-sm text-neutral-500">{{ $t('settings.tier') }}</dt>
+              <dd><Badge tone="info" class="capitalize">{{ tierLabel }}</Badge></dd>
+            </div>
+          </dl>
+          <div class="mt-5 flex justify-end border-t border-line pt-4">
+            <Button variant="ghost" @click="onSignOut"><PhSignOut :size="16" /> {{ $t('settings.signOut') }}</Button>
+          </div>
+        </Card>
+
+        <!-- Danger zone -->
+        <Card class="border-clay-200/60">
+          <div class="flex items-start gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-500/10 text-clay-600">
+              <PhTrash :size="20" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.dangerZone') }}</h2>
+              <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.deleteHint') }}</p>
+              <Button variant="danger" class="mt-4" @click="showDelete = true">{{ $t('settings.deleteAccount') }}</Button>
+            </div>
+          </div>
+        </Card>
+
+      </div>
+
+      <!-- ── Right column: business profile ───────────────── -->
       <Card>
         <div class="mb-5 flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-moss-50 text-moss-600">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-moss-500/10 text-moss-600">
             <PhBuildings :size="20" />
           </div>
           <div>
-            <h2 class="font-display text-lg font-semibold text-neutral-900">{{ $t('settings.business') }}</h2>
-            <p class="text-sm text-neutral-500">{{ $t('settings.businessHint') }}</p>
+            <h2 class="font-body text-[15px] font-semibold text-neutral-900">{{ $t('settings.business') }}</h2>
+            <p class="mt-0.5 text-sm text-neutral-500">{{ $t('settings.businessHint') }}</p>
           </div>
         </div>
 
@@ -354,94 +437,13 @@ async function onSignOut() {
         </form>
       </Card>
 
-      <!-- Change password -->
-      <Card>
-        <div class="mb-5 flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-50 text-gold-600">
-            <PhLockKey :size="20" />
-          </div>
-          <div>
-            <h2 class="font-display text-lg font-semibold text-neutral-900">{{ $t('settings.password') }}</h2>
-            <p class="text-sm text-neutral-500">{{ $t('settings.passwordHint') }}</p>
-          </div>
-        </div>
-        <form class="max-w-md space-y-4" @submit.prevent="onChangePassword">
-          <label class="block">
-            <span class="label">{{ $t('settings.currentPassword') }}</span>
-            <input v-model="pw.current" type="password" autocomplete="current-password" required class="input" />
-          </label>
-          <label class="block">
-            <span class="label">{{ $t('settings.newPassword') }}</span>
-            <input v-model="pw.next" type="password" minlength="8" autocomplete="new-password" required class="input" />
-          </label>
-          <label class="block">
-            <span class="label">{{ $t('settings.confirmPassword') }}</span>
-            <input v-model="pw.confirm" type="password" autocomplete="new-password" required class="input" />
-          </label>
-          <p v-if="!pwMatch" class="text-sm text-clay-700">{{ $t('settings.passwordsMustMatch') }}</p>
-          <div class="flex items-center gap-3">
-            <Button type="submit" :disabled="pwBusy || !pwMatch || pw.next.length < 8">
-              {{ pwBusy ? $t('settings.saving') : $t('settings.updatePassword') }}
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      <!-- Access -->
-      <Card>
-        <div class="mb-5 flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500">
-            <PhShieldCheck :size="20" />
-          </div>
-          <div>
-            <h2 class="font-display text-lg font-semibold text-neutral-900">{{ $t('settings.access') }}</h2>
-            <p class="text-sm text-neutral-500">{{ $t('settings.accessHint') }}</p>
-          </div>
-        </div>
-
-        <!-- Active organization / workspace — switch context here. -->
-        <div class="mb-5">
-          <p class="label mb-1.5">{{ $t('settings.organization') }}</p>
-          <OrgWorkspaceSwitcher />
-        </div>
-
-        <dl class="divide-y divide-neutral-100">
-          <div class="flex items-center justify-between py-3">
-            <dt class="text-sm text-neutral-500">{{ $t('settings.role') }}</dt>
-            <dd><Badge tone="accent" class="capitalize">{{ roleLabel }}</Badge></dd>
-          </div>
-          <div class="flex items-center justify-between py-3">
-            <dt class="text-sm text-neutral-500">{{ $t('settings.tier') }}</dt>
-            <dd><Badge tone="info" class="capitalize">{{ tierLabel }}</Badge></dd>
-          </div>
-        </dl>
-        <div class="mt-5 flex justify-end border-t border-neutral-100 pt-4">
-          <Button variant="ghost" @click="onSignOut"><PhSignOut :size="16" /> {{ $t('settings.signOut') }}</Button>
-        </div>
-      </Card>
-
-      <!-- Danger zone -->
-      <Card class="ring-1 ring-clay-100">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-start gap-3">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-clay-50 text-clay-600">
-              <PhTrash :size="20" />
-            </div>
-            <div>
-              <h2 class="font-display text-lg font-semibold text-neutral-900">{{ $t('settings.dangerZone') }}</h2>
-              <p class="max-w-md text-sm text-neutral-500">{{ $t('settings.deleteHint') }}</p>
-            </div>
-          </div>
-          <Button variant="danger" @click="showDelete = true">{{ $t('settings.deleteAccount') }}</Button>
-        </div>
-      </Card>
     </div>
 
     <!-- Delete confirmation modal -->
     <div v-if="showDelete" class="fixed inset-0 z-40 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showDelete = false" />
       <div class="relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-pop">
-        <h3 class="font-display text-xl font-semibold text-neutral-900">{{ $t('settings.deleteConfirmTitle') }}</h3>
+        <h3 class="font-body text-xl font-semibold text-neutral-900">{{ $t('settings.deleteConfirmTitle') }}</h3>
         <p class="mt-1 text-sm text-neutral-500">{{ $t('settings.deleteConfirmBody') }}</p>
         <label class="mt-4 block">
           <span class="label">{{ $t('settings.deleteReason') }}</span>

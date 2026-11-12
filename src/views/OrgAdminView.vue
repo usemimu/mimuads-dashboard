@@ -93,26 +93,34 @@ async function makeKey() {
 <template>
   <div>
     <PageHeader :title="$t('orgAdmin.title')" :subtitle="$t('orgAdmin.subtitle')" />
+    <div class="max-w-5xl">
     <div class="mb-5">
       <Tabs v-model="tab" :tabs="orgTabs" />
     </div>
 
     <!-- Members -->
-    <div v-if="tab === 'members'" class="space-y-4">
-      <div v-if="session.canMutate" class="flex flex-wrap gap-2">
-        <input v-model="inviteEmail" type="email" :placeholder="$t('orgAdmin.email')" :aria-label="$t('orgAdmin.email')" class="input max-w-xs text-sm" />
-        <select v-model="inviteRole" :aria-label="$t('orgAdmin.role')" class="select w-auto text-sm">
-          <option v-for="r in roles" :key="r" :value="r">{{ r.replace(/_/g, ' ') }}</option>
-        </select>
-        <Button size="sm" @click="sendInvite">{{ $t('orgAdmin.invite') }}</Button>
-      </div>
+    <div v-if="tab === 'members'">
+      <Card padding="none" class="overflow-hidden">
+        <!-- Invite form header -->
+        <div v-if="session.canMutate" class="flex flex-wrap items-end gap-2 border-b border-line bg-surface-sunken/40 px-4 py-3.5">
+          <label class="min-w-0 flex-1">
+            <span class="label">{{ $t('orgAdmin.email') }}</span>
+            <input v-model="inviteEmail" type="email" :placeholder="$t('orgAdmin.email')" :aria-label="$t('orgAdmin.email')" class="input text-sm" />
+          </label>
+          <label class="shrink-0">
+            <span class="label">{{ $t('orgAdmin.role') }}</span>
+            <select v-model="inviteRole" :aria-label="$t('orgAdmin.role')" class="select w-auto text-sm">
+              <option v-for="r in roles" :key="r" :value="r">{{ r.replace(/_/g, ' ') }}</option>
+            </select>
+          </label>
+          <Button size="sm" class="mb-px self-end" @click="sendInvite">{{ $t('orgAdmin.invite') }}</Button>
+        </div>
 
-      <Card v-if="memberList.length" padding="none" class="overflow-hidden">
-        <ul role="list" class="divide-y divide-line">
+        <ul v-if="memberList.length" role="list" class="divide-y divide-line">
           <li
             v-for="m in memberList"
             :key="m.userId"
-            class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-neutral-50/70"
+            class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-sunken/60"
             data-testid="member-row"
           >
             <Avatar :name="m.name" :email="m.email" size="md" />
@@ -126,7 +134,7 @@ async function makeKey() {
             <!-- Row actions -->
             <Menu v-if="session.canMutate && m.role !== 'owner'" as="div" class="relative shrink-0">
               <MenuButton
-                class="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+                class="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-900/[0.05] hover:text-neutral-700"
                 :aria-label="$t('orgAdmin.role')"
               >
                 <PhDotsThreeVertical :size="18" weight="bold" />
@@ -147,7 +155,7 @@ async function makeKey() {
                   </p>
                   <MenuItem v-for="r in roles.filter((x) => x !== m.role && x !== 'owner')" :key="r" v-slot="{ active }">
                     <button
-                      :class="[active ? 'bg-neutral-100' : '', 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm capitalize text-neutral-700']"
+                      :class="[active ? 'bg-neutral-900/[0.05]' : '', 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm capitalize text-neutral-700']"
                       @click="run(() => changeRole(m.userId, r as never), 'members')"
                     >
                       <PhUserSwitch :size="16" class="text-neutral-400" /> {{ r.replace(/_/g, ' ') }}
@@ -157,7 +165,7 @@ async function makeKey() {
                     <div class="my-1 border-t border-line" />
                     <MenuItem v-slot="{ active }">
                       <button
-                        :class="[active ? 'bg-clay-50' : '', 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-clay-700']"
+                        :class="[active ? 'bg-clay-500/10' : '', 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-clay-700']"
                         @click="run(() => suspendMember(m.userId), 'members')"
                       >
                         <PhProhibit :size="16" /> {{ $t('orgAdmin.suspend') }}
@@ -169,49 +177,48 @@ async function makeKey() {
             </Menu>
           </li>
         </ul>
-      </Card>
-      <Card v-else padding="none">
-        <EmptyState :title="$t('orgAdmin.member')" :message="$t('orgAdmin.subtitle')">
+        <EmptyState v-else :title="$t('orgAdmin.member')" :message="$t('orgAdmin.subtitle')">
           <template #icon><PhUsersThree :size="24" /></template>
         </EmptyState>
       </Card>
     </div>
 
     <!-- Workspaces -->
-    <div v-else-if="tab === 'workspaces'" class="space-y-4">
+    <div v-else-if="tab === 'workspaces'">
       <p v-if="!isAgency" class="text-sm text-neutral-400">{{ $t('orgAdmin.agencyOnly') }}</p>
-      <template v-else>
-        <div v-if="session.canMutate" class="flex flex-wrap gap-2">
-          <input v-model="wsName" :placeholder="$t('orgAdmin.workspaceName')" :aria-label="$t('orgAdmin.workspaceName')" class="input max-w-xs text-sm" />
-          <Button size="sm" @click="makeWorkspace">{{ $t('orgAdmin.create') }}</Button>
+      <Card v-else padding="none" class="overflow-hidden">
+        <!-- Create form header -->
+        <div v-if="session.canMutate" class="flex flex-wrap items-end gap-2 border-b border-line bg-surface-sunken/40 px-4 py-3.5">
+          <label class="min-w-0 flex-1">
+            <span class="label">{{ $t('orgAdmin.workspaceName') }}</span>
+            <input v-model="wsName" :placeholder="$t('orgAdmin.workspaceName')" :aria-label="$t('orgAdmin.workspaceName')" class="input text-sm" />
+          </label>
+          <Button size="sm" class="mb-px self-end" @click="makeWorkspace">{{ $t('orgAdmin.create') }}</Button>
         </div>
-        <Card v-if="workspaces?.workspaces.length" padding="none" class="overflow-hidden">
-          <ul role="list" class="divide-y divide-line">
-            <li
-              v-for="w in workspaces.workspaces"
-              :key="w.id"
-              class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-neutral-50/70"
-              data-testid="workspace-row"
+
+        <ul v-if="workspaces?.workspaces.length" role="list" class="divide-y divide-line">
+          <li
+            v-for="w in workspaces.workspaces"
+            :key="w.id"
+            class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-sunken/60"
+            data-testid="workspace-row"
+          >
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-clay-500/10 text-clay-600"><PhStack :size="18" /></span>
+            <p class="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-900">{{ w.name }}</p>
+            <Badge :tone="w.status === 'archived' ? 'neutral' : 'success'" size="sm" dot>{{ w.status }}</Badge>
+            <button
+              v-if="session.canMutate && w.status !== 'archived'"
+              class="shrink-0 text-xs font-medium text-clay-600 hover:underline"
+              @click="run(() => updateWorkspace(w.id, { status: 'archived' }), 'ws-admin')"
             >
-              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-clay-500/10 text-clay-600"><PhStack :size="18" /></span>
-              <p class="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-900">{{ w.name }}</p>
-              <Badge :tone="w.status === 'archived' ? 'neutral' : 'success'" size="sm" dot>{{ w.status }}</Badge>
-              <button
-                v-if="session.canMutate && w.status !== 'archived'"
-                class="shrink-0 text-xs font-medium text-clay-600 hover:underline"
-                @click="run(() => updateWorkspace(w.id, { status: 'archived' }), 'ws-admin')"
-              >
-                {{ $t('orgAdmin.archive') }}
-              </button>
-            </li>
-          </ul>
-        </Card>
-        <Card v-else padding="none">
-          <EmptyState :title="$t('orgAdmin.noWorkspaces')">
-            <template #icon><PhStack :size="24" /></template>
-          </EmptyState>
-        </Card>
-      </template>
+              {{ $t('orgAdmin.archive') }}
+            </button>
+          </li>
+        </ul>
+        <EmptyState v-else :title="$t('orgAdmin.noWorkspaces')">
+          <template #icon><PhStack :size="24" /></template>
+        </EmptyState>
+      </Card>
     </div>
 
     <!-- Verification -->
@@ -224,7 +231,7 @@ async function makeKey() {
           <div class="min-w-0 flex-1">
             <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('orgAdmin.verificationLevel') }}</p>
             <div class="mt-1 flex flex-wrap items-center gap-2">
-              <p class="text-lg font-bold capitalize text-neutral-900">{{ session.context.tier }}</p>
+              <p class="text-[15px] font-semibold capitalize text-neutral-900">{{ session.context.tier }}</p>
               <Badge :tone="session.context.tier === 'agency' ? 'accent' : 'success'" size="sm">{{ session.context.tier }}</Badge>
             </div>
             <p class="mt-2 max-w-md text-sm text-neutral-500">{{ $t('orgAdmin.verificationBody') }}</p>
@@ -240,29 +247,38 @@ async function makeKey() {
 
     <!-- API keys -->
     <div v-else class="space-y-4">
-      <p v-if="newKey" class="rounded-lg bg-gold-50 px-4 py-3 font-mono text-sm text-gold-800">{{ newKey }} <span class="block font-body text-xs">{{ $t('orgAdmin.keyOnce') }}</span></p>
-      <div v-if="session.canMutate" class="flex flex-wrap gap-2">
-        <input v-model="keyName" :placeholder="$t('orgAdmin.apiKeyName')" :aria-label="$t('orgAdmin.apiKeyName')" class="input max-w-xs text-sm" />
-        <Button size="sm" @click="makeKey">{{ $t('orgAdmin.createKey') }}</Button>
+      <!-- One-time key reveal -->
+      <div v-if="newKey" class="overflow-hidden rounded-xl border border-gold-200/60 bg-gold-500/10 px-4 py-3.5">
+        <p class="break-all font-mono text-sm text-gold-800">{{ newKey }}</p>
+        <p class="mt-1 text-xs text-gold-700">{{ $t('orgAdmin.keyOnce') }}</p>
       </div>
-      <Card v-if="((keys as { keys?: Array<{ id: string; name: string }> })?.keys?.length)" padding="none" class="overflow-hidden">
-        <ul role="list" class="divide-y divide-line">
+
+      <Card padding="none" class="overflow-hidden">
+        <!-- Create form header -->
+        <div v-if="session.canMutate" class="flex flex-wrap items-end gap-2 border-b border-line bg-surface-sunken/40 px-4 py-3.5">
+          <label class="min-w-0 flex-1">
+            <span class="label">{{ $t('orgAdmin.apiKeyName') }}</span>
+            <input v-model="keyName" :placeholder="$t('orgAdmin.apiKeyName')" :aria-label="$t('orgAdmin.apiKeyName')" class="input text-sm" />
+          </label>
+          <Button size="sm" class="mb-px self-end" @click="makeKey">{{ $t('orgAdmin.createKey') }}</Button>
+        </div>
+
+        <ul v-if="((keys as { keys?: Array<{ id: string; name: string }> })?.keys?.length)" role="list" class="divide-y divide-line">
           <li
             v-for="k in ((keys as { keys?: Array<{ id: string; name: string }> })?.keys ?? [])"
             :key="k.id"
-            class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-neutral-50/70"
+            class="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-sunken/60"
           >
             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-clay-500/10 text-clay-600"><PhKey :size="18" /></span>
-            <p class="min-w-0 flex-1 truncate font-mono text-sm text-neutral-900">{{ k.name }}</p>
+            <p class="min-w-0 flex-1 truncate text-sm text-neutral-900">{{ k.name }}</p>
             <button class="shrink-0 text-xs font-medium text-clay-600 hover:underline" @click="run(() => revokeApiKey(k.id), 'apikeys')">{{ $t('orgAdmin.revoke') }}</button>
           </li>
         </ul>
-      </Card>
-      <Card v-else padding="none">
-        <EmptyState :title="$t('orgAdmin.noKeys')">
+        <EmptyState v-else :title="$t('orgAdmin.noKeys')">
           <template #icon><PhKey :size="24" /></template>
         </EmptyState>
       </Card>
+    </div>
     </div>
   </div>
 </template>

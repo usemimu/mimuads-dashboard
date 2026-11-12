@@ -45,7 +45,7 @@ withDefaults(
     </div>
     <div class="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
       <p
-        class="whitespace-nowrap font-mono text-[clamp(1.125rem,14cqi,2.25rem)] font-bold leading-none tracking-tight text-neutral-900 [font-variant-numeric:tabular-nums]"
+        class="whitespace-nowrap font-display text-[clamp(1.125rem,14cqi,2.25rem)] font-semibold leading-none tracking-tight text-neutral-900 [font-variant-numeric:tabular-nums]"
       >
         {{ value }}
       </p>

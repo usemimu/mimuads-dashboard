@@ -43,10 +43,10 @@ function toggle() {
 </script>
 
 <template>
-  <aside class="flex h-full w-96 flex-col border-l border-neutral-200 bg-surface shadow-card">
-    <header class="flex items-start justify-between border-b border-neutral-100 p-5">
+  <aside class="flex h-full w-96 flex-col border-l border-line bg-surface shadow-card">
+    <header class="flex items-start justify-between border-b border-line p-5">
       <div>
-        <h2 class="font-display text-xl font-semibold text-neutral-900">{{ screen?.name }}</h2>
+        <h2 class="font-body text-xl font-semibold text-neutral-900">{{ screen?.name }}</h2>
         <span
           class="mt-1 inline-flex items-center gap-1 text-xs font-medium"
           :class="online ? 'text-moss-600' : 'text-neutral-500'"
@@ -99,7 +99,7 @@ function toggle() {
       </div>
     </div>
 
-    <footer class="border-t border-neutral-100 p-5">
+    <footer class="border-t border-line p-5">
       <Button
         v-if="session.canMutate"
         class="w-full"

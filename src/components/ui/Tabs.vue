@@ -45,7 +45,7 @@ const emit = defineEmits<{ (e: 'update:modelValue', value: T): void }>()
             <span
               v-if="tab.count != null"
               class="ml-2 hidden rounded-full px-2 py-0.5 text-xs font-medium md:inline-block"
-              :class="modelValue === tab.value ? 'bg-clay-500/10 text-clay-700' : 'bg-neutral-100 text-neutral-600'"
+              :class="modelValue === tab.value ? 'bg-clay-500/10 text-clay-700' : 'bg-surface-sunken text-neutral-600'"
             >
               {{ tab.count }}
             </span>
