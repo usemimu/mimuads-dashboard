@@ -131,3 +131,42 @@ export const ResetPasswordSchema = z.object({
   token: z.string().regex(/^\d{6}$/),
   newPassword: z.string().min(8),
 })
+
+// ── Social sign-in: POST /advertiser/auth/google | /advertiser/auth/apple ───
+// Shared response shape for both providers. Backend returns either an
+// established session (existing user or new user who already has a phone) or
+// a `needs_phone` ticket for a brand-new user who still needs to verify a
+// Nigerian phone number before the session can be issued.
+const SocialSignedInUserSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  email: z.string().nullable(),
+  phoneNumber: z.string(),
+  isNewUser: z.boolean(),
+  profileImageUrl: z.string().nullable().optional(),
+})
+
+export const SocialSignInResponseSchema = z.discriminatedUnion('status', [
+  z.object({
+    status: z.literal('signed_in'),
+    accessToken: z.string(),
+    refreshToken: z.string(),
+    expiresIn: z.number().int().positive(),
+    csrfToken: z.string().optional(),
+    user: SocialSignedInUserSchema,
+  }),
+  z.object({
+    status: z.literal('needs_phone'),
+    signupToken: z.string(),
+    email: z.string(),
+    name: z.string().nullable().optional(),
+  }),
+])
+export type SocialSignInResponse = z.infer<typeof SocialSignInResponseSchema>
+
+// POST /advertiser/auth/social/request-otp — sends a verification code to the
+// phone collected after a `needs_phone` social sign-in.
+export const SocialOtpRequestSchema = z.object({
+  signupToken: z.string(),
+  phone: z.string().regex(/^\+234\d{10}$/),
+})

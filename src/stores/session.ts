@@ -12,10 +12,14 @@ import {
   PasswordLoginResponseSchema,
   PasswordLoginSchema,
   RefreshTokenResponseSchema,
+  SocialSignInResponseSchema,
   SwitchContextResponseSchema,
   VerifyOtpSchema,
   type SessionUser,
+  type SocialSignInResponse,
 } from '@/api/contracts/auth'
+
+export type SocialNeedsPhone = Extract<SocialSignInResponse, { status: 'needs_phone' }>
 
 export interface ActiveContext {
   userId: string | null
@@ -103,6 +107,26 @@ export const useSession = defineStore('session', () => {
     user.value = toSessionUser(res.user)
     setCsrfToken(res.csrfToken)
     applyToken(res.accessToken)
+  }
+
+  async function loginWithGoogle(idToken: string): Promise<SocialNeedsPhone | null> {
+    const res = await api.post('/advertiser/auth/google', { idToken }, SocialSignInResponseSchema)
+    if (res.status === 'needs_phone') return res
+    user.value = toSessionUser(res.user)
+    if (res.csrfToken) setCsrfToken(res.csrfToken)
+    applyToken(res.accessToken)
+    return null
+  }
+
+  async function loginWithApple(identityToken: string, name?: string): Promise<SocialNeedsPhone | null> {
+    const body: Record<string, string> = { identityToken }
+    if (name) body.name = name
+    const res = await api.post('/advertiser/auth/apple', body, SocialSignInResponseSchema)
+    if (res.status === 'needs_phone') return res
+    user.value = toSessionUser(res.user)
+    if (res.csrfToken) setCsrfToken(res.csrfToken)
+    applyToken(res.accessToken)
+    return null
   }
 
   async function switchOrg(orgId: string): Promise<void> {
@@ -198,6 +222,8 @@ export const useSession = defineStore('session', () => {
     canSubmitCampaign,
     hasToken: () => getAccessToken() !== null,
     loginWithPassword,
+    loginWithGoogle,
+    loginWithApple,
     verifyOtp,
     switchOrg,
     switchWorkspace,
