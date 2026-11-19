@@ -19,6 +19,12 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true },
   },
   {
+    path: '/signup/social-phone',
+    name: 'social-phone',
+    component: () => import('@/views/SocialPhoneView.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/forgot-password',
     name: 'forgot-password',
     component: () => import('@/views/ForgotPasswordView.vue'),

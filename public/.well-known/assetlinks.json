@@ -1,15 +1,15 @@
 [
   {
-    "relation": [ "delegate_permission/common.handle_all_urls" ],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "ng.mimu.advertiser",
       "sha256_cert_fingerprints": [
         "8A:B5:EC:94:80:63:F0:E1:1C:AA:B7:FB:1D:DF:08:31:8A:92:46:91:BF:9C:6A:00:AC:99:2A:FF:80:0F:49:9A",
-        "REPLACE_WITH_PLAY_APP_SIGNING_SHA256_FINGERPRINT"
+        "D5:4E:EB:CB:C8:63:3B:40:F8:A3:D8:C9:CD:A6:75:26:8C:A6:3C:2D:16:AB:49:F4:B5:9D:6E:70:77:6D:8D:F6"
       ]
     }
   }
 ]
-
-

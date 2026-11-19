@@ -40,17 +40,27 @@ export interface Env {
   googleMapsApiKey: string | undefined
   paystackPublicKey: string
   isProduction: boolean
+  /** Google OAuth 2.0 web client ID for Google Sign-In (GIS). OPTIONAL — social
+   *  buttons are hidden when absent. Set VITE_GOOGLE_AUTH_CLIENT_ID in Vercel. */
+  googleAuthClientId: string | undefined
+  /** Apple Services ID for Sign in with Apple on web. OPTIONAL — Apple button is
+   *  hidden when absent. Requires a registered Services ID in Apple Developer. */
+  appleClientId: string | undefined
 }
 
 function buildEnv(): Env {
   const appEnv = resolveAppEnv()
   const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim()
+  const googleAuthClientId = import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID?.trim()
+  const appleClientId = import.meta.env.VITE_APPLE_CLIENT_ID?.trim()
   return {
     appEnv,
     apiBaseUrl: requireEnv('VITE_API_BASE_URL').replace(/\/+$/, ''),
     googleMapsApiKey: mapsKey && mapsKey.length > 0 ? mapsKey : undefined,
     paystackPublicKey: requireEnv('VITE_PAYSTACK_PUBLIC_KEY'),
     isProduction: appEnv === 'production',
+    googleAuthClientId: googleAuthClientId || undefined,
+    appleClientId: appleClientId || undefined,
   }
 }
 

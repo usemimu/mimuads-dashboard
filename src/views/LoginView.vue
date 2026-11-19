@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhGoogleLogo } from '@phosphor-icons/vue'
+import { PhGoogleLogo, PhAppleLogo } from '@phosphor-icons/vue'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
 import PasswordField from '@/components/ui/PasswordField.vue'
 import { useSession } from '@/stores/session'
+import { useSocialStore } from '@/stores/social'
 import { useToastStore } from '@/stores/toast'
 import { isApiError } from '@/api/errors'
+import { env } from '@/env'
+import { initGoogle, googleSignIn, appleSignIn } from '@/composables/useSocialAuth'
 import { useI18n } from 'vue-i18n'
 
 const session = useSession()
+const socialStore = useSocialStore()
 const router = useRouter()
 const route = useRoute()
 const toast = useToastStore()
@@ -19,6 +23,7 @@ const { t } = useI18n()
 const email = ref('')
 const password = ref('')
 const submitting = ref(false)
+const socialBusy = ref(false)
 
 async function onSubmit() {
   submitting.value = true
@@ -33,10 +38,54 @@ async function onSubmit() {
   }
 }
 
-// Social sign-in UI is in place; OAuth wiring is a separate backend task.
-function social() {
-  toast.info(t('auth.socialSoon'))
+async function handleSocialResult(promise: Promise<import('@/stores/session').SocialNeedsPhone | null>) {
+  socialBusy.value = true
+  try {
+    const needsPhone = await promise
+    if (needsPhone) {
+      socialStore.set(needsPhone)
+      router.push({ name: 'social-phone' })
+    } else {
+      const redirect = (route.query.redirect as string) || '/dashboard'
+      router.replace(redirect)
+    }
+  } catch (e) {
+    toast.error(isApiError(e) ? e.message : t('auth.socialFailed'))
+  } finally {
+    socialBusy.value = false
+  }
 }
+
+function onGoogle() {
+  handleSocialResult(
+    new Promise((resolve, reject) => {
+      initGoogle((idToken) => session.loginWithGoogle(idToken).then(resolve).catch(reject))
+        .then(() => googleSignIn())
+        .catch(reject)
+    }),
+  )
+}
+
+async function onApple() {
+  socialBusy.value = true
+  try {
+    const result = await appleSignIn()
+    if (!result) return
+    await handleSocialResult(session.loginWithApple(result.identityToken, result.name))
+  } catch (e) {
+    toast.error(isApiError(e) ? e.message : t('auth.socialFailed'))
+  } finally {
+    socialBusy.value = false
+  }
+}
+
+onMounted(() => {
+  if (env.googleAuthClientId) {
+    initGoogle((idToken) =>
+      handleSocialResult(session.loginWithGoogle(idToken)),
+    )
+  }
+})
 </script>
 
 <template>
@@ -75,16 +124,38 @@ function social() {
         </Button>
       </form>
 
-      <div class="relative py-1 text-center">
+      <div v-if="env.googleAuthClientId || env.appleClientId" class="relative py-1 text-center">
         <div class="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-line"></div>
         <span class="relative bg-surface px-3 text-xs uppercase tracking-wider text-neutral-400">
           {{ $t('auth.continueWith') }}
         </span>
       </div>
 
-      <Button variant="secondary" size="lg" class="w-full" @click="social">
-        <PhGoogleLogo :size="18" weight="bold" /> Google
-      </Button>
+      <div v-if="env.googleAuthClientId || env.appleClientId" class="flex flex-col gap-3">
+        <Button
+          v-if="env.googleAuthClientId"
+          variant="secondary"
+          size="lg"
+          class="w-full"
+          :disabled="socialBusy"
+          @click="onGoogle"
+        >
+          <PhGoogleLogo :size="18" weight="bold" />
+          {{ $t('auth.socialGoogle') }}
+        </Button>
+
+        <Button
+          v-if="env.appleClientId"
+          variant="secondary"
+          size="lg"
+          class="w-full"
+          :disabled="socialBusy"
+          @click="onApple"
+        >
+          <PhAppleLogo :size="18" weight="bold" />
+          {{ $t('auth.socialApple') }}
+        </Button>
+      </div>
     </div>
 
     <template #footer>
