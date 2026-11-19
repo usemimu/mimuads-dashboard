@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { PhGoogleLogo, PhAppleLogo } from '@phosphor-icons/vue'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
 import PasswordField from '@/components/ui/PasswordField.vue'
+import SocialButtons from '@/components/ui/SocialButtons.vue'
 import { useSession } from '@/stores/session'
 import { useSocialStore } from '@/stores/social'
 import { useToastStore } from '@/stores/toast'
@@ -131,31 +131,7 @@ onMounted(() => {
         </span>
       </div>
 
-      <div v-if="env.googleAuthClientId || env.appleClientId" class="flex flex-col gap-3">
-        <Button
-          v-if="env.googleAuthClientId"
-          variant="secondary"
-          size="lg"
-          class="w-full"
-          :disabled="socialBusy"
-          @click="onGoogle"
-        >
-          <PhGoogleLogo :size="18" weight="bold" />
-          {{ $t('auth.socialGoogle') }}
-        </Button>
-
-        <Button
-          v-if="env.appleClientId"
-          variant="secondary"
-          size="lg"
-          class="w-full"
-          :disabled="socialBusy"
-          @click="onApple"
-        >
-          <PhAppleLogo :size="18" weight="bold" />
-          {{ $t('auth.socialApple') }}
-        </Button>
-      </div>
+      <SocialButtons v-if="env.googleAuthClientId || env.appleClientId" :busy="socialBusy" @google="onGoogle" @apple="onApple" />
     </div>
 
     <template #footer>

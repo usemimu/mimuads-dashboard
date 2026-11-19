@@ -2,11 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { PhGoogleLogo, PhAppleLogo } from '@phosphor-icons/vue'
 import AuthCard from '@/components/AuthCard.vue'
 import Button from '@/components/ui/Button.vue'
 import PasswordField from '@/components/ui/PasswordField.vue'
 import SelectMenu from '@/components/ui/SelectMenu.vue'
+import SocialButtons from '@/components/ui/SocialButtons.vue'
 import { requestOtp } from '@/api/onboarding'
 import { isApiError } from '@/api/errors'
 import { useSession } from '@/stores/session'
@@ -123,32 +123,7 @@ async function onSubmit() {
       </div>
 
       <!-- Social sign-in shortcuts -->
-      <div v-if="hasSocial" class="flex flex-col gap-3">
-        <Button
-          v-if="env.googleAuthClientId"
-          variant="secondary"
-          size="lg"
-          class="w-full"
-          type="button"
-          :disabled="socialBusy"
-          @click="onGoogle"
-        >
-          <PhGoogleLogo :size="18" weight="bold" />
-          {{ $t('auth.socialGoogle') }}
-        </Button>
-        <Button
-          v-if="env.appleClientId"
-          variant="secondary"
-          size="lg"
-          class="w-full"
-          type="button"
-          :disabled="socialBusy"
-          @click="onApple"
-        >
-          <PhAppleLogo :size="18" weight="bold" />
-          {{ $t('auth.socialApple') }}
-        </Button>
-      </div>
+      <SocialButtons v-if="hasSocial" :busy="socialBusy" @google="onGoogle" @apple="onApple" />
 
       <div v-if="hasSocial" class="relative py-1 text-center">
         <div class="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-line"></div>
