@@ -27,6 +27,7 @@ import {
   PhChartLine,
   PhWallet,
   PhBuildings,
+  PhUsers,
 } from '@phosphor-icons/vue'
 import CommandPalette from '@/components/CommandPalette.vue'
 import VerificationBanner from '@/components/VerificationBanner.vue'
@@ -50,6 +51,7 @@ const navItems = [
   { to: '/dashboard',    key: 'nav.dashboard',    icon: PhGauge },
   { to: '/campaigns',    key: 'nav.campaigns',    icon: PhMegaphone },
   { to: '/screens',      key: 'nav.screens',      icon: PhMapPin },
+  { to: '/audiences',   key: 'nav.audiences',    icon: PhUsers },
   { to: '/reports',      key: 'nav.reports',      icon: PhChartLine },
   { to: '/billing',      key: 'nav.billing',      icon: PhWallet },
   { to: '/organization', key: 'nav.organization', icon: PhBuildings },

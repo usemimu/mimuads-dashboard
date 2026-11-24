@@ -13,6 +13,7 @@ export default {
     dashboard: 'Dashboard',
     campaigns: 'Campaigns',
     screens: 'Screens',
+    audiences: 'Audiences',
     reports: 'Reports',
     billing: 'Billing',
     organization: 'Organization',

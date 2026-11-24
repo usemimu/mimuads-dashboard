@@ -3,6 +3,7 @@ import {
   UpsertOfferSchema,
   OfferSchema,
   OfferOrNullSchema,
+  LeadsSchema,
   type UpsertOfferRequest,
 } from './contracts/offers'
 
@@ -26,5 +27,18 @@ export function submitOffer(campaignId: string) {
     `/advertiser/campaigns/${campaignId}/offer/submit`,
     {},
     OfferSchema,
+  )
+}
+
+/** List B2B inquiry leads for a campaign. */
+export function getCampaignLeads(campaignId: string) {
+  return api.get(`/advertiser/campaigns/${campaignId}/leads`, LeadsSchema)
+}
+
+/** Mark a lead as viewed (no-op if already past 'new'). */
+export function markLeadViewed(campaignId: string, leadId: string) {
+  return api.patch(
+    `/advertiser/campaigns/${campaignId}/leads/${leadId}/viewed`,
+    {},
   )
 }

@@ -138,6 +138,7 @@ export function buildCreatePayload(s: WizardState): CreateCampaignRequest {
   return {
     name: s.name.trim(),
     objective: s.objective as Objective,
+    type: 'screen' as const,
     // A carousel is a creative: the campaign references its id like any other.
     creativeId: s.creativeMode === 'carousel' ? s.carouselId : s.creativeId,
     isWildcard: s.isWildcard,

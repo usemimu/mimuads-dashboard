@@ -410,6 +410,22 @@ async function finish(submit: boolean) {
       <Button variant="ghost" size="sm" @click="router.push('/campaigns')">{{ $t('common.cancel') }}</Button>
     </div>
 
+    <!-- Campaign type selector: Screen Ads vs Outreach -->
+    <div class="mb-5 flex gap-3 rounded-xl border border-line bg-surface p-3">
+      <button
+        class="flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors"
+        :class="'bg-clay-900 text-white shadow-sm'"
+      >
+        Screen Ads
+      </button>
+      <button
+        class="flex-1 rounded-lg py-2.5 text-sm font-medium text-neutral-500 transition-colors hover:bg-clay-50"
+        @click="router.push('/audiences')"
+      >
+        Outreach
+      </button>
+    </div>
+
     <WizardShell>
       <!-- Left: phase rail -->
       <template #rail>
