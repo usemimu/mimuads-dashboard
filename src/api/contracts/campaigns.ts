@@ -25,9 +25,13 @@ export const CampaignStatusSchema = z.enum([
 export type CampaignStatus = z.infer<typeof CampaignStatusSchema>
 
 // POST /advertiser/campaigns
+export const CampaignTypeSchema = z.enum(['screen', 'outreach'])
+export type CampaignType = z.infer<typeof CampaignTypeSchema>
+
 export const CreateCampaignSchema = z.object({
   name: z.string().min(3).max(255),
   objective: ObjectiveSchema,
+  type: CampaignTypeSchema.optional().default('screen'),
   creativeId: z.string().uuid(),
   isWildcard: z.boolean().optional(),
   screenIds: z.array(z.string().uuid()).max(50).optional(),
@@ -83,6 +87,9 @@ export const CampaignSchema = z
     pausedReason: z.string().nullable().optional(),
     suspensionReason: z.string().nullable().optional(),
     apconRejectionReason: z.string().nullable().optional(),
+    // 'screen' = physical DOOH; 'outreach' = direct-to-subscriber.
+    // Not present on legacy rows — treat absence as 'screen'.
+    type: z.enum(['screen', 'outreach']).optional().default('screen'),
   })
   .passthrough()
 export type Campaign = z.infer<typeof CampaignSchema>

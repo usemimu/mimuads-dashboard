@@ -6,7 +6,7 @@ import { z } from 'zod'
  * opted-in audiences (see mimu/docs/offers-opt-in.md).
  */
 
-export const OfferCtaTypeSchema = z.enum(['online', 'in_store', 'whatsapp'])
+export const OfferCtaTypeSchema = z.enum(['online', 'in_store', 'whatsapp', 'b2b_inquiry'])
 export type OfferCtaType = z.infer<typeof OfferCtaTypeSchema>
 
 export const OfferStatusSchema = z.enum([
@@ -54,3 +54,19 @@ export type Offer = z.infer<typeof OfferSchema>
 
 // GET returns the offer or null when the campaign has none yet.
 export const OfferOrNullSchema = OfferSchema.nullable()
+
+export const LeadStatusSchema = z.enum(['new', 'viewed', 'responded', 'closed'])
+export type LeadStatus = z.infer<typeof LeadStatusSchema>
+
+export const LeadSchema = z.object({
+  id: z.string().uuid(),
+  businessName: z.string(),
+  contactName: z.string(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  message: z.string().nullable(),
+  status: LeadStatusSchema,
+  createdAt: z.string(),
+})
+export type Lead = z.infer<typeof LeadSchema>
+export const LeadsSchema = z.array(LeadSchema)
