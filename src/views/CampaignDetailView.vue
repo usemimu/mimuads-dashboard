@@ -24,7 +24,7 @@ import { statusTone, statusLabel } from '@/lib/status'
 import { useSession } from '@/stores/session'
 import {
   getCampaign, getPerformance, getPerformanceBreakdown, getDecisionFactors,
-  getCampaignSummaries,
+  getCampaignSummaries, getOutreachPerformance, getFieldPerformance, getScoutLeaderboard,
   pauseCampaign, resumeCampaign, topUpCampaign, extendCampaign, cloneCampaign,
 } from '@/api/campaigns'
 import { ctxKey } from '@/lib/ctx-key'
@@ -51,11 +51,12 @@ const pacing = computed(() => {
   return b > 0 ? Math.min(100, Math.round((sp / b) * 100)) : 0
 })
 
-type PerfTab = 'overall' | 'by-screen' | 'by-hour' | 'by-day' | 'audience'
+type PerfTab = 'overall' | 'by-screen' | 'by-creative' | 'by-hour' | 'by-day' | 'audience'
 const tab = ref<PerfTab>('overall')
 const perfTabs = computed<ReadonlyArray<{ value: PerfTab; label: string }>>(() => [
   { value: 'overall', label: t('campaigns.tabOverall') },
   { value: 'by-screen', label: t('campaigns.tabByScreen') },
+  { value: 'by-creative', label: 'By creative' },
   { value: 'by-hour', label: t('campaigns.tabByHour') },
   { value: 'by-day', label: t('campaigns.tabByDay') },
   { value: 'audience', label: 'Audience' },
@@ -69,7 +70,7 @@ const { data: perfOverall } = useQuery({
 // Breakdown perf only loads when a breakdown tab is active.
 const { data: perf } = useQuery({
   queryKey: computed(() => ctxKey(session.context, 'perf', id.value, tab.value)),
-  queryFn: () => getPerformanceBreakdown(id.value, tab.value as 'by-screen' | 'by-hour' | 'by-day'),
+  queryFn: () => getPerformanceBreakdown(id.value, tab.value as 'by-screen' | 'by-creative' | 'by-hour' | 'by-day'),
   enabled: computed(() => tab.value !== 'overall' && tab.value !== 'audience'),
 })
 const { data: factors } = useQuery({
@@ -135,6 +136,35 @@ const { data: topScoutsData } = useQuery({
 })
 const topScouts = computed(() => topScoutsData.value ?? [])
 
+// New performance endpoints (open/click, scout economics). Untyped responses.
+const { data: outreachPerfData } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'outreach-perf', id.value)),
+  queryFn: () => getOutreachPerformance(id.value),
+  enabled: isOutreach,
+})
+const outreachPerf = computed(() => outreachPerfData.value as {
+  delivery?: { totalSent?: number; totalFailed?: number; totalOpened?: number; totalClicked?: number; openRate?: number; clickRate?: number; costPerSendNaira?: number }
+} | undefined)
+
+const { data: fieldPerfData } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'field-perf', id.value)),
+  queryFn: () => getFieldPerformance(id.value),
+  enabled: computed(() => !!fieldCampaign.value),
+})
+const fieldPerf = computed(() => fieldPerfData.value as {
+  pool?: { poolUtilization?: number }
+  scouts?: { totalRedemptions?: number; redemptionRate?: number; totalEarnedNaira?: number }
+} | undefined)
+
+const { data: scoutLbData } = useQuery({
+  queryKey: computed(() => ctxKey(session.context, 'scout-lb', id.value)),
+  queryFn: () => getScoutLeaderboard(id.value),
+  enabled: computed(() => !!fieldCampaign.value),
+})
+const scoutLeaderboard = computed(() => (scoutLbData.value as {
+  scouts?: Array<{ rank: number; scoutId: string; scoutName: string; referrals: number; redemptions: number; earnedNaira: number }>
+} | undefined)?.scouts ?? [])
+
 const showFieldCreate = ref(false)
 const fieldCreateForm = ref({ name: '', budgetPool: '', startDate: c.value?.startDate?.slice(0, 10) ?? '', endDate: c.value?.endDate?.slice(0, 10) ?? '' })
 type FieldTab = 'overview' | 'tasks'
@@ -158,7 +188,17 @@ async function onCreateField() {
 
 // ── Performance (untyped API responses → typed accessors) ─────────────
 interface Overall {
-  metrics?: { totalPlays?: number; totalImpressions?: number; totalAttentionSeconds?: number; averageAttentionSeconds?: number }
+  metrics?: {
+    totalPlays?: number
+    totalImpressions?: number
+    totalAttentionSeconds?: number
+    averageAttentionSeconds?: number
+    // Vision model (0 until screens have cameras — surfaced only when > 0)
+    attentionRate?: number
+    completionRate?: number
+    bleReach?: number
+    demographics?: { male?: number; female?: number; child?: number; adult?: number; senior?: number }
+  }
   pacing?: { status?: string; daysElapsed?: number; daysRemaining?: number; formattedExpectedSpend?: string }
   timeline?: { startDate?: string; endDate?: string; lastPlayAt?: string | null }
 }
@@ -166,6 +206,8 @@ interface BreakdownRow {
   label: string
   plays: number
   formattedCost?: string
+  // Present only on by-screen rows: did the booked slots actually play?
+  fillRate?: number
 }
 const overall = computed<Overall | null>(() => (perfOverall.value as Overall) ?? null)
 
@@ -240,6 +282,41 @@ const rows = computed<BreakdownRow[]>(() => {
     label: (r.screenName as string) ?? (r.hour ? formatHour(r.hour as string) : (r.date as string)) ?? '—',
     plays: (r.plays as number) ?? 0,
     formattedCost: r.formattedCost as string | undefined,
+    fillRate: typeof r.fillRate === 'number' ? (r.fillRate as number) : undefined,
+  }))
+})
+
+// Vision/quality headline metrics — each only shown when the signal exists
+// (CV-less screens report 0; we don't clutter the plays-first view with zeros).
+const attentionRatePct = computed(() => {
+  const r = overall.value?.metrics?.attentionRate ?? 0
+  return r > 0 ? Math.round(r * 100) : null
+})
+const completionRatePct = computed(() => {
+  const r = overall.value?.metrics?.completionRate ?? 0
+  return r > 0 ? Math.round(r * 100) : null
+})
+const bleReach = computed(() => overall.value?.metrics?.bleReach ?? 0)
+const showFill = computed(() => tab.value === 'by-screen')
+
+interface CreativeRow {
+  creativeId: string
+  creativeName: string
+  plays: number
+  attentionRate: number
+  completionRate: number
+  costNaira: number
+}
+const creativeRows = computed<CreativeRow[]>(() => {
+  if (tab.value !== 'by-creative' || !perf.value) return []
+  const arr = ((perf.value as { creatives?: unknown[] }).creatives ?? []) as Array<Record<string, unknown>>
+  return arr.map((r) => ({
+    creativeId: (r.creativeId as string) ?? '',
+    creativeName: (r.creativeName as string) ?? 'Creative',
+    plays: (r.plays as number) ?? 0,
+    attentionRate: (r.attentionRate as number) ?? 0,
+    completionRate: (r.completionRate as number) ?? 0,
+    costNaira: (r.costNaira as number) ?? 0,
   }))
 })
 
@@ -311,6 +388,10 @@ async function onClone() {
                 <MetricTile :label="$t('campaigns.perf.estReach')" :value="estReach ? estReach.toLocaleString('en-NG') : '—'" :sub="$t('campaigns.perf.estReachHint')" :icon="PhUsersThree" />
                 <MetricTile :label="$t('campaigns.perf.spend')" :value="formatKobo(c?.spentKobo ?? '0', { showDecimals: false })" :icon="PhCurrencyNgn" />
                 <MetricTile :label="$t('campaigns.perf.cpmPlays')" :value="cpmPerKPlays ? formatKobo(String(cpmPerKPlays)) : '—'" :icon="PhChartLineUp" />
+                <!-- Vision + anonymous-reach signals: appear as cameras/BLE come online -->
+                <MetricTile v-if="attentionRatePct !== null" label="Attention rate" :value="`${attentionRatePct}%`" sub="Looked vs passed by" :icon="PhUsersThree" />
+                <MetricTile v-if="completionRatePct !== null" label="Completion rate" :value="`${completionRatePct}%`" sub="Full plays" :icon="PhChartLineUp" />
+                <MetricTile v-if="bleReach > 0" label="Anonymous reach" :value="bleReach.toLocaleString('en-NG')" sub="BLE footfall (camera-less)" :icon="PhUsersThree" />
               </div>
               <p v-else class="py-6 text-center text-sm text-neutral-400">{{ $t('common.loading') }}</p>
             </template>
@@ -318,6 +399,37 @@ async function onClone() {
             <!-- Audience insights -->
             <template v-else-if="tab === 'audience'">
               <AudienceInsightsPanel :campaign-id="id" />
+            </template>
+
+            <!-- By creative: which creative earns attention / completes -->
+            <template v-else-if="tab === 'by-creative'">
+              <div v-if="creativeRows.length" class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-neutral-400">
+                    <tr>
+                      <th class="py-2 pr-3 font-semibold">Creative</th>
+                      <th class="px-3 py-2 text-right font-semibold">{{ $t('campaigns.perf.colPlays') }}</th>
+                      <th class="px-3 py-2 text-right font-semibold">Attention</th>
+                      <th class="px-3 py-2 text-right font-semibold">Completion</th>
+                      <th class="py-2 pl-3 text-right font-semibold">{{ $t('campaigns.perf.colCost') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="r in creativeRows" :key="r.creativeId" class="border-b border-line last:border-0">
+                      <td class="py-2 pr-3 text-neutral-900">{{ r.creativeName }}</td>
+                      <td class="px-3 py-2 text-right font-display text-[13px] font-medium text-neutral-700">{{ r.plays.toLocaleString('en-NG') }}</td>
+                      <td class="px-3 py-2 text-right font-display text-[13px] font-medium text-neutral-700">{{ r.attentionRate > 0 ? `${Math.round(r.attentionRate * 100)}%` : '—' }}</td>
+                      <td class="px-3 py-2 text-right font-display text-[13px] font-medium text-neutral-700">{{ r.completionRate > 0 ? `${Math.round(r.completionRate * 100)}%` : '—' }}</td>
+                      <td class="py-2 pl-3 text-right font-display text-[13px] font-medium text-neutral-700">₦{{ r.costNaira.toLocaleString('en-NG') }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p class="mt-2 text-[11px] text-neutral-400">Attention + completion are 0 until screens have cameras; plays and cost are live.</p>
+              </div>
+              <div v-else class="flex flex-col items-center py-8 text-center text-sm text-neutral-400">
+                <MimuIcon name="dashboard" variant="sticker" :size="104" class="mb-2" />
+                {{ $t('campaigns.perf.empty') }}
+              </div>
             </template>
 
             <!-- Breakdown table (screen / hour / day) -->
@@ -328,6 +440,7 @@ async function onClone() {
                     <tr>
                       <th class="py-2 pr-3 font-semibold">{{ breakdownColLabel }}</th>
                       <th class="px-3 py-2 text-right font-semibold">{{ $t('campaigns.perf.colPlays') }}</th>
+                      <th v-if="showFill" class="px-3 py-2 text-right font-semibold">Fill</th>
                       <th class="py-2 pl-3 text-right font-semibold">{{ $t('campaigns.perf.colCost') }}</th>
                     </tr>
                   </thead>
@@ -335,6 +448,9 @@ async function onClone() {
                     <tr v-for="(r, i) in rows" :key="i" class="border-b border-line last:border-0">
                       <td class="py-2 pr-3 text-neutral-900">{{ r.label }}</td>
                       <td class="px-3 py-2 text-right font-display text-[13px] font-medium text-neutral-700">{{ r.plays.toLocaleString('en-NG') }}</td>
+                      <td v-if="showFill" class="px-3 py-2 text-right font-display text-[13px] font-medium" :class="r.fillRate != null && r.fillRate < 0.8 ? 'text-amber-600' : 'text-neutral-700'">
+                        {{ r.fillRate != null ? `${Math.round(r.fillRate * 100)}%` : '—' }}
+                      </td>
                       <td class="py-2 pl-3 text-right font-display text-[13px] font-medium text-neutral-700">{{ r.formattedCost ?? '—' }}</td>
                     </tr>
                   </tbody>
@@ -432,6 +548,21 @@ async function onClone() {
               <p class="eyebrow text-clay-500">Rate</p>
             </div>
           </div>
+          <!-- Engagement: open/click from the outreach_sends log (click → page) -->
+          <div v-if="outreachPerf?.delivery" class="mt-3 grid grid-cols-3 gap-3">
+            <div class="rounded-xl border border-line p-3 text-center">
+              <p class="text-lg font-bold text-neutral-900">{{ (outreachPerf.delivery.totalClicked ?? 0).toLocaleString('en-NG') }}</p>
+              <p class="eyebrow text-neutral-500">Clicked</p>
+            </div>
+            <div class="rounded-xl border border-line p-3 text-center">
+              <p class="text-lg font-bold text-neutral-900">{{ Math.round((outreachPerf.delivery.clickRate ?? 0) * 100) }}%</p>
+              <p class="eyebrow text-neutral-500">Click rate</p>
+            </div>
+            <div class="rounded-xl border border-line p-3 text-center">
+              <p class="text-lg font-bold text-neutral-900">₦{{ (outreachPerf.delivery.costPerSendNaira ?? 0).toLocaleString('en-NG') }}</p>
+              <p class="eyebrow text-neutral-500">Cost / send</p>
+            </div>
+          </div>
         </Card>
 
         <!-- Field Campaign — people-powered referral layer for screen campaigns -->
@@ -505,14 +636,43 @@ async function onClone() {
                 </div>
               </div>
 
+              <!-- Scout economics: redemptions actually convert claims → sales -->
+              <div v-if="fieldPerf?.scouts" class="grid grid-cols-3 gap-3">
+                <div class="rounded-xl border border-line p-3 text-center">
+                  <p class="text-lg font-bold text-neutral-900">{{ (fieldPerf.scouts.totalRedemptions ?? 0).toLocaleString('en-NG') }}</p>
+                  <p class="eyebrow text-neutral-500">Redeemed</p>
+                </div>
+                <div class="rounded-xl border border-line p-3 text-center">
+                  <p class="text-lg font-bold text-neutral-900">{{ Math.round((fieldPerf.scouts.redemptionRate ?? 0) * 100) }}%</p>
+                  <p class="eyebrow text-neutral-500">Redeem rate</p>
+                </div>
+                <div class="rounded-xl border border-line p-3 text-center">
+                  <p class="text-lg font-bold text-neutral-900">₦{{ (fieldPerf.scouts.totalEarnedNaira ?? 0).toLocaleString('en-NG') }}</p>
+                  <p class="eyebrow text-neutral-500">Paid out</p>
+                </div>
+              </div>
+
               <!-- Spread map -->
               <div>
                 <p class="eyebrow mb-2 text-neutral-500">Scout spread</p>
                 <SpreadMap :points="heatmapPoints" height="300px" />
               </div>
 
-              <!-- Top scouts -->
-              <div v-if="topScouts.length">
+              <!-- Top scouts: earnings leaderboard when available, else claims -->
+              <div v-if="scoutLeaderboard.length">
+                <p class="eyebrow mb-2 text-neutral-500">Scout leaderboard · by earnings</p>
+                <div class="space-y-2">
+                  <div v-for="s in scoutLeaderboard.slice(0, 5)" :key="s.scoutId" class="flex items-center justify-between rounded-lg bg-clay-50 px-3 py-2">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-bold text-clay-400 w-4">#{{ s.rank }}</span>
+                      <span class="text-sm font-medium text-neutral-800">{{ s.scoutName }}</span>
+                      <span class="text-xs text-neutral-400">{{ s.referrals }} ref · {{ s.redemptions }} redeemed</span>
+                    </div>
+                    <span class="text-sm font-medium text-neutral-700">₦{{ s.earnedNaira.toLocaleString('en-NG') }}</span>
+                  </div>
+                </div>
+              </div>
+              <div v-else-if="topScouts.length">
                 <p class="eyebrow mb-2 text-neutral-500">Top scouts</p>
                 <div class="space-y-2">
                   <div v-for="(scout, i) in topScouts.slice(0, 5)" :key="scout.id" class="flex items-center justify-between rounded-lg bg-clay-50 px-3 py-2">
