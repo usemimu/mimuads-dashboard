@@ -40,6 +40,7 @@ export const ScreenSchema = z
     latitude: z.number().nullable().optional(),
     longitude: z.number().nullable().optional(),
     photoUrl: z.string().nullable().optional(),
+    thumbnailUrl: z.string().nullable().optional(),
   })
   .passthrough()
 export type Screen = z.infer<typeof ScreenSchema>

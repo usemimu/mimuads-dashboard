@@ -100,6 +100,68 @@
         ]
       }
     },
+    "/v1/advertiser/notifications/devices": {
+      "post": {
+        "operationId": "AdvertiserNotificationsController_registerDevice",
+        "summary": "Register (or refresh) this device for push notifications",
+        "description": "Upserts the FCM token for the calling user. Safe to call on every app launch and whenever the token rotates.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Device registered"
+          }
+        },
+        "tags": [
+          "Advertiser / Notifications"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/notifications/devices/unregister": {
+      "post": {
+        "operationId": "AdvertiserNotificationsController_unregisterDevice",
+        "summary": "Remove this device from push notifications",
+        "description": "Deletes the token for the calling user — call on sign-out so a shared device stops receiving the previous user's pushes.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Device unregistered"
+          }
+        },
+        "tags": [
+          "Advertiser / Notifications"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/v1/advertiser/notifications": {
       "get": {
         "operationId": "AdvertiserNotificationsController_list",
@@ -976,6 +1038,36 @@
         ]
       }
     },
+    "/v1/host/profile/brand-image/upload-url": {
+      "post": {
+        "operationId": "HostProfileController_getBrandImageUploadUrl",
+        "summary": "Get a presigned upload URL for a host logo or banner",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HostBrandImageUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Presigned upload URL + public fileUrl returned"
+          }
+        },
+        "tags": [
+          "Host / Profile"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/v1/host/profile/completion-status": {
       "get": {
         "operationId": "HostProfileController_getCompletionStatus",
@@ -1713,6 +1805,64 @@
           },
           "404": {
             "description": "Screen not found / not yours"
+          }
+        },
+        "tags": [
+          "Host / Screen Audio"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/host/screens/{screenId}/operating-hours": {
+      "get": {
+        "operationId": "HostScreenConfigController_getOperatingHours",
+        "summary": "Get the screen's operating hours schedule (host-self)",
+        "parameters": [
+          {
+            "name": "screenId",
+            "required": true,
+            "in": "path",
+            "description": "Screen UUID owned by this host",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Host / Screen Audio"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "HostScreenConfigController_updateOperatingHours",
+        "summary": "Update the screen's operating hours schedule (host-self)",
+        "parameters": [
+          {
+            "name": "screenId",
+            "required": true,
+            "in": "path",
+            "description": "Screen UUID owned by this host",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
           }
         },
         "tags": [
@@ -2828,6 +2978,38 @@
         ]
       }
     },
+    "/v1/admin/players/pair/{screenId}/rotate-secret": {
+      "post": {
+        "operationId": "AdminPlayerPairingController_rotateSecret",
+        "summary": "Rotate the player secret for a screen",
+        "parameters": [
+          {
+            "name": "screenId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "New secret returned once"
+          },
+          "404": {
+            "description": "No active player for this screen"
+          }
+        },
+        "tags": [
+          "Admin / Players"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
     "/v1/players/update-check": {
       "get": {
         "operationId": "UpdateCheckController_check",
@@ -2931,6 +3113,260 @@
         },
         "tags": [
           "Player / Host Promotions"
+        ]
+      }
+    },
+    "/v1/screens/observe": {
+      "post": {
+        "operationId": "ObservationsController_observe",
+        "summary": "Post ambient scene observation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObservationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Player / Vision"
+        ]
+      }
+    },
+    "/v1/screens/anomaly": {
+      "post": {
+        "operationId": "ObservationsController_anomaly",
+        "summary": "Report a detected anomaly event",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnomalyEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Player / Vision"
+        ]
+      }
+    },
+    "/v1/screens/patterns": {
+      "post": {
+        "operationId": "ObservationsController_syncPatterns",
+        "summary": "Sync locally-learned audience patterns to server",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatternSyncDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Player / Vision"
+        ]
+      }
+    },
+    "/v1/screens/models/current": {
+      "get": {
+        "operationId": "ObservationsController_currentModel",
+        "summary": "Check for model OTA update",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Player / Vision"
+        ]
+      }
+    },
+    "/v1/admin/vision/models": {
+      "get": {
+        "operationId": "AdminVisionController_listModels",
+        "summary": "List all model versions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Vision"
+        ]
+      },
+      "post": {
+        "operationId": "AdminVisionController_createModel",
+        "summary": "Register a new model version",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Vision"
+        ]
+      }
+    },
+    "/v1/admin/vision/models/{id}/deploy": {
+      "patch": {
+        "operationId": "AdminVisionController_deployModel",
+        "summary": "Deploy model version to fleet (sets as current)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Vision"
+        ]
+      }
+    },
+    "/v1/admin/vision/observations": {
+      "get": {
+        "operationId": "AdminVisionController_listObservations",
+        "summary": "Unlabelled observations for active learning",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "modelVersion",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Vision"
+        ]
+      }
+    },
+    "/v1/admin/vision/observations/{id}/label": {
+      "patch": {
+        "operationId": "AdminVisionController_labelObservation",
+        "summary": "Submit label corrections for an observation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Vision"
+        ]
+      }
+    },
+    "/v1/admin/vision/anomalies": {
+      "get": {
+        "operationId": "AdminVisionController_listAnomalies",
+        "summary": "Recent anomaly events",
+        "parameters": [
+          {
+            "name": "screenId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "all",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Vision"
+        ]
+      }
+    },
+    "/v1/admin/vision/anomalies/{id}/resolve": {
+      "patch": {
+        "operationId": "AdminVisionController_resolveAnomaly",
+        "summary": "Mark an anomaly as resolved",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Vision"
         ]
       }
     },
@@ -3204,6 +3640,109 @@
         ]
       }
     },
+    "/v1/advertiser/auth/google": {
+      "post": {
+        "operationId": "AdvertiserAuthController_googleSignIn",
+        "summary": "Sign in or start sign-up with a Google ID token",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleSignInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in, or a phone is needed to finish sign-up"
+          },
+          "401": {
+            "description": "Invalid Google token or unverified email"
+          }
+        },
+        "tags": [
+          "Advertiser / Auth"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/auth/apple": {
+      "post": {
+        "operationId": "AdvertiserAuthController_appleSignIn",
+        "summary": "Sign in or start sign-up with an Apple identity token",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppleSignInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in, or a phone is needed to finish sign-up"
+          },
+          "401": {
+            "description": "Invalid Apple token or no email"
+          }
+        },
+        "tags": [
+          "Advertiser / Auth"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/auth/social/request-otp": {
+      "post": {
+        "operationId": "AdvertiserAuthController_socialRequestOtp",
+        "summary": "Send the phone code to finish a Google / Apple sign-up",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SocialRequestOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestOTPResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Advertiser / Auth"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/v1/advertiser/auth/forgot-password": {
       "post": {
         "operationId": "AdvertiserAuthController_forgotPassword",
@@ -3449,6 +3988,45 @@
           },
           "401": {
             "description": "Unauthorized — missing or invalid JWT"
+          }
+        },
+        "tags": [
+          "Advertiser / Profile"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/profile/account": {
+      "patch": {
+        "operationId": "AdvertiserProfileController_updateAccount",
+        "summary": "Update current user account (name, email)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account updated successfully"
+          },
+          "400": {
+            "description": "Validation error or email already in use"
+          },
+          "401": {
+            "description": "Unauthorized — missing or invalid JWT"
+          },
+          "404": {
+            "description": "User not found"
           }
         },
         "tags": [
@@ -4085,6 +4663,256 @@
         },
         "tags": [
           "Advertiser / Creatives"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/creatives/carousel": {
+      "post": {
+        "operationId": "CarouselController_create",
+        "summary": "Create a carousel creative",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCarouselDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Creatives / Carousel"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/creatives/carousel/{id}/items/upload-intent": {
+      "post": {
+        "operationId": "CarouselController_addItem",
+        "summary": "Presigned URL for one carousel item",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarouselItemUploadIntentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Creatives / Carousel"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/creatives/carousel/{id}/items/{itemId}/confirm": {
+      "post": {
+        "operationId": "CarouselController_confirmItem",
+        "summary": "Confirm a carousel item upload",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmCarouselItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Creatives / Carousel"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/creatives/carousel/{id}/items/{itemId}": {
+      "delete": {
+        "operationId": "CarouselController_deleteItem",
+        "summary": "Delete a carousel item",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Creatives / Carousel"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/creatives/carousel/{id}/reorder": {
+      "patch": {
+        "operationId": "CarouselController_reorder",
+        "summary": "Reorder carousel items",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderCarouselDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Creatives / Carousel"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/creatives/carousel/{id}/confirm": {
+      "post": {
+        "operationId": "CarouselController_confirm",
+        "summary": "Finalize carousel → ready for vetting",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Creatives / Carousel"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/creatives/carousel/{id}": {
+      "get": {
+        "operationId": "CarouselController_get",
+        "summary": "Get a carousel with its ordered items",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Creatives / Carousel"
         ],
         "security": [
           {
@@ -4830,6 +5658,37 @@
         ]
       }
     },
+    "/v1/advertiser/campaigns/{campaignId}/performance/scout-leaderboard": {
+      "get": {
+        "operationId": "CampaignPerformanceController_getScoutLeaderboard",
+        "summary": "Scout leaderboard for a field campaign",
+        "description": "Per-scout ranking by earnings (then redemptions) for the campaign’s field (scout) arm.",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Campaigns"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/v1/advertiser/campaigns/{campaignId}/performance/by-hour": {
       "get": {
         "operationId": "CampaignPerformanceController_getPerformanceByHour",
@@ -4898,6 +5757,96 @@
           },
           "404": {
             "description": "Campaign not found"
+          }
+        },
+        "tags": [
+          "Advertiser / Campaigns"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/performance/by-creative": {
+      "get": {
+        "operationId": "CampaignPerformanceController_getPerformanceByCreative",
+        "summary": "Per-creative performance breakdown",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Campaigns"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/performance/outreach": {
+      "get": {
+        "operationId": "CampaignPerformanceController_getOutreachPerformance",
+        "summary": "Outreach campaign performance (sends, opens, clicks)",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Campaigns"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/performance/field": {
+      "get": {
+        "operationId": "CampaignPerformanceController_getFieldPerformance",
+        "summary": "Field (scout) campaign performance",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
           }
         },
         "tags": [
@@ -4979,6 +5928,76 @@
           },
           "403": {
             "description": "Forbidden — insufficient permissions"
+          }
+        },
+        "tags": [
+          "Admin / Campaigns"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/campaigns/scheduled": {
+      "get": {
+        "operationId": "AdminCampaignController_listScheduled",
+        "summary": "List scheduled campaigns (approved, awaiting start)",
+        "description": "Returns campaigns whose status is approved — APCON-cleared but not yet activated because start_date is in the future. Ordered by start_date ASC. Same row shape as /live (linked creative, presigned preview, advertiser, spend metrics).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of scheduled campaigns awaiting their start date"
+          },
+          "401": {
+            "description": "Unauthorized — session expired or missing"
+          },
+          "403": {
+            "description": "Forbidden — insufficient permissions"
+          }
+        },
+        "tags": [
+          "Admin / Campaigns"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/campaigns/{id}/activate": {
+      "post": {
+        "operationId": "AdminCampaignController_activateCampaignNow",
+        "summary": "Force a scheduled (approved) campaign live now",
+        "description": "Immediately activates an approved campaign, bypassing the scheduled-start wait. Sets status=active and pulls start_date forward to now so it serves right away; end_date is unchanged. Fails if the campaign is not in approved status or its end_date has already passed.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Campaign ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Campaign activated and now live"
+          },
+          "400": {
+            "description": "Campaign is not in approved status, or its end_date has passed"
+          },
+          "401": {
+            "description": "Unauthorized — session expired or missing"
+          },
+          "403": {
+            "description": "Forbidden — insufficient permissions"
+          },
+          "404": {
+            "description": "Campaign not found"
           }
         },
         "tags": [
@@ -5338,6 +6357,1681 @@
           {
             "AdminSession": []
           }
+        ]
+      }
+    },
+    "/v1/advertiser/outreach/segments": {
+      "get": {
+        "operationId": "AdvertiserOutreachController_listSegments",
+        "summary": "List available named audience segments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Outreach"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/outreach/target": {
+      "get": {
+        "operationId": "AdvertiserOutreachController_getTarget",
+        "summary": "Get the campaign's outreach targeting config",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Outreach"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "AdvertiserOutreachController_upsertTarget",
+        "summary": "Create or replace outreach targeting config",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutreachTargetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Outreach"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/outreach/estimate": {
+      "post": {
+        "operationId": "AdvertiserOutreachController_estimate",
+        "summary": "Estimate audience size + cost for targeting config",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutreachEstimateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Outreach"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/outreach/stats": {
+      "get": {
+        "operationId": "AdvertiserOutreachController_getStats",
+        "summary": "Delivery stats for an outreach campaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Outreach"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/audiences": {
+      "post": {
+        "operationId": "AdvertiserAudiencesController_create",
+        "summary": "Create a new custom audience (empty)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAudienceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Audiences"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "AdvertiserAudiencesController_list",
+        "summary": "List all custom audiences for this org",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Audiences"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/audiences/{audienceId}/contacts": {
+      "post": {
+        "operationId": "AdvertiserAudiencesController_uploadContacts",
+        "summary": "Upload hashed contacts into an audience (CSV-free JSON)",
+        "parameters": [
+          {
+            "name": "audienceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadContactsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Audiences"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/portal/outreach/opened": {
+      "post": {
+        "operationId": "OutreachTrackingController_opened",
+        "summary": "Beacon: subscriber opened an outreach notification",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutreachBeaconDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/outreach/clicked": {
+      "post": {
+        "operationId": "OutreachTrackingController_clicked",
+        "summary": "Beacon: subscriber clicked through an outreach notification",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutreachBeaconDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/offer": {
+      "get": {
+        "operationId": "AdvertiserOffersController_get",
+        "summary": "Read the campaign's offer + review status",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Offers"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "AdvertiserOffersController_upsert",
+        "summary": "Create or update the offer (resets to draft)",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertOfferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Offers"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/offer/submit": {
+      "post": {
+        "operationId": "AdvertiserOffersController_submit",
+        "summary": "Submit the offer for admin review",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Offers"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/leads": {
+      "get": {
+        "operationId": "AdvertiserLeadsController_list",
+        "summary": "List B2B inquiry leads for a campaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Offers"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/leads/{leadId}/viewed": {
+      "patch": {
+        "operationId": "AdvertiserLeadsController_markViewed",
+        "summary": "Mark a new lead as viewed",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Offers"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/offers/pending": {
+      "get": {
+        "operationId": "AdminOffersController_pending",
+        "summary": "Offers awaiting review",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Offers"
+        ]
+      }
+    },
+    "/v1/admin/offers/media-ops": {
+      "get": {
+        "operationId": "AdminOffersController_mediaOps",
+        "summary": "Media-ops snapshot: consent funnel, sends, audiences, conversions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Offers"
+        ]
+      }
+    },
+    "/v1/admin/offers/{id}/approve": {
+      "post": {
+        "operationId": "AdminOffersController_approve",
+        "summary": "Approve an offer (makes it eligible to show/send)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Offer not found"
+          }
+        },
+        "tags": [
+          "Admin / Offers"
+        ]
+      }
+    },
+    "/v1/admin/offers/{id}/reject": {
+      "post": {
+        "operationId": "AdminOffersController_reject",
+        "summary": "Reject an offer with a reason",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectOfferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Offers"
+        ]
+      }
+    },
+    "/v1/portal/screen/{code}": {
+      "get": {
+        "operationId": "PortalController_screen",
+        "summary": "Resolve a screen QR code to its live offer",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Screen not found"
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/claim": {
+      "post": {
+        "operationId": "PortalController_claim",
+        "summary": "Claim the live offer; reveals a redemption code",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimOfferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "404": {
+            "description": "No live offer for this screen"
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/confirm/{token}": {
+      "get": {
+        "operationId": "PortalController_confirm",
+        "summary": "Confirm email (double opt-in)",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/unsubscribe/{token}": {
+      "get": {
+        "operationId": "PortalController_unsubscribe",
+        "summary": "Unsubscribe from future offers (all channels)",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/push/vapid-key": {
+      "get": {
+        "operationId": "PortalController_vapidKey",
+        "summary": "Public VAPID key for web-push subscription",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/push/subscribe": {
+      "post": {
+        "operationId": "PortalController_pushSubscribe",
+        "summary": "Register a web-push subscription after a claim",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscribeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/redeem": {
+      "post": {
+        "operationId": "PortalController_redeem",
+        "summary": "Mark a redemption code as used (cashier endpoint)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemOfferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Code already redeemed"
+          },
+          "404": {
+            "description": "Code not found"
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/discover": {
+      "get": {
+        "operationId": "PortalController_discover",
+        "summary": "Personalized offer feed matched to physical visit patterns",
+        "parameters": [
+          {
+            "name": "email",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/inquiry": {
+      "post": {
+        "operationId": "PortalController_inquiry",
+        "summary": "Submit a B2B inquiry for an offer with cta_type=b2b_inquiry",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/r/{offerId}": {
+      "get": {
+        "operationId": "PortalController_redirect",
+        "summary": "Broadcast click tracker → redirect to the CTA",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "s",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/share/{offerId}": {
+      "get": {
+        "operationId": "PortalController_shareLink",
+        "summary": "Get a shareable referral link for an offer after claiming it",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "s",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/checkin/info/{code}": {
+      "get": {
+        "operationId": "PortalController_checkInInfo",
+        "summary": "Resolve a host check-in code to venue info",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/checkin": {
+      "post": {
+        "operationId": "PortalController_checkIn",
+        "summary": "Opt-in to future offers via host check-in QR (no campaign required)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/history": {
+      "get": {
+        "operationId": "PortalController_history",
+        "summary": "Subscriber claim history (last 50 claims)",
+        "parameters": [
+          {
+            "name": "email",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Offers"
+        ]
+      }
+    },
+    "/v1/portal/ussd": {
+      "post": {
+        "operationId": "UssdController_handleUssd",
+        "summary": "Africa's Talking USSD callback",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / USSD"
+        ]
+      }
+    },
+    "/v1/portal/sms-optin": {
+      "post": {
+        "operationId": "UssdController_handleSmsOptin",
+        "summary": "Africa's Talking incoming SMS webhook",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / USSD"
+        ]
+      }
+    },
+    "/v1/portal/field/scout/signup": {
+      "post": {
+        "operationId": "FieldPortalController_signup",
+        "summary": "Sign up as a field scout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/scout/profile": {
+      "get": {
+        "operationId": "FieldPortalController_getProfile",
+        "summary": "Get a scout's profile by email",
+        "parameters": [
+          {
+            "name": "email",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/scout/{referralCode}": {
+      "get": {
+        "operationId": "FieldPortalController_getByCode",
+        "summary": "Get public scout profile by referral code",
+        "parameters": [
+          {
+            "name": "referralCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/campaigns": {
+      "get": {
+        "operationId": "FieldPortalController_listCampaigns",
+        "summary": "List active field campaigns available to join",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/campaigns/{fieldCampaignId}/join": {
+      "post": {
+        "operationId": "FieldPortalController_joinCampaign",
+        "summary": "Get campaign info + scout referral code",
+        "parameters": [
+          {
+            "name": "fieldCampaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/wallet": {
+      "get": {
+        "operationId": "FieldPortalController_getWallet",
+        "summary": "Get authenticated scout's wallet balance",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/wallet/withdraw": {
+      "post": {
+        "operationId": "FieldPortalController_withdraw",
+        "summary": "Request instant withdrawal (min ₦5,000)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/walking-session": {
+      "put": {
+        "operationId": "FieldPortalController_startWalkingSession",
+        "summary": "Start or refresh a GPS walking session (30-min TTL)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      },
+      "delete": {
+        "operationId": "FieldPortalController_stopWalkingSession",
+        "summary": "End a GPS walking session",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/banks": {
+      "get": {
+        "operationId": "FieldPortalController_listBanks",
+        "summary": "List supported banks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/bank-accounts/verify": {
+      "post": {
+        "operationId": "FieldPortalController_verifyAccount",
+        "summary": "Verify bank account number via Paystack",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/bank-accounts": {
+      "post": {
+        "operationId": "FieldPortalController_addBankAccount",
+        "summary": "Add a payout bank account (max 3)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      },
+      "get": {
+        "operationId": "FieldPortalController_listBankAccounts",
+        "summary": "List payout bank accounts for authenticated scout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/bank-accounts/{id}/default": {
+      "patch": {
+        "operationId": "FieldPortalController_setDefaultAccount",
+        "summary": "Set a bank account as default",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/bank-accounts/{id}": {
+      "delete": {
+        "operationId": "FieldPortalController_removeBankAccount",
+        "summary": "Remove a payout bank account",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/campaign-tasks": {
+      "get": {
+        "operationId": "FieldPortalController_listCampaignTasks",
+        "summary": "List active custom tasks for a field campaign",
+        "parameters": [
+          {
+            "name": "fieldCampaignId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/tasks/{taskId}/proof-upload-url": {
+      "post": {
+        "operationId": "FieldPortalController_getProofUploadUrl",
+        "summary": "Get a presigned URL to upload photo/screenshot proof",
+        "parameters": [
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/tasks/{taskId}/submit": {
+      "post": {
+        "operationId": "FieldPortalController_submitTask",
+        "summary": "Submit a custom task completion",
+        "parameters": [
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/portal/field/task-progress": {
+      "get": {
+        "operationId": "FieldPortalController_getTaskProgress",
+        "summary": "Get authenticated scout's task progress for a field campaign",
+        "parameters": [
+          {
+            "name": "fieldCampaignId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field"
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field": {
+      "post": {
+        "operationId": "AdvertiserFieldController_create",
+        "summary": "Create a field campaign for a screen campaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "AdvertiserFieldController_get",
+        "summary": "Get field campaign details + stats",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field/scout-summary": {
+      "get": {
+        "operationId": "AdvertiserFieldController_scoutSummary",
+        "summary": "\"Scouts on it\" — distinct scouts + tasks completed",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field/status": {
+      "patch": {
+        "operationId": "AdvertiserFieldController_setStatus",
+        "summary": "Activate or pause a field campaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field/heatmap": {
+      "get": {
+        "operationId": "AdvertiserFieldController_heatmap",
+        "summary": "Geographic spread heatmap for scout activity",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field/scouts": {
+      "get": {
+        "operationId": "AdvertiserFieldController_topScouts",
+        "summary": "Top scouts by activity count for a field campaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field/tasks": {
+      "post": {
+        "operationId": "AdvertiserFieldController_createTask",
+        "summary": "Create a custom scout task",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "AdvertiserFieldController_listTasks",
+        "summary": "List custom scout tasks",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field/tasks/{taskId}": {
+      "patch": {
+        "operationId": "AdvertiserFieldController_updateTask",
+        "summary": "Update a custom scout task",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AdvertiserFieldController_deleteTask",
+        "summary": "Delete a custom scout task",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field/tasks/{taskId}/completions": {
+      "get": {
+        "operationId": "AdvertiserFieldController_listCompletions",
+        "summary": "List scout completions for a task",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/field/tasks/{taskId}/completions/{completionId}": {
+      "patch": {
+        "operationId": "AdvertiserFieldController_reviewCompletion",
+        "summary": "Approve or reject a scout task completion",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "completionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Field"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/portal/field/auth/request-token": {
+      "post": {
+        "operationId": "ScoutAuthController_requestToken",
+        "summary": "Send OTP to scout email (10-min TTL)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field Auth"
+        ]
+      }
+    },
+    "/v1/portal/field/auth/verify-token": {
+      "post": {
+        "operationId": "ScoutAuthController_verifyToken",
+        "summary": "Exchange OTP for a 24h scout JWT",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Portal / Field Auth"
         ]
       }
     },
@@ -5998,6 +8692,26 @@
         "responses": {
           "200": {
             "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Reports"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/reports/campaigns/summary": {
+      "get": {
+        "operationId": "ReportsController_campaignSummaries",
+        "summary": "Per-campaign week/month/lifetime performance + milestones",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Reports view: people reached, plays, spend per period"
           }
         },
         "tags": [
@@ -9098,7 +11812,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UploadPlaysDto"
+                "$ref": "#/components/schemas/UploadPlaysEnvelopeDto"
               }
             }
           }
@@ -9113,6 +11827,374 @@
         },
         "tags": [
           "Player / Plays"
+        ]
+      }
+    },
+    "/v1/admin/intelligence/aggregate": {
+      "post": {
+        "operationId": "IntelligenceController_aggregate",
+        "summary": "Recompute the venue_intelligence grid from recent CV plays",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Aggregation summary"
+          }
+        },
+        "tags": [
+          "Admin / Audience Intelligence"
+        ]
+      }
+    },
+    "/v1/admin/intelligence/venue/{screenId}": {
+      "get": {
+        "operationId": "IntelligenceController_venue",
+        "summary": "Audience profile for one screen (24×7 grid + peaks)",
+        "parameters": [
+          {
+            "name": "screenId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Audience Intelligence"
+        ]
+      }
+    },
+    "/v1/admin/intelligence/lga/{lga}": {
+      "get": {
+        "operationId": "IntelligenceController_lga",
+        "summary": "LGA-level audience patterns (hourly + venue mix)",
+        "parameters": [
+          {
+            "name": "lga",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Audience Intelligence"
+        ]
+      }
+    },
+    "/v1/admin/intelligence/campaign/{campaignId}": {
+      "get": {
+        "operationId": "IntelligenceController_campaign",
+        "summary": "Venue types & LGAs a campaign's audience gathers in most",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Audience Intelligence"
+        ]
+      }
+    },
+    "/v1/admin/intelligence/export": {
+      "get": {
+        "operationId": "IntelligenceController_export",
+        "summary": "Export the aggregate training dataset for the placement model",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Anonymous aggregate JSON dataset"
+          }
+        },
+        "tags": [
+          "Admin / Audience Intelligence"
+        ]
+      }
+    },
+    "/v1/advertiser/integrations": {
+      "get": {
+        "operationId": "AdsyncController_get",
+        "summary": "Get connected ad-platform integrations (tokens masked)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Integrations"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/integrations/meta": {
+      "post": {
+        "operationId": "AdsyncController_setMeta",
+        "summary": "Connect Meta ad account",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMetaIntegrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Integrations"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AdsyncController_deleteMeta",
+        "summary": "Disconnect Meta integration",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Integrations"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/integrations/google": {
+      "post": {
+        "operationId": "AdsyncController_setGoogle",
+        "summary": "Connect Google Ads account",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGoogleIntegrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Integrations"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AdsyncController_deleteGoogle",
+        "summary": "Disconnect Google Ads integration",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Integrations"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/notifications/segments": {
+      "get": {
+        "operationId": "AdminNotificationsController_segments",
+        "summary": "Recipient counts per audience segment",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Notifications"
+        ]
+      }
+    },
+    "/v1/admin/notifications/recipients": {
+      "get": {
+        "operationId": "AdminNotificationsController_searchRecipients",
+        "summary": "Typeahead search for the specific-users picker",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Notifications"
+        ]
+      }
+    },
+    "/v1/admin/notifications/broadcasts": {
+      "get": {
+        "operationId": "AdminNotificationsController_list",
+        "summary": "Broadcast history",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Notifications"
+        ]
+      },
+      "post": {
+        "operationId": "AdminNotificationsController_create",
+        "summary": "Compose + send (or schedule) a broadcast",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBroadcastDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Notifications"
+        ]
+      }
+    },
+    "/v1/admin/notifications/broadcasts/{id}": {
+      "get": {
+        "operationId": "AdminNotificationsController_detail",
+        "summary": "Broadcast detail + delivery stats",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Notifications"
+        ]
+      }
+    },
+    "/v1/admin/notifications/broadcasts/test": {
+      "post": {
+        "operationId": "AdminNotificationsController_test",
+        "summary": "Send a one-off test to a single recipient",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestBroadcastDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Notifications"
+        ]
+      }
+    },
+    "/v1/admin/notifications/broadcasts/{id}/cancel": {
+      "post": {
+        "operationId": "AdminNotificationsController_cancel",
+        "summary": "Cancel a scheduled broadcast",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Notifications"
         ]
       }
     },
@@ -9524,6 +12606,175 @@
           },
           "403": {
             "description": "Forbidden — admin_root role required"
+          }
+        },
+        "tags": [
+          "Admin / Metrics"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/metrics/revenue-series": {
+      "get": {
+        "operationId": "AnalyticsController_revenueSeries",
+        "summary": "Daily GMV/net revenue series + growth + run-rate",
+        "parameters": [
+          {
+            "name": "days",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Metrics"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/metrics/advertiser-cohorts": {
+      "get": {
+        "operationId": "AnalyticsController_advertiserCohorts",
+        "summary": "Monthly advertiser cohort retention + new/repeat",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Metrics"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/metrics/measurement": {
+      "get": {
+        "operationId": "AnalyticsController_measurement",
+        "summary": "Measurement & ML scorecard — coverage, attention, model, training data",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Metrics"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/metrics/conversion-funnel": {
+      "get": {
+        "operationId": "AnalyticsController_conversionFunnel",
+        "summary": "OOH→digital funnel — subscribers, claims, outreach, amplification",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Metrics"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/metrics/supply": {
+      "get": {
+        "operationId": "AnalyticsController_supply",
+        "summary": "Supply/liquidity — screen yield, fill rate, LGA coverage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Metrics"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/metrics/demand": {
+      "get": {
+        "operationId": "AnalyticsController_demand",
+        "summary": "Demand — campaign funnel conversion, time-to-launch, budget utilisation",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Metrics"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/metrics/growth": {
+      "get": {
+        "operationId": "AnalyticsController_growth",
+        "summary": "Growth engine — scout CPA/quality, host onboarding pipeline",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Admin / Metrics"
+        ],
+        "security": [
+          {
+            "AdminSession": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/metrics/trust": {
+      "get": {
+        "operationId": "AnalyticsController_trust",
+        "summary": "Trust/compliance — fraud + refund rates, consent coverage, fleet health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
           }
         },
         "tags": [
@@ -11045,10 +14296,110 @@
           }
         ]
       }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/data-export": {
+      "get": {
+        "operationId": "AnalyticsController_getCampaignDataExport",
+        "summary": "Full campaign attribution + audience intelligence export",
+        "description": "Returns hourly claims by geohash5, top areas, and where your claimers visit outside this campaign (audience visit patterns). Up to 90 days of data.",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Analytics"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/lookalike": {
+      "get": {
+        "operationId": "AnalyticsController_getLookalike",
+        "summary": "Look-alike audience — subscribers who match your best claimers",
+        "description": "Scores subscribers by behavioural overlap with your campaign claimers. Returns geohash5 + venue-type fingerprint and suggested outreach targeting params.",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "description": "Campaign UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Analytics"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/v1/advertiser/campaigns/{campaignId}/lookalike/to-outreach": {
+      "post": {
+        "operationId": "AnalyticsController_lookalikeToOutreach",
+        "summary": "Get pre-filled outreach wizard params from look-alike audience",
+        "description": "Returns the suggested outreach target params (geohash5Areas, venueTypes, etc.) derived from campaign claimers. Use to pre-fill the outreach campaign wizard.",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Advertiser / Analytics"
+        ],
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
     }
   },
   "info": {
-    "title": "mìmú API",
+    "title": "Mimuads API",
     "description": "Self-service DOOH advertising platform for Lagos, Nigeria.\n\n## Authentication\nMost endpoints require a Bearer JWT token obtained via OTP or password login.\nProgrammatic (public API) endpoints use an org API key via the `X-API-Key` header.\nAdmin endpoints use session cookies issued after Google OAuth + TOTP verification.\n\n## User Types\n- **Advertiser** — brands running ad campaigns\n- **Host** — venue owners with DOOH screens\n- **Admin** — internal mìmú operations staff",
     "version": "1.1.0",
     "contact": {}
@@ -11211,6 +14562,40 @@
       }
     },
     "schemas": {
+      "RegisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "ios",
+              "android"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "platform"
+        ]
+      },
+      "UnregisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
       "ClaimInviteDto": {
         "type": "object",
         "properties": {
@@ -11495,10 +14880,49 @@
           },
           "lga": {
             "type": "string"
+          },
+          "logoUrl": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "bannerUrl": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 500,
+            "nullable": true
           }
         },
         "required": [
-          "businessAddress"
+          "businessAddress",
+          "logoUrl",
+          "bannerUrl"
+        ]
+      },
+      "HostBrandImageUploadDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "logo",
+              "banner"
+            ]
+          },
+          "fileExtension": {
+            "type": "string",
+            "enum": [
+              "jpg",
+              "jpeg",
+              "png",
+              "webp"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "fileExtension"
         ]
       },
       "AddBankAccountDto": {
@@ -11551,6 +14975,18 @@
           "callbackUrl": {
             "type": "string",
             "format": "uri"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "card",
+              "bank_transfer",
+              "bank",
+              "ussd",
+              "mobile_money",
+              "eft",
+              "apple_pay"
+            ]
           }
         },
         "required": [
@@ -12202,6 +15638,288 @@
           "cacheSize"
         ]
       },
+      "ObservationDto": {
+        "type": "object",
+        "properties": {
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "pedestrianCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "attentiveCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "passByCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "dwellTimeMedianS": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": false
+          },
+          "dwellTimeP95S": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": false
+          },
+          "estimatedMaleCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "estimatedFemaleCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "estimatedChildCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "estimatedAdultCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "estimatedSeniorCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "vehicleCount": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "vehicleTypes": {
+            "type": "object",
+            "properties": {
+              "car": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false
+              },
+              "danfo": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false
+              },
+              "keke": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false
+              },
+              "okada": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false
+              },
+              "truck": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false
+              },
+              "cyclist": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": false
+              }
+            }
+          },
+          "crowdDensityScore": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "maximum": 1,
+            "exclusiveMaximum": false
+          },
+          "venueActivityCategory": {
+            "type": "string",
+            "enum": [
+              "quiet",
+              "moderate",
+              "busy",
+              "packed"
+            ]
+          },
+          "screenObstructed": {
+            "type": "boolean",
+            "default": false
+          },
+          "ambientLuxEstimate": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": false
+          },
+          "visionModelVersion": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "inferenceMeanConfidence": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "maximum": 1,
+            "exclusiveMaximum": false
+          },
+          "framesCaptured": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "framesProcessed": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "default": 0
+          },
+          "rawAnnotations": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "capturedAt"
+        ]
+      },
+      "AnomalyEventDto": {
+        "type": "object",
+        "properties": {
+          "detectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "anomalyType": {
+            "type": "string",
+            "enum": [
+              "crowd_surge",
+              "screen_blocked",
+              "unusually_empty",
+              "vehicle_surge"
+            ]
+          },
+          "expectedValue": {
+            "type": "number"
+          },
+          "observedValue": {
+            "type": "number"
+          },
+          "multiplier": {
+            "type": "number"
+          },
+          "observationId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "detectedAt",
+          "anomalyType"
+        ]
+      },
+      "PatternSyncDto": {
+        "type": "object",
+        "properties": {
+          "patterns": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "object",
+              "properties": {
+                "dayOfWeek": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": false,
+                  "maximum": 6,
+                  "exclusiveMaximum": false
+                },
+                "hourBlock": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": false,
+                  "maximum": 23,
+                  "exclusiveMaximum": false
+                },
+                "typicalPedestrianCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": false
+                },
+                "typicalAttentiveCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": false
+                },
+                "typicalCrowdDensityScore": {
+                  "type": "number",
+                  "minimum": 0,
+                  "exclusiveMinimum": false,
+                  "maximum": 1,
+                  "exclusiveMaximum": false
+                },
+                "typicalVehicleComposition": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number"
+                  }
+                },
+                "typicalAgeGroupSplit": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number"
+                  }
+                },
+                "typicalGenderSplit": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number"
+                  }
+                },
+                "anomalyThresholdMultiplier": {
+                  "type": "number",
+                  "minimum": 1,
+                  "exclusiveMinimum": false,
+                  "maximum": 10,
+                  "exclusiveMaximum": false,
+                  "default": 2.5
+                },
+                "observationCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": false,
+                  "default": 0
+                }
+              },
+              "required": [
+                "dayOfWeek",
+                "hourBlock"
+              ]
+            }
+          }
+        },
+        "required": [
+          "patterns"
+        ]
+      },
       "RequestOTPDto": {
         "type": "object",
         "properties": {
@@ -12313,6 +16031,56 @@
         "required": [
           "orgId",
           "workspaceId"
+        ]
+      },
+      "GoogleSignInDto": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "description": "Google ID token from the device sign-in",
+            "type": "string",
+            "minLength": 20
+          }
+        },
+        "required": [
+          "idToken"
+        ]
+      },
+      "AppleSignInDto": {
+        "type": "object",
+        "properties": {
+          "identityToken": {
+            "description": "Apple identity token (JWT) from the device sign-in",
+            "type": "string",
+            "minLength": 20
+          },
+          "name": {
+            "description": "Full name, when Apple provided it",
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "identityToken"
+        ]
+      },
+      "SocialRequestOtpDto": {
+        "type": "object",
+        "properties": {
+          "signupToken": {
+            "description": "Ticket returned by /auth/google or /auth/apple when a phone is needed",
+            "type": "string",
+            "minLength": 16
+          },
+          "phone": {
+            "description": "Nigerian phone number in E.164 format",
+            "type": "string",
+            "pattern": "^\\+234\\d{10}$"
+          }
+        },
+        "required": [
+          "signupToken",
+          "phone"
         ]
       },
       "CreateProfileDto": {
@@ -12452,6 +16220,21 @@
           },
           "isAgency": {
             "type": "boolean"
+          }
+        }
+      },
+      "UpdateAccountDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
           }
         }
       },
@@ -13098,7 +16881,8 @@
             "type": "string",
             "enum": [
               "video",
-              "image"
+              "image",
+              "carousel"
             ]
           },
           "sizeBytes": {
@@ -13175,6 +16959,99 @@
           "sizeBytes",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "CreateCarouselDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        }
+      },
+      "CarouselItemUploadIntentDto": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "exclusiveMinimum": false,
+            "maximum": 524288000,
+            "exclusiveMaximum": false
+          },
+          "dwellSeconds": {
+            "type": "integer",
+            "minimum": 3,
+            "exclusiveMinimum": false,
+            "maximum": 30,
+            "exclusiveMaximum": false
+          },
+          "durationSeconds": {
+            "type": "number"
+          },
+          "resolution": {
+            "type": "string",
+            "pattern": "^\\d+x\\d+$"
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "video/mp4",
+              "video/quicktime"
+            ]
+          }
+        },
+        "required": [
+          "filename",
+          "format",
+          "sizeBytes",
+          "dwellSeconds"
+        ]
+      },
+      "ConfirmCarouselItemDto": {
+        "type": "object",
+        "properties": {
+          "sha256Hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "sha256Hash"
+        ]
+      },
+      "ReorderCarouselDto": {
+        "type": "object",
+        "properties": {
+          "itemIds": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 6,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "itemIds"
         ]
       },
       "PricingQuoteResponseDto": {
@@ -13291,7 +17168,9 @@
           "formattedCost",
           "estimatedImpressions",
           "estimatedPlays",
+          "estimatedReach",
           "costPerThousandImpressions",
+          "bidCpmKobo",
           "breakdown",
           "durationDays",
           "durationHours"
@@ -13311,6 +17190,106 @@
               "awareness",
               "consideration",
               "conversion"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "screen",
+              "outreach"
+            ],
+            "default": "screen"
+          },
+          "outreachTarget": {
+            "type": "object",
+            "properties": {
+              "audienceType": {
+                "type": "string",
+                "enum": [
+                  "behavioral",
+                  "custom"
+                ]
+              },
+              "namedSegment": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "venueTypes": {
+                "type": "array",
+                "maxItems": 50,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                }
+              },
+              "geohash5Areas": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 12
+                }
+              },
+              "recencyDays": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 365,
+                "exclusiveMaximum": false
+              },
+              "minFrequency": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "maximum": 100,
+                "exclusiveMaximum": false
+              },
+              "customAudienceId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "audienceType"
+            ]
+          },
+          "offer": {
+            "type": "object",
+            "properties": {
+              "headline": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 140
+              },
+              "details": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "ctaType": {
+                "type": "string",
+                "enum": [
+                  "online",
+                  "in_store",
+                  "whatsapp",
+                  "b2b_inquiry"
+                ]
+              },
+              "ctaUrl": {
+                "type": "string",
+                "format": "uri",
+                "maxLength": 2048
+              },
+              "redemptionInstructions": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "headline",
+              "ctaType"
             ]
           },
           "creativeId": {
@@ -13368,6 +17347,86 @@
           "isEvenPacing": {
             "type": "boolean",
             "default": true
+          },
+          "fieldTasks": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 200
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                "proofType": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "gps",
+                    "photo",
+                    "screenshot"
+                  ]
+                },
+                "targetLat": {
+                  "type": "number",
+                  "minimum": -90,
+                  "exclusiveMinimum": false,
+                  "maximum": 90,
+                  "exclusiveMaximum": false
+                },
+                "targetLng": {
+                  "type": "number",
+                  "minimum": -180,
+                  "exclusiveMinimum": false,
+                  "maximum": 180,
+                  "exclusiveMaximum": false
+                },
+                "gpsRadiusMeters": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true,
+                  "maximum": 5000,
+                  "exclusiveMaximum": false
+                },
+                "rewardKobo": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                },
+                "maxCompletionsPerScout": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "maxTotalCompletions": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                }
+              },
+              "required": [
+                "title",
+                "proofType",
+                "rewardKobo"
+              ]
+            }
+          },
+          "fieldTaskPoolKobo": {
+            "type": "string",
+            "pattern": "^\\d+$"
+          },
+          "fieldTaskBonusPoolKobo": {
+            "type": "string",
+            "pattern": "^\\d+$"
+          },
+          "redemptionTarget": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false
           }
         },
         "required": [
@@ -13391,6 +17450,14 @@
           },
           "objective": {
             "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "screen",
+              "outreach"
+            ],
+            "default": "screen"
           },
           "status": {
             "type": "string",
@@ -13729,6 +17796,14 @@
                 "objective": {
                   "type": "string"
                 },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "screen",
+                    "outreach"
+                  ],
+                  "default": "screen"
+                },
                 "status": {
                   "type": "string",
                   "enum": [
@@ -13836,6 +17911,14 @@
                 "dailyBudgetCapKobo": {
                   "type": "string"
                 },
+                "bidCpmKobo": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "formattedBidCpm": {
+                  "type": "string",
+                  "nullable": true
+                },
                 "startDate": {
                   "type": "string",
                   "format": "date-time"
@@ -13882,6 +17965,22 @@
                 "updatedAt": {
                   "type": "string",
                   "format": "date-time"
+                },
+                "posterUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "previewUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "creativeFormat": {
+                  "type": "string",
+                  "enum": [
+                    "video",
+                    "image"
+                  ],
+                  "nullable": true
                 }
               },
               "required": [
@@ -13967,6 +18066,207 @@
         },
         "required": [
           "endDate"
+        ]
+      },
+      "OutreachTargetDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "OutreachEstimateDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateAudienceDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UploadContactsDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "OutreachBeaconDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpsertOfferDto": {
+        "type": "object",
+        "properties": {
+          "headline": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 140
+          },
+          "details": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "ctaType": {
+            "type": "string",
+            "enum": [
+              "online",
+              "in_store",
+              "whatsapp"
+            ]
+          },
+          "ctaUrl": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048
+          },
+          "redemptionInstructions": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "imageKey": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "redemptionCap": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 1000000,
+            "exclusiveMaximum": false
+          }
+        },
+        "required": [
+          "headline",
+          "ctaType"
+        ]
+      },
+      "RejectOfferDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ClaimOfferDto": {
+        "type": "object",
+        "properties": {
+          "screenCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^\\+[1-9]\\d{6,14}$"
+          },
+          "consentOffers": {
+            "type": "boolean",
+            "default": false
+          },
+          "consentAdPlatforms": {
+            "type": "boolean",
+            "default": false
+          },
+          "ref": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rep": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "referredLat": {
+            "type": "number",
+            "minimum": -90,
+            "exclusiveMinimum": false,
+            "maximum": 90,
+            "exclusiveMaximum": false
+          },
+          "referredLng": {
+            "type": "number",
+            "minimum": -180,
+            "exclusiveMinimum": false,
+            "maximum": 180,
+            "exclusiveMaximum": false
+          }
+        },
+        "required": [
+          "screenCode",
+          "email"
+        ]
+      },
+      "PushSubscribeDto": {
+        "type": "object",
+        "properties": {
+          "claimId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subscription": {
+            "type": "object",
+            "properties": {
+              "endpoint": {
+                "type": "string",
+                "format": "uri",
+                "maxLength": 2048
+              },
+              "keys": {
+                "type": "object",
+                "properties": {
+                  "p256dh": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "auth": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "p256dh",
+                  "auth"
+                ]
+              }
+            },
+            "required": [
+              "endpoint",
+              "keys"
+            ]
+          },
+          "userAgent": {
+            "type": "string",
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "claimId",
+          "subscription"
+        ]
+      },
+      "RedeemOfferDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 16
+          }
+        },
+        "required": [
+          "code"
         ]
       },
       "CreateInviteDto": {
@@ -14450,187 +18750,155 @@
           "creativeId"
         ]
       },
-      "UploadPlaysDto": {
+      "UploadPlaysEnvelopeDto": {
         "type": "object",
         "properties": {
           "plays": {
             "type": "array",
             "minItems": 1,
             "maxItems": 500,
-            "items": {
-              "type": "object",
-              "properties": {
-                "idempotencyKey": {
-                  "type": "string",
-                  "minLength": 8,
-                  "maxLength": 255
-                },
-                "screenId": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "campaignId": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "creativeId": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "advertiserId": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "playedAt": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "exclusiveMinimum": true
-                },
-                "playDurationMs": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "exclusiveMinimum": true
-                },
-                "expectedRevenueKobo": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "exclusiveMinimum": true
-                },
-                "category": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "playSource": {
-                  "type": "string",
-                  "enum": [
-                    "server",
-                    "schedule",
-                    "hints",
-                    "fallback"
-                  ]
-                },
-                "decisionToken": {
-                  "type": "string",
-                  "maxLength": 2048,
-                  "nullable": true
-                },
-                "measurement": {
-                  "type": "object",
-                  "properties": {
-                    "cvAvailable": {
-                      "type": "boolean"
-                    },
-                    "rawUniquePersonCount": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "rawMaxConcurrent": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "rawAvgConcurrent": {
-                      "type": "number",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "rawTotalPersonSeconds": {
-                      "type": "number",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "calibratedUniquePersonCount": {
-                      "type": "number",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "calibratedMaxConcurrent": {
-                      "type": "number",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "calibratedAvgConcurrent": {
-                      "type": "number",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "calibratedTotalPersonSeconds": {
-                      "type": "number",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "calibrationFactorVersion": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "exclusiveMinimum": false
-                    },
-                    "tamperFlagsJson": {
-                      "type": "string",
-                      "maxLength": 1024
-                    }
-                  },
-                  "required": [
-                    "cvAvailable",
-                    "rawUniquePersonCount",
-                    "rawMaxConcurrent",
-                    "rawAvgConcurrent",
-                    "rawTotalPersonSeconds",
-                    "calibratedUniquePersonCount",
-                    "calibratedMaxConcurrent",
-                    "calibratedAvgConcurrent",
-                    "calibratedTotalPersonSeconds",
-                    "calibrationFactorVersion",
-                    "tamperFlagsJson"
-                  ],
-                  "nullable": true
-                },
-                "playerState": {
-                  "type": "string",
-                  "enum": [
-                    "ONLINE",
-                    "DEGRADED",
-                    "OFFLINE_SCHEDULED",
-                    "OFFLINE_FALLBACK"
-                  ]
-                },
-                "networkQuality": {
-                  "type": "number",
-                  "minimum": 0,
-                  "exclusiveMinimum": false,
-                  "maximum": 1,
-                  "exclusiveMaximum": false,
-                  "nullable": true
-                },
-                "partialPlay": {
-                  "type": "boolean",
-                  "default": false
-                },
-                "cancelledReason": {
-                  "type": "string",
-                  "maxLength": 255,
-                  "nullable": true
-                }
-              },
-              "required": [
-                "idempotencyKey",
-                "screenId",
-                "campaignId",
-                "creativeId",
-                "advertiserId",
-                "playedAt",
-                "playDurationMs",
-                "expectedRevenueKobo",
-                "category",
-                "playSource",
-                "playerState"
-              ]
-            }
+            "items": {}
           }
         },
         "required": [
           "plays"
+        ]
+      },
+      "SetMetaIntegrationDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SetGoogleIntegrationDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateBroadcastDto": {
+        "type": "object",
+        "properties": {
+          "targetKind": {
+            "type": "string",
+            "enum": [
+              "segment",
+              "users",
+              "emails"
+            ],
+            "default": "segment"
+          },
+          "segment": {
+            "type": "string",
+            "enum": [
+              "all_advertisers",
+              "all_hosts",
+              "all_users"
+            ]
+          },
+          "userIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5000,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "emails": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5000,
+            "items": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          "channels": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "email",
+                "in_app",
+                "push"
+              ]
+            }
+          },
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "ctaLabel": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "ctaUrl": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048
+          },
+          "scheduledFor": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "channels",
+          "title",
+          "body"
+        ]
+      },
+      "TestBroadcastDto": {
+        "type": "object",
+        "properties": {
+          "channels": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "email",
+                "in_app",
+                "push"
+              ]
+            }
+          },
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "ctaLabel": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "ctaUrl": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "channels",
+          "title",
+          "body"
         ]
       }
     }

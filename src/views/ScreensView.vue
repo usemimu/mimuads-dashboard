@@ -204,8 +204,10 @@ function saveSet() {
               <!-- Screen name + photo + address -->
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
+                  <!-- Small square chip → host logo (thumbnailUrl), matching the
+                       pickers. The wide hero photo lives in the detail drawer. -->
                   <div class="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
-                    <img v-if="s.photoUrl" :src="s.photoUrl" :alt="s.name" class="h-full w-full object-cover" />
+                    <img v-if="s.thumbnailUrl" :src="s.thumbnailUrl" :alt="s.name" class="h-full w-full object-cover" />
                     <PhMapTrifold v-else :size="18" class="absolute inset-0 m-auto text-neutral-300" />
                   </div>
                   <div class="min-w-0">
