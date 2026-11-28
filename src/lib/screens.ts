@@ -21,6 +21,7 @@ export function featuresToScreens(fc: MapFeatureCollection): Screen[] {
       latitude: lat,
       longitude: lng,
       photoUrl: p.photoUrl == null ? null : String(p.photoUrl),
+      thumbnailUrl: p.thumbnailUrl == null ? null : String(p.thumbnailUrl),
     }
   })
 }

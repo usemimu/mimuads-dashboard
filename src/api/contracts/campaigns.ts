@@ -28,10 +28,52 @@ export type CampaignStatus = z.infer<typeof CampaignStatusSchema>
 export const CampaignTypeSchema = z.enum(['screen', 'outreach'])
 export type CampaignType = z.infer<typeof CampaignTypeSchema>
 
+// Inline targeting for an Outreach campaign (mirrors backend
+// OutreachTargetInputSchema). A `namedSegment` auto-resolves venue/day/hour
+// filters server-side; the console only sends audienceType + namedSegment.
+export const OutreachTargetSchema = z.object({
+  audienceType: z.enum(['behavioral', 'custom']),
+  namedSegment: z.string().min(1).max(100).optional(),
+  venueTypes: z.array(z.string().min(1).max(100)).max(50).optional(),
+  geohash5Areas: z.array(z.string().min(1).max(12)).max(100).optional(),
+  recencyDays: z.number().int().positive().max(365).optional(),
+  minFrequency: z.number().int().positive().max(100).optional(),
+  customAudienceId: z.string().uuid().optional(),
+})
+
+// Inline offer (broadcast content) for an Outreach campaign (mirrors backend
+// CampaignOfferInputSchema).
+export const CampaignOfferSchema = z.object({
+  headline: z.string().trim().min(2).max(140),
+  details: z.string().trim().max(2000).optional(),
+  ctaType: z.enum(['online', 'in_store', 'whatsapp', 'b2b_inquiry']),
+  ctaUrl: z.string().url().max(2048).optional(),
+  redemptionInstructions: z.string().trim().max(1000).optional(),
+})
+
+// One advertiser-defined scout task for "Release to Scouts" (mirrors backend
+// FieldTaskInputSchema). Kobo is a string for the same bigint-safety reason as
+// budgetKobo.
+export const FieldTaskSchema = z.object({
+  title: z.string().min(2).max(200),
+  description: z.string().max(1000).optional(),
+  proofType: z.enum(['none', 'gps', 'photo', 'screenshot']),
+  targetLat: z.number().min(-90).max(90).optional(),
+  targetLng: z.number().min(-180).max(180).optional(),
+  gpsRadiusMeters: z.number().int().positive().max(5000).optional(),
+  rewardKobo: z.string().regex(/^\d+$/),
+  maxCompletionsPerScout: z.number().int().positive().optional(),
+  maxTotalCompletions: z.number().int().positive().optional(),
+})
+
 export const CreateCampaignSchema = z.object({
   name: z.string().min(3).max(255),
   objective: ObjectiveSchema,
   type: CampaignTypeSchema.optional().default('screen'),
+  // Outreach-only inline config. Required when type==='outreach', forbidden
+  // when type==='screen' (enforced by the backend refines).
+  outreachTarget: OutreachTargetSchema.optional(),
+  offer: CampaignOfferSchema.optional(),
   creativeId: z.string().uuid(),
   isWildcard: z.boolean().optional(),
   screenIds: z.array(z.string().uuid()).max(50).optional(),
@@ -42,6 +84,13 @@ export const CreateCampaignSchema = z.object({
   startDate: z.string(),
   endDate: z.string(),
   isEvenPacing: z.boolean().optional(),
+  // "Release to Scouts" (opt-in, screen campaigns). Tasks + a separate pool to
+  // fund their rewards; an optional results bonus pays out when redemptions hit
+  // the target. All mirror the backend CreateCampaignRequestSchema.
+  fieldTasks: z.array(FieldTaskSchema).max(10).optional(),
+  fieldTaskPoolKobo: z.string().regex(/^\d+$/).optional(),
+  fieldTaskBonusPoolKobo: z.string().regex(/^\d+$/).optional(),
+  redemptionTarget: z.number().int().min(0).optional(),
 })
 export type CreateCampaignRequest = z.infer<typeof CreateCampaignSchema>
 

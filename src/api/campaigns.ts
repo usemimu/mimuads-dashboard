@@ -65,11 +65,23 @@ export function getQuote(req: QuoteRequest) {
 export function getPerformance(id: string) {
   return api.get(`/advertiser/campaigns/${id}/performance`)
 }
-export function getPerformanceBreakdown(id: string, dim: 'by-screen' | 'by-hour' | 'by-day') {
+export function getPerformanceBreakdown(id: string, dim: 'by-screen' | 'by-hour' | 'by-day' | 'by-creative') {
   return api.get(`/advertiser/campaigns/${id}/performance/${dim}`)
 }
 export function getDecisionFactors(id: string) {
   return api.get(`/advertiser/reports/campaigns/${id}/decision-factors`)
+}
+// Outreach delivery performance — sends, opens, clicks, cost-per-send.
+export function getOutreachPerformance(id: string) {
+  return api.get(`/advertiser/campaigns/${id}/performance/outreach`)
+}
+// Field (scout) campaign performance — referrals, redemptions, pool depletion.
+export function getFieldPerformance(id: string) {
+  return api.get(`/advertiser/campaigns/${id}/performance/field`)
+}
+// Scout leaderboard — per-scout ranking by earnings for a field campaign.
+export function getScoutLeaderboard(id: string) {
+  return api.get(`/advertiser/campaigns/${id}/performance/scout-leaderboard`)
 }
 
 // Per-campaign plays / reached / spend (week, month, lifetime) in one call.

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import { PhMagnifyingGlass } from '@phosphor-icons/vue'
+import { PhMagnifyingGlass, PhStorefront } from '@phosphor-icons/vue'
 import { listScreens } from '@/api/screens'
 import { isOnline, type Screen } from '@/api/contracts/screens'
 import { useSession } from '@/stores/session'
@@ -108,7 +108,13 @@ function clearAll() {
       </p>
       <ul v-else class="divide-y divide-line">
         <li v-for="s in filtered" :key="s.id" class="flex items-center gap-3 px-3 py-2 hover:bg-neutral-50">
-          <span class="inline-block h-2 w-2 shrink-0 rounded-full" :class="isOnline(s.status) ? 'bg-moss-500' : 'bg-neutral-400'" />
+          <!-- Host business logo chip (brand identity at a glance). Falls back
+               to a storefront glyph when the host has no logo. -->
+          <div class="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-neutral-100">
+            <img v-if="s.thumbnailUrl" :src="s.thumbnailUrl" :alt="s.name" class="h-full w-full object-cover" loading="lazy" />
+            <span v-else class="flex h-full w-full items-center justify-center text-neutral-300"><PhStorefront :size="16" /></span>
+            <span class="absolute bottom-0.5 right-0.5 inline-block h-1.5 w-1.5 rounded-full ring-1 ring-white" :class="isOnline(s.status) ? 'bg-moss-500' : 'bg-neutral-400'" />
+          </div>
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium text-neutral-900">{{ s.name }}</p>
             <p class="truncate text-xs capitalize text-neutral-500">{{ s.lga }} · {{ s.venueType }}</p>

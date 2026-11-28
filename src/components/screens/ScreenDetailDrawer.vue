@@ -61,6 +61,11 @@ function toggle() {
     </header>
 
     <div class="flex-1 space-y-5 overflow-auto p-5">
+      <!-- Venue hero (resolves to the host's banner/logo when the screen has no
+           photo of its own). Hidden when there's nothing to show. -->
+      <div v-if="screen?.photoUrl" class="overflow-hidden rounded-xl bg-neutral-100" style="aspect-ratio: 16 / 9;">
+        <img :src="screen.photoUrl" :alt="screen?.name ?? ''" class="h-full w-full object-cover" />
+      </div>
       <div>
         <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{{ $t('screens.venue') }}</p>
         <p class="text-sm text-neutral-900">{{ screen?.venueName }} · {{ screen?.venueType }}</p>
